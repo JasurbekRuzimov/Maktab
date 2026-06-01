@@ -1,0 +1,4 @@
+com.maktab.app.test.app-androidTest-0 C:\Users\ruzim\Downloads\MaktabApp\MaktabApp\app\build\generated\res\resValues\androidTest\debug
+com.maktab.app.test.app-mergeDebugAndroidTestResources-1 C:\Users\ruzim\Downloads\MaktabApp\MaktabApp\app\build\intermediates\incremental\debugAndroidTest\mergeDebugAndroidTestResources\merged.dir
+com.maktab.app.test.app-mergeDebugAndroidTestResources-2 C:\Users\ruzim\Downloads\MaktabApp\MaktabApp\app\build\intermediates\incremental\debugAndroidTest\mergeDebugAndroidTestResources\stripped.dir
+com.maktab.app.test.app-merged_res-3 C:\Users\ruzim\Downloads\MaktabApp\MaktabApp\app\build\intermediates\merged_res\debugAndroidTest
