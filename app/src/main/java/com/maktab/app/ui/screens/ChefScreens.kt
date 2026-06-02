@@ -5,6 +5,9 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -15,11 +18,13 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.maktab.app.ui.components.*
 import com.maktab.app.ui.theme.*
+import kotlinx.coroutines.launch
 
 // ─────────────────────────────────────────────
 // DATA MODELS
@@ -90,9 +95,9 @@ private object ChefMock {
         IngredientItem(1, "Kartoshka", "Sabzavot", 100.0, "kg", 10.0, "29.05.2026", StockStatus.YETARLI),
         IngredientItem(2, "Piyoz", "Sabzavot", 5.0, "kg", 8.0, "01.06.2026", StockStatus.KAM),
         IngredientItem(3, "Guruch", "Don mahsulot", 50.0, "kg", 20.0, "31.12.2026", StockStatus.YETARLI),
-        IngredientItem(4, "Go'sht", "Go'sht mahsulot", 0.0, "kg", 15.0, "30.05.2026", StockStatus.TUGAGAN),
+        IngredientItem(4, "Go'sht", "Et mahsulot", 0.0, "kg", 15.0, "30.05.2026", StockStatus.TUGAGAN),
         IngredientItem(5, "Qovoq", "Sabzavot", 30.0, "kg", 5.0, "03.06.2026", StockStatus.YETARLI),
-        IngredientItem(6, "Sut", "Sut mahsulot", 3.0, "L", 10.0, "31.05.2026", StockStatus.KAM)
+        IngredientItem(6, "Sut", "Sut mahsulot", 3.0, "l", 10.0, "31.05.2026", StockStatus.KAM)
     )
 
     val movements = listOf(
@@ -391,13 +396,33 @@ fun ChefOmborScreen() {
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun IngredientRow(ing: IngredientItem, modifier: Modifier = Modifier) {
     val (color, container) = when (ing.status) {
         StockStatus.YETARLI -> Pair(Teal10, TealContainer)
-        StockStatus.KAM -> Pair(Amber10, AmberContainer)
+        StockStatus.KAM     -> Pair(Amber10, AmberContainer)
         StockStatus.TUGAGAN -> Pair(Red10, RedContainer)
     }
+
+    // Edit sheet holati
+    var showSheet by remember { mutableStateOf(false) }
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+
+    // Tahrirlash maydonlari
+    var editName     by remember { mutableStateOf(ing.name) }
+    var editCategory by remember { mutableStateOf(ing.category) }
+    var editQuantity by remember { mutableStateOf(ing.quantity.toInt().toString()) }
+    var editMin      by remember { mutableStateOf(ing.minQuantity.toInt().toString()) }
+    var editUnit     by remember { mutableStateOf(ing.unit) }
+    var editExpiry   by remember { mutableStateOf(ing.expiryDate) }
+    var saved        by remember { mutableStateOf(false) }
+    val scope        = rememberCoroutineScope()
+
+    val units = listOf("kg", "g", "l", "ml", "dona", "litr")
+    val categories = listOf("Sabzavot", "Don mahsulot", "Go'sht mahsulot", "Sut mahsulot", "Meva", "Boshqa")
+
+    // ── CARD ──
     Card(
         modifier = modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = Color.White),
@@ -406,30 +431,261 @@ private fun IngredientRow(ing: IngredientItem, modifier: Modifier = Modifier) {
         elevation = CardDefaults.cardElevation(0.dp)
     ) {
         Row(
-            modifier = Modifier.padding(12.dp),
+            modifier = Modifier.padding(start = 12.dp, top = 10.dp, bottom = 10.dp, end = 4.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             Box(
-                Modifier.size(40.dp).clip(RoundedCornerShape(8.dp)).background(AmberContainer),
+                Modifier.size(42.dp).clip(RoundedCornerShape(8.dp)).background(AmberContainer),
                 contentAlignment = Alignment.Center
-            ) { Icon(Icons.Default.Inventory, null, tint = Amber10, modifier = Modifier.size(20.dp)) }
+            ) {
+                Icon(Icons.Default.Inventory, null, tint = Amber10, modifier = Modifier.size(20.dp))
+            }
             Column(Modifier.weight(1f)) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(ing.name, fontSize = 14.sp, fontWeight = FontWeight.Medium)
+                    Text(editName, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
                     StatusChip(ing.status.name, color, container)
                 }
-                Text("${ing.category} · min: ${ing.minQuantity} ${ing.unit}", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                Text("Tugash: ${ing.expiryDate}", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Spacer(Modifier.height(2.dp))
+                Text("$editCategory · min: $editMin $editUnit",
+                    fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text("Tugash: $editExpiry",
+                    fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
-            Column(horizontalAlignment = Alignment.End) {
-                Text("${ing.quantity} ${ing.unit}", fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = color)
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Icon(Icons.Default.Edit, null, tint = Blue10, modifier = Modifier.size(18.dp).clickable { })
-                    Icon(Icons.Default.SwapVert, null, tint = Teal10, modifier = Modifier.size(18.dp).clickable { })
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                modifier = Modifier.padding(end = 4.dp)
+            ) {
+                Text(
+                    "$editQuantity $editUnit",
+                    fontSize = 15.sp, fontWeight = FontWeight.Bold, color = color
+                )
+                Box(
+                    modifier = Modifier
+                        .size(38.dp)
+                        .clip(RoundedCornerShape(10.dp))
+                        .clickable { showSheet = true }
+                        .background(Blue10.copy(0.09f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(Icons.Default.Edit, "Tahrirlash", tint = Blue10, modifier = Modifier.size(20.dp))
                 }
             }
         }
+    }
+
+    // ── BOTTOM SHEET ──
+    if (showSheet) {
+        ModalBottomSheet(
+            onDismissRequest = { showSheet = false },
+            sheetState = sheetState,
+            shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp),
+            containerColor = MaterialTheme.colorScheme.surface,
+            windowInsets = WindowInsets.navigationBars
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 20.dp)
+                    .padding(bottom = 32.dp)
+            ) {
+                // Header
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Box(
+                        Modifier.size(44.dp).clip(RoundedCornerShape(10.dp)).background(AmberContainer),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(Icons.Default.Inventory, null, tint = Amber10, modifier = Modifier.size(22.dp))
+                    }
+                    Column(Modifier.weight(1f)) {
+                        Text("Ingredientni tahrirlash", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+                        Text(ing.name, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                    IconButton(onClick = { showSheet = false }) {
+                        Icon(Icons.Default.Close, null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                }
+
+                Spacer(Modifier.height(20.dp))
+                HorizontalDivider(color = Outline, thickness = 0.5.dp)
+                Spacer(Modifier.height(20.dp))
+
+                // Nom
+                SheetField(
+                    label = "Ingredient nomi",
+                    value = editName,
+                    onValueChange = { editName = it },
+                    icon = Icons.Default.Label,
+                    placeholder = "Masalan: Kartoshka"
+                )
+                Spacer(Modifier.height(14.dp))
+
+                // Kategoriya
+                Text("Kategoriya", fontSize = 13.sp, fontWeight = FontWeight.Medium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Spacer(Modifier.height(8.dp))
+                LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    items(categories) { cat ->
+                        val isSel = editCategory == cat
+                        FilterChip(
+                            selected = isSel,
+                            onClick = { editCategory = cat },
+                            label = { Text(cat, fontSize = 12.sp) },
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = Amber10,
+                                selectedLabelColor = Color.White
+                            ),
+                            border = FilterChipDefaults.filterChipBorder(
+                                enabled = true, selected = isSel,
+                                borderColor = Outline, selectedBorderColor = Color.Transparent
+                            )
+                        )
+                    }
+                }
+                Spacer(Modifier.height(14.dp))
+
+                // O'lchov birligi
+                Text("O'lchov birligi", fontSize = 13.sp, fontWeight = FontWeight.Medium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Spacer(Modifier.height(8.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    units.forEach { u ->
+                        val isSel = editUnit == u
+                        FilterChip(
+                            selected = isSel,
+                            onClick = { editUnit = u },
+                            label = { Text(u, fontSize = 12.sp) },
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = Amber10,
+                                selectedLabelColor = Color.White
+                            ),
+                            border = FilterChipDefaults.filterChipBorder(
+                                enabled = true, selected = isSel,
+                                borderColor = Outline, selectedBorderColor = Color.Transparent
+                            )
+                        )
+                    }
+                }
+                Spacer(Modifier.height(14.dp))
+
+                // Miqdor va Minimal miqdor — ikki ustun
+                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Column(Modifier.weight(1f)) {
+                        SheetField(
+                            label = "Joriy miqdor",
+                            value = editQuantity,
+                            onValueChange = { editQuantity = it.filter { c -> c.isDigit() } },
+                            icon = Icons.Default.Inventory,
+                            placeholder = "0",
+                            keyboardType = KeyboardType.Number
+                        )
+                    }
+                    Column(Modifier.weight(1f)) {
+                        SheetField(
+                            label = "Minimal miqdor",
+                            value = editMin,
+                            onValueChange = { editMin = it.filter { c -> c.isDigit() } },
+                            icon = Icons.Default.Warning,
+                            placeholder = "0",
+                            keyboardType = KeyboardType.Number
+                        )
+                    }
+                }
+                Spacer(Modifier.height(14.dp))
+
+                // Yaroqlilik muddati
+                SheetField(
+                    label = "Yaroqlilik muddati",
+                    value = editExpiry,
+                    onValueChange = { editExpiry = it },
+                    icon = Icons.Default.CalendarToday,
+                    placeholder = "DD.MM.YYYY"
+                )
+                Spacer(Modifier.height(24.dp))
+
+                // Saqlash tugmasi
+                if (saved) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth()
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(TealContainer)
+                            .padding(14.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        Icon(Icons.Default.CheckCircle, null, tint = Teal10, modifier = Modifier.size(20.dp))
+                        Text("Muvaffaqiyatli saqlandi!", fontSize = 14.sp, color = Teal10, fontWeight = FontWeight.Medium)
+                    }
+                } else {
+                    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        OutlinedButton(
+                            onClick = {
+                                scope.launch { sheetState.hide() }.invokeOnCompletion { showSheet = false }
+                            },
+                            modifier = Modifier.weight(1f).height(50.dp),
+                            shape = RoundedCornerShape(12.dp),
+                            border = BorderStroke(0.5.dp, Outline)
+                        ) {
+                            Text("Bekor qilish", fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurface)
+                        }
+                        Button(
+                            onClick = {
+                                saved = true
+                                scope.launch {
+                                    kotlinx.coroutines.delay(1500)
+                                    sheetState.hide()
+                                    showSheet = false
+                                    saved = false
+                                }
+                            },
+                            modifier = Modifier.weight(1f).height(50.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = Amber10),
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Icon(Icons.Default.Save, null, modifier = Modifier.size(18.dp))
+                            Spacer(Modifier.width(8.dp))
+                            Text("Saqlash", fontSize = 14.sp)
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun SheetField(
+    label: String,
+    value: String,
+    onValueChange: (String) -> Unit,
+    icon: ImageVector,
+    placeholder: String,
+    keyboardType: KeyboardType = KeyboardType.Text
+) {
+    Column {
+        Text(label, fontSize = 13.sp, fontWeight = FontWeight.Medium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Spacer(Modifier.height(6.dp))
+        OutlinedTextField(
+            value = value,
+            onValueChange = onValueChange,
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true,
+            shape = RoundedCornerShape(10.dp),
+            placeholder = { Text(placeholder, fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant) },
+            leadingIcon = { Icon(icon, null, tint = Amber10, modifier = Modifier.size(18.dp)) },
+            keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = Amber10,
+                unfocusedBorderColor = Outline
+            )
+        )
     }
 }
 
@@ -441,7 +697,7 @@ private fun IngredientRow(ing: IngredientItem, modifier: Modifier = Modifier) {
 fun ChefIngredientsScreen() {
     var searchQuery by remember { mutableStateOf("") }
     var selectedFilter by remember { mutableStateOf("Barchasi") }
-    val filters = listOf("Barchasi", "Sabzavot", "Don mahsulot", "Go'sht mahsulot", "Sut mahsulot")
+    val filters = listOf("Barchasi", "Sabzavot", "Don mahsulot", "Et mahsulot", "Sut mahsulot")
     val filtered = ChefMock.ingredients.filter { ing ->
         (selectedFilter == "Barchasi" || ing.category == selectedFilter) &&
                 ing.name.contains(searchQuery, ignoreCase = true)

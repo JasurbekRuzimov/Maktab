@@ -95,6 +95,27 @@ val parentDrawerItems = listOf(
 // DRAWER ITEMS — Chef
 // ─────────────────────────────────────────────
 
+val studentDrawerItems = listOf(
+    NavItem("jadval",       "Dars jadvali",     Icons.Default.TableChart,    "O'qish"),
+    NavItem("darsliklar",   "Darsliklar",        Icons.Default.MenuBook,      "O'qish"),
+    NavItem("vazifa",       "Uy vazifalari",     Icons.Default.AssignmentTurnedIn, "O'qish"),
+    NavItem("baholar",      "Baholar",           Icons.Default.Star,          "Natijalar"),
+    NavItem("davomat",      "Davomat",           Icons.Default.HowToReg,      "Natijalar"),
+    NavItem("imtihonlar",   "Imtihonlar",        Icons.Default.Assignment,    "Natijalar"),
+    NavItem("xabarnomalar", "Xabarnomalar",      Icons.Default.Notifications, "Boshqa"),
+    NavItem("surveylar",    "So'rovnomalar",     Icons.Default.Poll,          "Boshqa"),
+)
+
+val hrDrawerItems = listOf(
+    NavItem("xodimlar",    "Xodimlar ro'yxati",  Icons.Default.People,         "Xodimlar"),
+    NavItem("yangi",       "Yangi xodim",         Icons.Default.PersonAdd,      "Xodimlar"),
+    NavItem("lavozimlar",  "Lavozimlar",          Icons.Default.Business,       "Xodimlar"),
+    NavItem("davomat",     "Xodimlar davomati",   Icons.Default.CalendarToday,  "Davomat va Ta'til"),
+    NavItem("tatil",       "Ta'til va ruxsatlar", Icons.Default.BeachAccess,    "Davomat va Ta'til"),
+    NavItem("maosh",       "Maosh hisob-kitobi",  Icons.Default.Payments,       "Moliya"),
+    NavItem("analitika",   "HR analitika",        Icons.Default.BarChart,       "Hisobotlar"),
+    NavItem("hujjatlar",   "Hujjatlar",           Icons.Default.Description,    "Hisobotlar"),
+)
 val chefDrawerItems = listOf(
     NavItem("dashboard",  "Bosh panel",            Icons.Default.Dashboard,      "Asosiy"),
     NavItem("ombor",      "Oziq-ovqat ombori",     Icons.Default.Inventory,      "Asosiy"),
@@ -262,8 +283,10 @@ fun RoleApp(
     onToggleDark: () -> Unit, onLanguageChange: (String) -> Unit, onLogout: () -> Unit
 ) {
     when (role) {
-        "chef" -> ChefApp(language, isDark, onToggleDark, onLanguageChange, onLogout)
-        else   -> DrawerApp(role, language, isDark, onToggleDark, onLanguageChange, onLogout)
+        "chef"    -> ChefApp(language, isDark, onToggleDark, onLanguageChange, onLogout)
+        "student" -> DrawerApp(role, language, isDark, onToggleDark, onLanguageChange, onLogout)
+        "hr"      -> DrawerApp(role, language, isDark, onToggleDark, onLanguageChange, onLogout)
+        else      -> DrawerApp(role, language, isDark, onToggleDark, onLanguageChange, onLogout)
     }
 }
 
@@ -278,26 +301,47 @@ fun DrawerApp(
     onToggleDark: () -> Unit, onLanguageChange: (String) -> Unit, onLogout: () -> Unit
 ) {
     val isTeacher = role == "teacher"
-    val accent = if (isTeacher) Teal10 else Blue10
-    val accentContainer = if (isTeacher) TealContainer else BlueContainer
-    val drawerItems = if (isTeacher) teacherDrawerItems else parentDrawerItems
-    val defaultId = if (isTeacher) "jadval" else "jadval"
+    val isStudent = role == "student"
+    val isHR      = role == "hr"
+    val accent = when (role) {
+        "teacher" -> Teal10; "student" -> Blue10; "hr" -> Purple10; else -> Blue10
+    }
+    val accentContainer = when (role) {
+        "teacher" -> TealContainer; "student" -> BlueContainer; "hr" -> PurpleContainer; else -> BlueContainer
+    }
+    val drawerItems = when (role) {
+        "teacher" -> teacherDrawerItems
+        "student" -> studentDrawerItems
+        "hr"      -> hrDrawerItems
+        else      -> parentDrawerItems
+    }
+    val defaultId = drawerItems.first().id
 
     val drawerState = rememberDrawerState(DrawerValue.Closed)
     val scope = rememberCoroutineScope()
     var selectedId by remember { mutableStateOf(defaultId) }
     var showSettings by remember { mutableStateOf(false) }
 
-    val currentTitle = drawerItems.find { it.id == selectedId }?.labelUz
-        ?: if (isTeacher) "Jadval" else "Jadval"
+    val currentTitle = drawerItems.find { it.id == selectedId }?.labelUz ?: drawerItems.first().labelUz
 
-    val userName = if (isTeacher) "Karimova Nargiza" else "Karimov Bobur"
-    val userSub  = if (isTeacher) "O'qituvchi · 5-A sinf" else "Ota-ona · 5-A sinf"
-    val panelTitle = when {
-        isTeacher -> "O'qituvchi paneli"
-        else      -> "Ota-ona paneli"
+    val userName = when (role) {
+        "teacher" -> "Karimova Nargiza"
+        "student" -> "Asilbek Karimov"
+        "hr"      -> "Rahimova Aziza"
+        else      -> "Karimov Bobur"
     }
-    val roleIcon = if (isTeacher) Icons.Default.School else Icons.Default.FamilyRestroom
+    val userSub = when (role) {
+        "teacher" -> "O'qituvchi · 5-A sinf"
+        "student" -> "O'quvchi · 5-A sinf"
+        "hr"      -> "HR mutaxassis"
+        else      -> "Ota-ona · 5-A sinf"
+    }
+    val roleIcon = when (role) {
+        "teacher" -> Icons.Default.School
+        "student" -> Icons.Default.Person
+        "hr"      -> Icons.Default.People
+        else      -> Icons.Default.FamilyRestroom
+    }
 
     BackHandler(enabled = drawerState.isOpen) { scope.launch { drawerState.close() } }
     BackHandler(enabled = showSettings) { showSettings = false }
@@ -456,6 +500,30 @@ fun DrawerApp(
                         "baholash" -> BaholashScreen(language)
                         "sinflar"  -> SinflarimScreen(language)
                         else       -> TeacherScheduleScreen()
+                    }
+                } else if (isStudent) {
+                    when (selectedId) {
+                        "jadval"       -> StudentScheduleScreen()
+                        "darsliklar"   -> StudentDarsliklarsScreen()
+                        "vazifa"       -> StudentUyVazifaScreen()
+                        "baholar"      -> StudentBaholarScreen()
+                        "davomat"      -> StudentDavomatScreen()
+                        "imtihonlar"   -> StudentImtihonlarScreen()
+                        "xabarnomalar" -> StudentXabarnomaScreen()
+                        "surveylar"    -> StudentSurveylar()
+                        else           -> StudentScheduleScreen()
+                    }
+                } else if (isHR) {
+                    when (selectedId) {
+                        "xodimlar"   -> HRXodimlarScreen()
+                        "yangi"      -> HRYangiXodimScreen()
+                        "lavozimlar" -> HRLavozimlarScreen()
+                        "davomat"    -> HRDavomatScreen()
+                        "tatil"      -> HRTatilScreen()
+                        "maosh"      -> HRMaoshScreen()
+                        "analitika"  -> HRAnalitika()
+                        "hujjatlar"  -> HRHujjatlarScreen()
+                        else         -> HRXodimlarScreen()
                     }
                 } else {
                     when (selectedId) {

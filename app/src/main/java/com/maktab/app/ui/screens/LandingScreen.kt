@@ -2,6 +2,8 @@ package com.maktab.app.ui.screens
 
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -20,7 +22,12 @@ import com.maktab.app.ui.theme.*
 @Composable
 fun LandingScreen(onRoleSelected: (String) -> Unit) {
     Column(
-        modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).statusBarsPadding().padding(24.dp),
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+            .statusBarsPadding()
+            .verticalScroll(rememberScrollState())
+            .padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Spacer(Modifier.height(48.dp))
@@ -31,12 +38,17 @@ fun LandingScreen(onRoleSelected: (String) -> Unit) {
         Text("Maktab tizimi", fontSize = 24.sp, fontWeight = FontWeight.SemiBold)
         Spacer(Modifier.height(6.dp))
         Text("Kirish uchun rolni tanlang", fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        Spacer(Modifier.height(48.dp))
+        Spacer(Modifier.height(36.dp))
         RoleCard("O'qituvchi", "Dars jadvali, davomat, baholash va oylik hisob", Icons.Default.School, Teal10, TealContainer) { onRoleSelected("teacher") }
-        Spacer(Modifier.height(16.dp))
+        Spacer(Modifier.height(12.dp))
         RoleCard("Ota-ona", "Farzandingiz jadvali, o'qishi va taraqqiyoti", Icons.Default.FamilyRestroom, Blue10, BlueContainer) { onRoleSelected("parent") }
-        Spacer(Modifier.height(16.dp))
+        Spacer(Modifier.height(12.dp))
+        RoleCard("O'quvchi", "Dars jadvali, baholar, uy vazifalari va imtihonlar", Icons.Default.Person, Purple10, PurpleContainer) { onRoleSelected("student") }
+        Spacer(Modifier.height(12.dp))
         RoleCard("Oshpaz", "Menyu kalendari, ombor, retseptlar va analitika", Icons.Default.Restaurant, Amber10, AmberContainer) { onRoleSelected("chef") }
+        Spacer(Modifier.height(12.dp))
+        RoleCard("HR", "Xodimlar, davomat, ta'til, maosh va hujjatlar", Icons.Default.People, Green10, GreenContainer) { onRoleSelected("hr") }
+        Spacer(Modifier.height(24.dp))
     }
 }
 
