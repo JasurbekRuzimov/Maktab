@@ -3,6 +3,8 @@ package com.maktab.app.ui
 import android.app.Activity
 import android.content.Context
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
@@ -76,12 +78,17 @@ val teacherDrawerItems = listOf(
 // ─────────────────────────────────────────────
 
 val parentDrawerItems = listOf(
-    NavItem("jadval",   "Jadval",       Icons.Default.TableChart,    "Farzand"),
-    NavItem("davomat",  "Davomat",      Icons.Default.CalendarToday, "Farzand"),
-    NavItem("baholar",  "Baholar",      Icons.Default.Star,          "Farzand"),
-    NavItem("vazifa",   "Uyga vazifa",  Icons.Default.Home,          "Muloqot"),
-    NavItem("xulq",     "Xulq-atvor",  Icons.Default.Favorite,      "Muloqot"),
-    NavItem("shikoyat", "Shikoyat",    Icons.Default.Feedback,      "Muloqot"),
+    NavItem("dashboard",  "Dashboard",       Icons.Default.Dashboard,       "Bosh sahifa"),
+    NavItem("profil",     "Profil",          Icons.Default.Person,          "Bosh sahifa"),
+    NavItem("davomat",    "Davomat",         Icons.Default.CalendarToday,   "Farzand ta'limi"),
+    NavItem("baholar",    "Baholar",         Icons.Default.Star,            "Farzand ta'limi"),
+    NavItem("vazifa",     "Uy vazifalari",   Icons.Default.MenuBook,        "Farzand ta'limi"),
+    NavItem("imtihonlar", "Imtihonlar",      Icons.Default.Assignment,      "Farzand ta'limi"),
+    NavItem("tolovlar",   "To'lovlar",       Icons.Default.Payment,         "Farzand ta'limi"),
+    NavItem("yangiliklar","Yangiliklar",     Icons.Default.Notifications,   "Faollik"),
+    NavItem("bloglar",    "Bloglar",         Icons.Default.Article,         "Faollik"),
+    NavItem("surveylar",  "So'rovnomalar",   Icons.Default.Poll,            "Faollik"),
+    NavItem("murojaatlar","Murojaatlar",     Icons.Default.Feedback,        "Faollik"),
 )
 
 // ─────────────────────────────────────────────
@@ -324,58 +331,64 @@ fun DrawerApp(
                     }
                 }
 
-                Spacer(Modifier.height(8.dp))
-
-                // Guruh bo'yicha menu
-                drawerItems.map { it.group }.distinct().forEach { group ->
-                    Text(
-                        text = group.uppercase(),
-                        fontSize = 10.sp, fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        letterSpacing = 0.8.sp,
-                        modifier = Modifier.padding(horizontal = 20.dp, vertical = 6.dp)
-                    )
-                    drawerItems.filter { it.group == group }.forEach { item ->
-                        val isSelected = selectedId == item.id
-                        NavigationDrawerItem(
-                            icon = {
-                                Box(
-                                    modifier = Modifier.size(34.dp).clip(RoundedCornerShape(9.dp))
-                                        .background(if (isSelected) accent.copy(0.15f) else MaterialTheme.colorScheme.surfaceVariant),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Icon(item.icon, null,
-                                        tint = if (isSelected) accent else MaterialTheme.colorScheme.onSurfaceVariant,
-                                        modifier = Modifier.size(18.dp))
-                                }
-                            },
-                            label = {
-                                Text(item.labelUz, fontSize = 13.sp,
-                                    fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
-                                    color = if (isSelected) accent else MaterialTheme.colorScheme.onSurface)
-                            },
-                            selected = isSelected,
-                            onClick = {
-                                selectedId = item.id
-                                scope.launch { drawerState.close() }
-                            },
-                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 1.dp),
-                            colors = NavigationDrawerItemDefaults.colors(
-                                selectedContainerColor = accentContainer,
-                                unselectedContainerColor = Color.Transparent
+                // Guruh bo'yicha scrollable menyu
+                LazyColumn(
+                    modifier = Modifier.weight(1f),
+                    contentPadding = PaddingValues(top = 8.dp, bottom = 8.dp)
+                ) {
+                    drawerItems.map { it.group }.distinct().forEach { group ->
+                        item {
+                            Text(
+                                text = group.uppercase(),
+                                fontSize = 10.sp, fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                letterSpacing = 0.8.sp,
+                                modifier = Modifier.padding(horizontal = 20.dp, vertical = 6.dp)
                             )
-                        )
+                        }
+                        items(drawerItems.filter { it.group == group }) { item ->
+                            val isSelected = selectedId == item.id
+                            NavigationDrawerItem(
+                                icon = {
+                                    Box(
+                                        modifier = Modifier.size(34.dp).clip(RoundedCornerShape(9.dp))
+                                            .background(if (isSelected) accent.copy(0.15f) else MaterialTheme.colorScheme.surfaceVariant),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(item.icon, null,
+                                            tint = if (isSelected) accent else MaterialTheme.colorScheme.onSurfaceVariant,
+                                            modifier = Modifier.size(18.dp))
+                                    }
+                                },
+                                label = {
+                                    Text(item.labelUz, fontSize = 13.sp,
+                                        fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
+                                        color = if (isSelected) accent else MaterialTheme.colorScheme.onSurface)
+                                },
+                                selected = isSelected,
+                                onClick = {
+                                    selectedId = item.id
+                                    scope.launch { drawerState.close() }
+                                },
+                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 1.dp),
+                                colors = NavigationDrawerItemDefaults.colors(
+                                    selectedContainerColor = accentContainer,
+                                    unselectedContainerColor = Color.Transparent
+                                )
+                            )
+                        }
+                        item {
+                            HorizontalDivider(
+                                modifier = Modifier.padding(horizontal = 20.dp, vertical = 6.dp),
+                                color = Outline, thickness = 0.5.dp
+                            )
+                        }
                     }
-                    HorizontalDivider(
-                        modifier = Modifier.padding(horizontal = 20.dp, vertical = 6.dp),
-                        color = Outline, thickness = 0.5.dp
-                    )
                 }
 
-                Spacer(Modifier.weight(1f))
-
-                // Sozlamalar + Chiqish
-                Column(modifier = Modifier.navigationBarsPadding().padding(bottom = 8.dp)) {
+                // Sozlamalar + Chiqish — har doim pastda ko'rinadi
+                HorizontalDivider(color = Outline, thickness = 0.5.dp)
+                Column(modifier = Modifier.navigationBarsPadding().padding(vertical = 6.dp)) {
                     NavigationDrawerItem(
                         icon = { Icon(Icons.Default.Settings, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(20.dp)) },
                         label = { Text("Sozlamalar", fontSize = 13.sp) },
@@ -420,15 +433,12 @@ fun DrawerApp(
                         }
                     },
                     actions = {
-                        Box(Modifier.padding(end = 4.dp)) {
+                        Box(Modifier.padding(end = 12.dp)) {
                             Surface(shape = RoundedCornerShape(6.dp), color = accent.copy(0.1f)) {
                                 Text(language.uppercase(),
                                     modifier = Modifier.padding(horizontal = 6.dp, vertical = 4.dp),
                                     fontSize = 11.sp, fontWeight = FontWeight.Bold, color = accent)
                             }
-                        }
-                        IconButton(onClick = { showSettings = true }) {
-                            Icon(Icons.Default.Settings, null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                     },
                     colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.surface)
@@ -449,13 +459,18 @@ fun DrawerApp(
                     }
                 } else {
                     when (selectedId) {
-                        "jadval"   -> StudentScheduleScreen()
-                        "davomat"  -> ParentDavomatScreen()
-                        "baholar"  -> BaholarScreen()
-                        "vazifa"   -> ParentUygaVazifaScreen()
-                        "xulq"     -> XulqScreen()
-                        "shikoyat" -> ShikoyatScreen()
-                        else       -> StudentScheduleScreen()
+                        "dashboard"   -> ParentDashboardScreen()
+                        "profil"      -> ParentProfilScreen()
+                        "davomat"     -> ParentDavomatScreen()
+                        "baholar"     -> BaholarScreen()
+                        "vazifa"      -> ParentUygaVazifaScreen()
+                        "imtihonlar"  -> ParentImtihonlarScreen()
+                        "tolovlar"    -> ParentTolovlarScreen()
+                        "yangiliklar" -> ParentYangiliklar()
+                        "bloglar"     -> ParentBloglar()
+                        "surveylar"   -> ParentSurveylar()
+                        "murojaatlar" -> ParentMurojaatlar()
+                        else          -> ParentDashboardScreen()
                     }
                 }
             }
@@ -512,53 +527,61 @@ fun ChefApp(
                     }
                 }
 
-                Spacer(Modifier.height(8.dp))
-
-                chefDrawerItems.map { it.group }.distinct().forEach { group ->
-                    Text(
-                        text = group.uppercase(),
-                        fontSize = 10.sp, fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        letterSpacing = 0.8.sp,
-                        modifier = Modifier.padding(horizontal = 20.dp, vertical = 6.dp)
-                    )
-                    chefDrawerItems.filter { it.group == group }.forEach { item ->
-                        val isSelected = selectedId == item.id
-                        NavigationDrawerItem(
-                            icon = {
-                                Box(
-                                    modifier = Modifier.size(34.dp).clip(RoundedCornerShape(9.dp))
-                                        .background(if (isSelected) Amber10.copy(0.15f) else MaterialTheme.colorScheme.surfaceVariant),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Icon(item.icon, null,
-                                        tint = if (isSelected) Amber10 else MaterialTheme.colorScheme.onSurfaceVariant,
-                                        modifier = Modifier.size(18.dp))
-                                }
-                            },
-                            label = {
-                                Text(item.labelUz, fontSize = 13.sp,
-                                    fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
-                                    color = if (isSelected) Amber10 else MaterialTheme.colorScheme.onSurface)
-                            },
-                            selected = isSelected,
-                            onClick = { selectedId = item.id; scope.launch { drawerState.close() } },
-                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 1.dp),
-                            colors = NavigationDrawerItemDefaults.colors(
-                                selectedContainerColor = AmberContainer,
-                                unselectedContainerColor = Color.Transparent
+                // Guruh bo'yicha scrollable menyu
+                LazyColumn(
+                    modifier = Modifier.weight(1f),
+                    contentPadding = PaddingValues(top = 8.dp, bottom = 8.dp)
+                ) {
+                    chefDrawerItems.map { it.group }.distinct().forEach { group ->
+                        item {
+                            Text(
+                                text = group.uppercase(),
+                                fontSize = 10.sp, fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                letterSpacing = 0.8.sp,
+                                modifier = Modifier.padding(horizontal = 20.dp, vertical = 6.dp)
                             )
-                        )
+                        }
+                        items(chefDrawerItems.filter { it.group == group }) { item ->
+                            val isSelected = selectedId == item.id
+                            NavigationDrawerItem(
+                                icon = {
+                                    Box(
+                                        modifier = Modifier.size(34.dp).clip(RoundedCornerShape(9.dp))
+                                            .background(if (isSelected) Amber10.copy(0.15f) else MaterialTheme.colorScheme.surfaceVariant),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(item.icon, null,
+                                            tint = if (isSelected) Amber10 else MaterialTheme.colorScheme.onSurfaceVariant,
+                                            modifier = Modifier.size(18.dp))
+                                    }
+                                },
+                                label = {
+                                    Text(item.labelUz, fontSize = 13.sp,
+                                        fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
+                                        color = if (isSelected) Amber10 else MaterialTheme.colorScheme.onSurface)
+                                },
+                                selected = isSelected,
+                                onClick = { selectedId = item.id; scope.launch { drawerState.close() } },
+                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 1.dp),
+                                colors = NavigationDrawerItemDefaults.colors(
+                                    selectedContainerColor = AmberContainer,
+                                    unselectedContainerColor = Color.Transparent
+                                )
+                            )
+                        }
+                        item {
+                            HorizontalDivider(
+                                modifier = Modifier.padding(horizontal = 20.dp, vertical = 6.dp),
+                                color = Outline, thickness = 0.5.dp
+                            )
+                        }
                     }
-                    HorizontalDivider(
-                        modifier = Modifier.padding(horizontal = 20.dp, vertical = 6.dp),
-                        color = Outline, thickness = 0.5.dp
-                    )
                 }
 
-                Spacer(Modifier.weight(1f))
-
-                Column(modifier = Modifier.navigationBarsPadding().padding(bottom = 8.dp)) {
+                // Sozlamalar + Chiqish — pastda qotib turadi
+                HorizontalDivider(color = Outline, thickness = 0.5.dp)
+                Column(modifier = Modifier.navigationBarsPadding().padding(vertical = 6.dp)) {
                     NavigationDrawerItem(
                         icon = { Icon(Icons.Default.Settings, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(20.dp)) },
                         label = { Text("Sozlamalar", fontSize = 13.sp) },
@@ -603,15 +626,12 @@ fun ChefApp(
                         }
                     },
                     actions = {
-                        Box(Modifier.padding(end = 4.dp)) {
+                        Box(Modifier.padding(end = 12.dp)) {
                             Surface(shape = RoundedCornerShape(6.dp), color = accent.copy(0.1f)) {
                                 Text(language.uppercase(),
                                     modifier = Modifier.padding(horizontal = 6.dp, vertical = 4.dp),
                                     fontSize = 11.sp, fontWeight = FontWeight.Bold, color = accent)
                             }
-                        }
-                        IconButton(onClick = { showSettings = true }) {
-                            Icon(Icons.Default.Settings, null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                     },
                     colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.surface)

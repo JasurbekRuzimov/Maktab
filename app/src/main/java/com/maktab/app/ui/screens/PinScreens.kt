@@ -264,7 +264,8 @@ private fun PinKeypad(accent: Color, onDigit: (String) -> Unit, onDelete: () -> 
             ) {
                 row.forEach { key ->
                     if (key.isEmpty()) {
-                        Spacer(Modifier.size(72.dp))
+                        // Bo'sh joy — weight(1f) bilan boshqa tugmalar bilan teng kenglikda
+                        Spacer(Modifier.weight(1f).aspectRatio(1.25f))
                     } else {
                         PinKeyButton(
                             label = key,
@@ -313,7 +314,7 @@ private fun RowScope.PinKeyButton(
                     Icons.Default.Backspace,
                     contentDescription = "O'chirish",
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.size(22.dp)
+                    modifier = Modifier.size(18.dp)
                 )
             } else {
                 Text(
