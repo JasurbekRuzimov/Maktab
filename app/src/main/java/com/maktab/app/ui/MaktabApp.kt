@@ -1,5 +1,6 @@
 package com.maktab.app.ui
 
+import android.app.Activity
 import android.content.Context
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
@@ -26,7 +27,7 @@ import com.maktab.app.ui.theme.*
 import kotlinx.coroutines.launch
 
 // ─────────────────────────────────────────────
-// ENCRYPTED PREFS HELPER
+// ENCRYPTED PREFS
 // ─────────────────────────────────────────────
 
 private fun getSecurePrefs(context: Context) = EncryptedSharedPreferences.create(
@@ -38,7 +39,7 @@ private fun getSecurePrefs(context: Context) = EncryptedSharedPreferences.create
 )
 
 // ─────────────────────────────────────────────
-// NAVIGATION MODELS
+// SCREEN MODEL
 // ─────────────────────────────────────────────
 
 sealed class Screen {
@@ -50,52 +51,110 @@ sealed class Screen {
     data class Dashboard(val role: String) : Screen()
 }
 
-data class NavTab(
-    val id: String,
-    val labelUz: String, val labelRu: String, val labelEn: String,
-    val icon: ImageVector
-) {
-    fun label(lang: String) = when (lang) { "ru" -> labelRu; "en" -> labelEn; else -> labelUz }
-}
-
-data class DrawerItem(
+data class NavItem(
     val id: String,
     val labelUz: String,
     val icon: ImageVector,
-    val group: String
+    val group: String = ""
 )
 
 // ─────────────────────────────────────────────
-// TABS
+// DRAWER ITEMS — Teacher
 // ─────────────────────────────────────────────
 
-val teacherTabs = listOf(
-    NavTab("jadval",   "Jadval",    "Расписание", "Schedule",   Icons.Default.TableChart),
-    NavTab("jurnal",   "Jurnal",    "Журнал",     "Journal",    Icons.Default.GridOn),
-    NavTab("kontent",  "Dars",      "Контент",    "Content",    Icons.Default.MenuBook),
-    NavTab("davomat",  "Davomat",   "Явка",       "Attendance", Icons.Default.HowToReg),
-    NavTab("baholash", "Baholash",  "Оценки",     "Assessment", Icons.Default.Assessment),
-    NavTab("sinflar",  "Sinflarim", "Классы",     "Classes",    Icons.Default.People),
+val teacherDrawerItems = listOf(
+    NavItem("jadval",   "Jadval",        Icons.Default.TableChart,  "Asosiy"),
+    NavItem("jurnal",   "Jurnal",         Icons.Default.GridOn,      "Asosiy"),
+    NavItem("kontent",  "Dars kontenti",  Icons.Default.MenuBook,    "Asosiy"),
+    NavItem("davomat",  "Davomat",        Icons.Default.HowToReg,    "Nazorat"),
+    NavItem("baholash", "Baholash",       Icons.Default.Assessment,  "Nazorat"),
+    NavItem("sinflar",  "Sinflarim",      Icons.Default.People,      "Nazorat"),
 )
 
-val parentTabs = listOf(
-    NavTab("jadval",   "Jadval",   "Расписание", "Schedule",   Icons.Default.TableChart),
-    NavTab("davomat",  "Davomat",  "Явка",       "Attendance", Icons.Default.CalendarToday),
-    NavTab("baholar",  "Baholar",  "Оценки",     "Grades",     Icons.Default.Star),
-    NavTab("vazifa",   "Vazifa",   "Задание",    "Homework",   Icons.Default.Home),
-    NavTab("xulq",     "Xulq",     "Поведение",  "Behavior",   Icons.Default.Favorite),
-    NavTab("shikoyat", "Shikoyat", "Жалоба",     "Complaint",  Icons.Default.Feedback),
+// ─────────────────────────────────────────────
+// DRAWER ITEMS — Parent
+// ─────────────────────────────────────────────
+
+val parentDrawerItems = listOf(
+    NavItem("jadval",   "Jadval",       Icons.Default.TableChart,    "Farzand"),
+    NavItem("davomat",  "Davomat",      Icons.Default.CalendarToday, "Farzand"),
+    NavItem("baholar",  "Baholar",      Icons.Default.Star,          "Farzand"),
+    NavItem("vazifa",   "Uyga vazifa",  Icons.Default.Home,          "Muloqot"),
+    NavItem("xulq",     "Xulq-atvor",  Icons.Default.Favorite,      "Muloqot"),
+    NavItem("shikoyat", "Shikoyat",    Icons.Default.Feedback,      "Muloqot"),
 )
+
+// ─────────────────────────────────────────────
+// DRAWER ITEMS — Chef
+// ─────────────────────────────────────────────
 
 val chefDrawerItems = listOf(
-    DrawerItem("dashboard",  "Bosh panel",            Icons.Default.Dashboard,      "Asosiy"),
-    DrawerItem("ombor",      "Oziq-ovqat ombori",     Icons.Default.Inventory,      "Asosiy"),
-    DrawerItem("ingredient", "Ingredientlar",          Icons.Default.Grass,          "Asosiy"),
-    DrawerItem("retsept",    "Taom retseptlari",       Icons.Default.RestaurantMenu, "Taomlar"),
-    DrawerItem("menyu",      "Menyu kalendari",        Icons.Default.CalendarMonth,  "Taomlar"),
-    DrawerItem("harakat",    "Stock harakatlari",      Icons.Default.SwapVert,       "Hisobotlar"),
-    DrawerItem("analitika",  "Kafeteriya analitikasi", Icons.Default.BarChart,       "Hisobotlar"),
+    NavItem("dashboard",  "Bosh panel",            Icons.Default.Dashboard,      "Asosiy"),
+    NavItem("ombor",      "Oziq-ovqat ombori",     Icons.Default.Inventory,      "Asosiy"),
+    NavItem("ingredient", "Ingredientlar",          Icons.Default.Grass,          "Asosiy"),
+    NavItem("retsept",    "Taom retseptlari",       Icons.Default.RestaurantMenu, "Taomlar"),
+    NavItem("menyu",      "Menyu kalendari",        Icons.Default.CalendarMonth,  "Taomlar"),
+    NavItem("harakat",    "Stock harakatlari",      Icons.Default.SwapVert,       "Hisobotlar"),
+    NavItem("analitika",  "Kafeteriya analitikasi", Icons.Default.BarChart,       "Hisobotlar"),
 )
+
+// ─────────────────────────────────────────────
+// ILOVADAN CHIQISH DIALOGI
+// ─────────────────────────────────────────────
+
+@Composable
+fun ExitAppDialog(onConfirm: () -> Unit, onDismiss: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        icon = {
+            Box(
+                modifier = Modifier
+                    .size(48.dp)
+                    .clip(CircleShape)
+                    .background(RedContainer),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(Icons.Default.ExitToApp, null, tint = Red10, modifier = Modifier.size(24.dp))
+            }
+        },
+        title = {
+            Text(
+                "Ilovadan chiqasizmi?",
+                fontSize = 17.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+        },
+        text = {
+            Text(
+                "Ilovani yopmoqchimisiz? Keyingi kirishda PIN kod so'raladi.",
+                fontSize = 14.sp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                lineHeight = 20.sp
+            )
+        },
+        confirmButton = {
+            Button(
+                onClick = onConfirm,
+                colors = ButtonDefaults.buttonColors(containerColor = Red10),
+                shape = RoundedCornerShape(10.dp)
+            ) {
+                Text("Ha, chiqish", fontSize = 14.sp)
+            }
+        },
+        dismissButton = {
+            OutlinedButton(
+                onClick = onDismiss,
+                shape = RoundedCornerShape(10.dp),
+                border = androidx.compose.foundation.BorderStroke(0.5.dp, Outline)
+            ) {
+                Text("Bekor qilish", fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurface)
+            }
+        },
+        shape = RoundedCornerShape(16.dp),
+        containerColor = MaterialTheme.colorScheme.surface
+    )
+}
 
 // ─────────────────────────────────────────────
 // ROOT
@@ -104,43 +163,46 @@ val chefDrawerItems = listOf(
 @Composable
 fun MaktabApp() {
     val context = LocalContext.current
+    val activity = context as? Activity
     val prefs = remember { getSecurePrefs(context) }
 
-    // SharedPreferences dan o'qi
     var savedPin  by remember { mutableStateOf(prefs.getString("pin", "") ?: "") }
     var savedRole by remember { mutableStateOf(prefs.getString("role", "") ?: "") }
     var isDark    by remember { mutableStateOf(false) }
     var language  by remember { mutableStateOf("uz") }
     var screen    by remember { mutableStateOf<Screen>(Screen.Splash) }
+    var showExitDialog by remember { mutableStateOf(false) }
 
-    // PIN va rolni saqlash yordamchi funksiyalari
     fun saveSession(pin: String, role: String) {
         prefs.edit().putString("pin", pin).putString("role", role).apply()
-        savedPin = pin
-        savedRole = role
+        savedPin = pin; savedRole = role
     }
     fun clearSession() {
         prefs.edit().remove("pin").remove("role").apply()
-        savedPin = ""
-        savedRole = ""
+        savedPin = ""; savedRole = ""
     }
 
     MaktabTheme(isDark = isDark, language = language) {
+
+        // Ilovadan chiqish dialogi
+        if (showExitDialog) {
+            ExitAppDialog(
+                onConfirm = { activity?.finish() },
+                onDismiss = { showExitDialog = false }
+            )
+        }
+
         when (val s = screen) {
             Screen.Splash -> SplashScreen(onFinished = {
                 screen = if (savedPin.isNotEmpty() && savedRole.isNotEmpty())
-                    Screen.PinEntry(savedRole)
-                else
-                    Screen.RoleSelect
+                    Screen.PinEntry(savedRole) else Screen.RoleSelect
             })
 
             Screen.RoleSelect -> LandingScreen(onRoleSelected = { role ->
-                savedRole = role
-                screen = Screen.Login(role)
+                savedRole = role; screen = Screen.Login(role)
             })
 
             is Screen.Login -> {
-                // Orqaga: RoleSelect ga qaytish
                 BackHandler { screen = Screen.RoleSelect }
                 LoginScreen(
                     role = s.role,
@@ -154,15 +216,11 @@ fun MaktabApp() {
 
             is Screen.PinSetup -> PinSetupScreen(
                 role = s.role,
-                onPinSet = { pin ->
-                    saveSession(pin, s.role)   // EncryptedSharedPreferences ga saqlash
-                    screen = Screen.Dashboard(s.role)
-                }
+                onPinSet = { pin -> saveSession(pin, s.role); screen = Screen.Dashboard(s.role) }
             )
 
             is Screen.PinEntry -> PinEntryScreen(
-                role = s.role,
-                savedPin = savedPin,
+                role = s.role, savedPin = savedPin,
                 userName = when (s.role) {
                     "teacher" -> "Karimova Nargiza"
                     "chef"    -> "Toshmatov Sardor"
@@ -173,25 +231,11 @@ fun MaktabApp() {
             )
 
             is Screen.Dashboard -> {
-                // Dashboard dan ikki marta orqaga bosganda chiqish
-                var backPressedOnce by remember { mutableStateOf(false) }
-                BackHandler {
-                    if (backPressedOnce) {
-                        // Ilova minimallashadi (finish yo'q, faqat background ga o'tadi)
-                        backPressedOnce = false
-                    } else {
-                        backPressedOnce = true
-                        // 2 soniyadan keyin reset
-                        kotlinx.coroutines.GlobalScope.launch {
-                            kotlinx.coroutines.delay(2000)
-                            backPressedOnce = false
-                        }
-                    }
-                }
+                // Back bosilganda exit dialog ko'rsat
+                BackHandler { showExitDialog = true }
+
                 RoleApp(
-                    role = s.role,
-                    language = language,
-                    isDark = isDark,
+                    role = s.role, language = language, isDark = isDark,
                     onToggleDark = { isDark = !isDark },
                     onLanguageChange = { language = it },
                     onLogout = { clearSession(); screen = Screen.RoleSelect }
@@ -210,38 +254,46 @@ fun RoleApp(
     role: String, language: String, isDark: Boolean,
     onToggleDark: () -> Unit, onLanguageChange: (String) -> Unit, onLogout: () -> Unit
 ) {
-    if (role == "chef") {
-        ChefApp(language, isDark, onToggleDark, onLanguageChange, onLogout)
-    } else {
-        BottomNavApp(role, language, isDark, onToggleDark, onLanguageChange, onLogout)
+    when (role) {
+        "chef" -> ChefApp(language, isDark, onToggleDark, onLanguageChange, onLogout)
+        else   -> DrawerApp(role, language, isDark, onToggleDark, onLanguageChange, onLogout)
     }
 }
 
 // ─────────────────────────────────────────────
-// CHEF — ModalNavigationDrawer
+// DRAWER APP — Teacher, Parent, Chef uchun umumiy
 // ─────────────────────────────────────────────
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ChefApp(
-    language: String, isDark: Boolean,
+fun DrawerApp(
+    role: String, language: String, isDark: Boolean,
     onToggleDark: () -> Unit, onLanguageChange: (String) -> Unit, onLogout: () -> Unit
 ) {
+    val isTeacher = role == "teacher"
+    val accent = if (isTeacher) Teal10 else Blue10
+    val accentContainer = if (isTeacher) TealContainer else BlueContainer
+    val drawerItems = if (isTeacher) teacherDrawerItems else parentDrawerItems
+    val defaultId = if (isTeacher) "jadval" else "jadval"
+
     val drawerState = rememberDrawerState(DrawerValue.Closed)
     val scope = rememberCoroutineScope()
-    var selectedId by remember { mutableStateOf("dashboard") }
+    var selectedId by remember { mutableStateOf(defaultId) }
     var showSettings by remember { mutableStateOf(false) }
-    val accent = Amber10
-    val currentTitle = chefDrawerItems.find { it.id == selectedId }?.labelUz ?: "Bosh panel"
 
-    // Drawer ochiq bo'lsa orqaga tugma uni yopsin
-    BackHandler(enabled = drawerState.isOpen) {
-        scope.launch { drawerState.close() }
+    val currentTitle = drawerItems.find { it.id == selectedId }?.labelUz
+        ?: if (isTeacher) "Jadval" else "Jadval"
+
+    val userName = if (isTeacher) "Karimova Nargiza" else "Karimov Bobur"
+    val userSub  = if (isTeacher) "O'qituvchi · 5-A sinf" else "Ota-ona · 5-A sinf"
+    val panelTitle = when {
+        isTeacher -> "O'qituvchi paneli"
+        else      -> "Ota-ona paneli"
     }
-    // Sozlamalar ochiq bo'lsa orqaga tugma uni yopsin
-    BackHandler(enabled = showSettings) {
-        showSettings = false
-    }
+    val roleIcon = if (isTeacher) Icons.Default.School else Icons.Default.FamilyRestroom
+
+    BackHandler(enabled = drawerState.isOpen) { scope.launch { drawerState.close() } }
+    BackHandler(enabled = showSettings) { showSettings = false }
 
     ModalNavigationDrawer(
         drawerState = drawerState,
@@ -254,13 +306,202 @@ fun ChefApp(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(AmberContainer)
-                        .padding(20.dp)
+                        .background(accentContainer)
                         .windowInsetsPadding(WindowInsets.statusBars)
+                        .padding(20.dp)
                 ) {
                     Column {
                         Box(
-                            modifier = Modifier.size(52.dp).clip(CircleShape).background(Amber10.copy(0.2f)),
+                            modifier = Modifier.size(52.dp).clip(CircleShape)
+                                .background(accent.copy(0.18f)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(roleIcon, null, tint = accent, modifier = Modifier.size(26.dp))
+                        }
+                        Spacer(Modifier.height(10.dp))
+                        Text(userName, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = accent)
+                        Text(userSub, fontSize = 12.sp, color = accent.copy(0.7f))
+                    }
+                }
+
+                Spacer(Modifier.height(8.dp))
+
+                // Guruh bo'yicha menu
+                drawerItems.map { it.group }.distinct().forEach { group ->
+                    Text(
+                        text = group.uppercase(),
+                        fontSize = 10.sp, fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        letterSpacing = 0.8.sp,
+                        modifier = Modifier.padding(horizontal = 20.dp, vertical = 6.dp)
+                    )
+                    drawerItems.filter { it.group == group }.forEach { item ->
+                        val isSelected = selectedId == item.id
+                        NavigationDrawerItem(
+                            icon = {
+                                Box(
+                                    modifier = Modifier.size(34.dp).clip(RoundedCornerShape(9.dp))
+                                        .background(if (isSelected) accent.copy(0.15f) else MaterialTheme.colorScheme.surfaceVariant),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(item.icon, null,
+                                        tint = if (isSelected) accent else MaterialTheme.colorScheme.onSurfaceVariant,
+                                        modifier = Modifier.size(18.dp))
+                                }
+                            },
+                            label = {
+                                Text(item.labelUz, fontSize = 13.sp,
+                                    fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
+                                    color = if (isSelected) accent else MaterialTheme.colorScheme.onSurface)
+                            },
+                            selected = isSelected,
+                            onClick = {
+                                selectedId = item.id
+                                scope.launch { drawerState.close() }
+                            },
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 1.dp),
+                            colors = NavigationDrawerItemDefaults.colors(
+                                selectedContainerColor = accentContainer,
+                                unselectedContainerColor = Color.Transparent
+                            )
+                        )
+                    }
+                    HorizontalDivider(
+                        modifier = Modifier.padding(horizontal = 20.dp, vertical = 6.dp),
+                        color = Outline, thickness = 0.5.dp
+                    )
+                }
+
+                Spacer(Modifier.weight(1f))
+
+                // Sozlamalar + Chiqish
+                Column(modifier = Modifier.navigationBarsPadding().padding(bottom = 8.dp)) {
+                    NavigationDrawerItem(
+                        icon = { Icon(Icons.Default.Settings, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(20.dp)) },
+                        label = { Text("Sozlamalar", fontSize = 13.sp) },
+                        selected = false,
+                        onClick = { showSettings = true; scope.launch { drawerState.close() } },
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 1.dp),
+                        colors = NavigationDrawerItemDefaults.colors(unselectedContainerColor = Color.Transparent)
+                    )
+                    NavigationDrawerItem(
+                        icon = { Icon(Icons.Default.Logout, null, tint = Red10, modifier = Modifier.size(20.dp)) },
+                        label = { Text("Chiqish", fontSize = 13.sp, color = Red10) },
+                        selected = false,
+                        onClick = onLogout,
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 1.dp),
+                        colors = NavigationDrawerItemDefaults.colors(unselectedContainerColor = Color.Transparent)
+                    )
+                }
+            }
+        }
+    ) {
+        if (showSettings) {
+            SozlamalarScreen(
+                role = role, isDark = isDark, language = language,
+                onToggleDark = onToggleDark, onLanguageChange = onLanguageChange, onLogout = onLogout
+            )
+            return@ModalNavigationDrawer
+        }
+
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    navigationIcon = {
+                        IconButton(onClick = { scope.launch { drawerState.open() } }) {
+                            Icon(Icons.Default.Menu, "Menyu", tint = MaterialTheme.colorScheme.onSurface)
+                        }
+                    },
+                    title = {
+                        Column {
+                            Text(currentTitle, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
+                            Text("$userName · ${if (isTeacher) "5-A" else "5-A sinf"}",
+                                fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                    },
+                    actions = {
+                        Box(Modifier.padding(end = 4.dp)) {
+                            Surface(shape = RoundedCornerShape(6.dp), color = accent.copy(0.1f)) {
+                                Text(language.uppercase(),
+                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 4.dp),
+                                    fontSize = 11.sp, fontWeight = FontWeight.Bold, color = accent)
+                            }
+                        }
+                        IconButton(onClick = { showSettings = true }) {
+                            Icon(Icons.Default.Settings, null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.surface)
+                )
+            },
+            containerColor = MaterialTheme.colorScheme.background
+        ) { padding ->
+            Box(Modifier.fillMaxSize().padding(padding)) {
+                if (isTeacher) {
+                    when (selectedId) {
+                        "jadval"   -> TeacherScheduleScreen()
+                        "jurnal"   -> JurnalScreen(language)
+                        "kontent"  -> DarsKontentiScreen(language)
+                        "davomat"  -> DavomatScreen()
+                        "baholash" -> BaholashScreen(language)
+                        "sinflar"  -> SinflarimScreen(language)
+                        else       -> TeacherScheduleScreen()
+                    }
+                } else {
+                    when (selectedId) {
+                        "jadval"   -> StudentScheduleScreen()
+                        "davomat"  -> ParentDavomatScreen()
+                        "baholar"  -> BaholarScreen()
+                        "vazifa"   -> ParentUygaVazifaScreen()
+                        "xulq"     -> XulqScreen()
+                        "shikoyat" -> ShikoyatScreen()
+                        else       -> StudentScheduleScreen()
+                    }
+                }
+            }
+        }
+    }
+}
+
+// ─────────────────────────────────────────────
+// CHEF APP — alohida (amber rang)
+// ─────────────────────────────────────────────
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ChefApp(
+    language: String, isDark: Boolean,
+    onToggleDark: () -> Unit, onLanguageChange: (String) -> Unit, onLogout: () -> Unit
+) {
+    val accent = Amber10
+    val drawerState = rememberDrawerState(DrawerValue.Closed)
+    val scope = rememberCoroutineScope()
+    var selectedId by remember { mutableStateOf("dashboard") }
+    var showSettings by remember { mutableStateOf(false) }
+
+    val currentTitle = chefDrawerItems.find { it.id == selectedId }?.labelUz ?: "Bosh panel"
+
+    BackHandler(enabled = drawerState.isOpen) { scope.launch { drawerState.close() } }
+    BackHandler(enabled = showSettings) { showSettings = false }
+
+    ModalNavigationDrawer(
+        drawerState = drawerState,
+        drawerContent = {
+            ModalDrawerSheet(
+                drawerShape = RoundedCornerShape(topEnd = 20.dp, bottomEnd = 20.dp),
+                windowInsets = WindowInsets(0)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(AmberContainer)
+                        .windowInsetsPadding(WindowInsets.statusBars)
+                        .padding(20.dp)
+                ) {
+                    Column {
+                        Box(
+                            modifier = Modifier.size(52.dp).clip(CircleShape)
+                                .background(Amber10.copy(0.2f)),
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(Icons.Default.Restaurant, null, tint = Amber10, modifier = Modifier.size(26.dp))
@@ -273,7 +514,6 @@ fun ChefApp(
 
                 Spacer(Modifier.height(8.dp))
 
-                // Guruh menyu
                 chefDrawerItems.map { it.group }.distinct().forEach { group ->
                     Text(
                         text = group.uppercase(),
@@ -310,12 +550,14 @@ fun ChefApp(
                             )
                         )
                     }
-                    HorizontalDivider(modifier = Modifier.padding(horizontal = 20.dp, vertical = 6.dp), color = Outline, thickness = 0.5.dp)
+                    HorizontalDivider(
+                        modifier = Modifier.padding(horizontal = 20.dp, vertical = 6.dp),
+                        color = Outline, thickness = 0.5.dp
+                    )
                 }
 
                 Spacer(Modifier.weight(1f))
 
-                // Sozlamalar va Chiqish — navigationBarsPadding bilan
                 Column(modifier = Modifier.navigationBarsPadding().padding(bottom = 8.dp)) {
                     NavigationDrawerItem(
                         icon = { Icon(Icons.Default.Settings, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(20.dp)) },
@@ -356,13 +598,16 @@ fun ChefApp(
                     title = {
                         Column {
                             Text(currentTitle, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
-                            Text("Toshmatov Sardor · Kafeteriya", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text("Toshmatov Sardor · Kafeteriya",
+                                fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                     },
                     actions = {
                         Box(Modifier.padding(end = 4.dp)) {
                             Surface(shape = RoundedCornerShape(6.dp), color = accent.copy(0.1f)) {
-                                Text(language.uppercase(), modifier = Modifier.padding(horizontal = 6.dp, vertical = 4.dp), fontSize = 11.sp, fontWeight = FontWeight.Bold, color = accent)
+                                Text(language.uppercase(),
+                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 4.dp),
+                                    fontSize = 11.sp, fontWeight = FontWeight.Bold, color = accent)
                             }
                         }
                         IconButton(onClick = { showSettings = true }) {
@@ -384,120 +629,6 @@ fun ChefApp(
                     "harakat"    -> ChefStockMovementsScreen()
                     "analitika"  -> ChefAnalyticsScreen()
                     else         -> ChefDashboardScreen()
-                }
-            }
-        }
-    }
-}
-
-// ─────────────────────────────────────────────
-// BOTTOM NAV — Teacher & Parent
-// ─────────────────────────────────────────────
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun BottomNavApp(
-    role: String, language: String, isDark: Boolean,
-    onToggleDark: () -> Unit, onLanguageChange: (String) -> Unit, onLogout: () -> Unit
-) {
-    val isTeacher = role == "teacher"
-    val tabs = if (isTeacher) teacherTabs else parentTabs
-    val accent = if (isTeacher) Teal10 else Blue10
-    var selectedTabIndex by remember { mutableStateOf(0) }
-    var showSettings by remember { mutableStateOf(false) }
-
-    BackHandler(enabled = showSettings) { showSettings = false }
-
-    if (showSettings) {
-        SozlamalarScreen(
-            role = role, isDark = isDark, language = language,
-            onToggleDark = onToggleDark, onLanguageChange = onLanguageChange, onLogout = onLogout
-        )
-        return
-    }
-
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Column {
-                        Text(
-                            text = when {
-                                isTeacher -> when (language) { "ru" -> "Панель учителя"; "en" -> "Teacher Panel"; else -> "O'qituvchi paneli" }
-                                else      -> when (language) { "ru" -> "Панель родителя"; "en" -> "Parent Panel";  else -> "Ota-ona paneli" }
-                            },
-                            fontSize = 15.sp, fontWeight = FontWeight.SemiBold
-                        )
-                        Text(
-                            text = if (isTeacher) "Karimova Nargiza · 5-A" else "Karimov Bobur · Asilbek otasi",
-                            fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                },
-                navigationIcon = {
-                    Box(Modifier.padding(start = 12.dp).size(36.dp), Alignment.Center) {
-                        Surface(shape = RoundedCornerShape(10.dp), color = accent.copy(0.12f)) {
-                            Icon(
-                                if (isTeacher) Icons.Default.School else Icons.Default.FamilyRestroom,
-                                null, tint = accent, modifier = Modifier.padding(8.dp).size(20.dp)
-                            )
-                        }
-                    }
-                },
-                actions = {
-                    Box(Modifier.padding(end = 4.dp)) {
-                        Surface(shape = RoundedCornerShape(6.dp), color = accent.copy(0.1f)) {
-                            Text(language.uppercase(), modifier = Modifier.padding(horizontal = 6.dp, vertical = 4.dp), fontSize = 11.sp, fontWeight = FontWeight.Bold, color = accent)
-                        }
-                    }
-                    IconButton(onClick = { showSettings = true }) {
-                        Icon(Icons.Default.Settings, null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.surface)
-            )
-        },
-        bottomBar = {
-            NavigationBar(containerColor = MaterialTheme.colorScheme.surface, tonalElevation = 0.dp) {
-                tabs.forEachIndexed { idx, tab ->
-                    NavigationBarItem(
-                        selected = selectedTabIndex == idx,
-                        onClick = { selectedTabIndex = idx },
-                        icon = { Icon(tab.icon, null, Modifier.size(22.dp)) },
-                        label = { Text(tab.label(language), fontSize = 9.sp) },
-                        colors = NavigationBarItemDefaults.colors(
-                            selectedIconColor = accent, selectedTextColor = accent,
-                            indicatorColor = accent.copy(0.12f),
-                            unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                            unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    )
-                }
-            }
-        },
-        containerColor = MaterialTheme.colorScheme.background
-    ) { padding ->
-        Box(Modifier.fillMaxSize().padding(padding)) {
-            val tabId = tabs[selectedTabIndex].id
-            if (isTeacher) {
-                when (tabId) {
-                    "jadval"   -> TeacherScheduleScreen()
-                    "jurnal"   -> JurnalScreen(language)
-                    "kontent"  -> DarsKontentiScreen(language)
-                    "davomat"  -> DavomatScreen()
-                    "baholash" -> BaholashScreen(language)
-                    "sinflar"  -> SinflarimScreen(language)
-                    else       -> TeacherScheduleScreen()
-                }
-            } else {
-                when (tabId) {
-                    "jadval"   -> StudentScheduleScreen()
-                    "davomat"  -> ParentDavomatScreen()
-                    "baholar"  -> BaholarScreen()
-                    "vazifa"   -> ParentUygaVazifaScreen()
-                    "xulq"     -> XulqScreen()
-                    "shikoyat" -> ShikoyatScreen()
-                    else       -> StudentScheduleScreen()
                 }
             }
         }

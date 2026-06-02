@@ -90,9 +90,9 @@ private object ChefMock {
         IngredientItem(1, "Kartoshka", "Sabzavot", 100.0, "kg", 10.0, "29.05.2026", StockStatus.YETARLI),
         IngredientItem(2, "Piyoz", "Sabzavot", 5.0, "kg", 8.0, "01.06.2026", StockStatus.KAM),
         IngredientItem(3, "Guruch", "Don mahsulot", 50.0, "kg", 20.0, "31.12.2026", StockStatus.YETARLI),
-        IngredientItem(4, "Go'sht", "Et mahsulot", 0.0, "kg", 15.0, "30.05.2026", StockStatus.TUGAGAN),
+        IngredientItem(4, "Go'sht", "Go'sht mahsulot", 0.0, "kg", 15.0, "30.05.2026", StockStatus.TUGAGAN),
         IngredientItem(5, "Qovoq", "Sabzavot", 30.0, "kg", 5.0, "03.06.2026", StockStatus.YETARLI),
-        IngredientItem(6, "Sut", "Sut mahsulot", 3.0, "l", 10.0, "31.05.2026", StockStatus.KAM)
+        IngredientItem(6, "Sut", "Sut mahsulot", 3.0, "L", 10.0, "31.05.2026", StockStatus.KAM)
     )
 
     val movements = listOf(
@@ -441,7 +441,7 @@ private fun IngredientRow(ing: IngredientItem, modifier: Modifier = Modifier) {
 fun ChefIngredientsScreen() {
     var searchQuery by remember { mutableStateOf("") }
     var selectedFilter by remember { mutableStateOf("Barchasi") }
-    val filters = listOf("Barchasi", "Sabzavot", "Don mahsulot", "Et mahsulot", "Sut mahsulot")
+    val filters = listOf("Barchasi", "Sabzavot", "Don mahsulot", "Go'sht mahsulot", "Sut mahsulot")
     val filtered = ChefMock.ingredients.filter { ing ->
         (selectedFilter == "Barchasi" || ing.category == selectedFilter) &&
                 ing.name.contains(searchQuery, ignoreCase = true)
