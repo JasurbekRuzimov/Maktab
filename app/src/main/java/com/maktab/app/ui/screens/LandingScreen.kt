@@ -35,6 +35,8 @@ fun LandingScreen(onRoleSelected: (String) -> Unit) {
         RoleCard("O'qituvchi", "Dars jadvali, davomat, baholash va oylik hisob", Icons.Default.School, Teal10, TealContainer) { onRoleSelected("teacher") }
         Spacer(Modifier.height(16.dp))
         RoleCard("Ota-ona", "Farzandingiz jadvali, o'qishi va taraqqiyoti", Icons.Default.FamilyRestroom, Blue10, BlueContainer) { onRoleSelected("parent") }
+        Spacer(Modifier.height(16.dp))
+        RoleCard("Oshpaz", "Menyu kalendari, ombor, retseptlar va analitika", Icons.Default.Restaurant, Amber10, AmberContainer) { onRoleSelected("chef") }
     }
 }
 

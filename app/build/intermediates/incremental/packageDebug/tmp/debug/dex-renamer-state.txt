@@ -1,13 +1,13 @@
-#Mon Jun 01 10:55:30 UZT 2026
-base.0=C\:\\Users\\ruzim\\Downloads\\MaktabApp\\MaktabApp\\app\\build\\intermediates\\dex\\debug\\mergeExtDexDebug\\classes.dex
-base.1=C\:\\Users\\ruzim\\Downloads\\MaktabApp\\MaktabApp\\app\\build\\intermediates\\dex\\debug\\mergeProjectDexDebug\\0\\classes.dex
-base.2=C\:\\Users\\ruzim\\Downloads\\MaktabApp\\MaktabApp\\app\\build\\intermediates\\dex\\debug\\mergeProjectDexDebug\\11\\classes.dex
-base.3=C\:\\Users\\ruzim\\Downloads\\MaktabApp\\MaktabApp\\app\\build\\intermediates\\dex\\debug\\mergeProjectDexDebug\\3\\classes.dex
-base.4=C\:\\Users\\ruzim\\Downloads\\MaktabApp\\MaktabApp\\app\\build\\intermediates\\dex\\debug\\mergeProjectDexDebug\\4\\classes.dex
-base.5=C\:\\Users\\ruzim\\Downloads\\MaktabApp\\MaktabApp\\app\\build\\intermediates\\dex\\debug\\mergeProjectDexDebug\\7\\classes.dex
-base.6=C\:\\Users\\ruzim\\Downloads\\MaktabApp\\MaktabApp\\app\\build\\intermediates\\dex\\debug\\mergeProjectDexDebug\\9\\classes.dex
-base.7=C\:\\Users\\ruzim\\Downloads\\MaktabApp\\MaktabApp\\app\\build\\intermediates\\dex\\debug\\mergeExtDexDebug\\classes2.dex
-base.8=C\:\\Users\\ruzim\\Downloads\\MaktabApp\\MaktabApp\\app\\build\\intermediates\\dex\\debug\\mergeExtDexDebug\\classes3.dex
+#Tue Jun 02 16:55:02 UZT 2026
+base.0=C\:\\Users\\Teacher\\StudioProjects\\Maktab\\app\\build\\intermediates\\dex\\debug\\mergeExtDexDebug\\classes.dex
+base.1=C\:\\Users\\Teacher\\StudioProjects\\Maktab\\app\\build\\intermediates\\dex\\debug\\mergeProjectDexDebug\\0\\classes.dex
+base.2=C\:\\Users\\Teacher\\StudioProjects\\Maktab\\app\\build\\intermediates\\dex\\debug\\mergeProjectDexDebug\\11\\classes.dex
+base.3=C\:\\Users\\Teacher\\StudioProjects\\Maktab\\app\\build\\intermediates\\dex\\debug\\mergeProjectDexDebug\\3\\classes.dex
+base.4=C\:\\Users\\Teacher\\StudioProjects\\Maktab\\app\\build\\intermediates\\dex\\debug\\mergeProjectDexDebug\\4\\classes.dex
+base.5=C\:\\Users\\Teacher\\StudioProjects\\Maktab\\app\\build\\intermediates\\dex\\debug\\mergeProjectDexDebug\\7\\classes.dex
+base.6=C\:\\Users\\Teacher\\StudioProjects\\Maktab\\app\\build\\intermediates\\dex\\debug\\mergeProjectDexDebug\\9\\classes.dex
+base.7=C\:\\Users\\Teacher\\StudioProjects\\Maktab\\app\\build\\intermediates\\dex\\debug\\mergeExtDexDebug\\classes2.dex
+base.8=C\:\\Users\\Teacher\\StudioProjects\\Maktab\\app\\build\\intermediates\\dex\\debug\\mergeExtDexDebug\\classes3.dex
 path.0=classes.dex
 path.1=0/classes.dex
 path.2=11/classes.dex

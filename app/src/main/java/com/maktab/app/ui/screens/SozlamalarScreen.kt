@@ -28,13 +28,14 @@ fun SozlamalarScreen(
     onLogout: () -> Unit
 ) {
     val isTeacher = role == "teacher"
-    val accent = if (isTeacher) Teal10 else Blue10
-    val accentContainer = if (isTeacher) TealContainer else BlueContainer
+    val isChef = role == "chef"
+    val accent = when (role) { "teacher" -> Teal10; "chef" -> Amber10; else -> Blue10 }
+    val accentContainer = when (role) { "teacher" -> TealContainer; "chef" -> AmberContainer; else -> BlueContainer }
 
-    val roleName = when (language) {
-        "ru" -> if (isTeacher) "Учитель" else "Родитель"
-        "en" -> if (isTeacher) "Teacher" else "Parent"
-        else -> if (isTeacher) "O'qituvchi" else "Ota-ona"
+    val roleName = when (role) {
+        "teacher" -> when (language) { "ru" -> "Учитель"; "en" -> "Teacher"; else -> "O'qituvchi" }
+        "chef"    -> when (language) { "ru" -> "Повар";   "en" -> "Chef";    else -> "Oshpaz" }
+        else      -> when (language) { "ru" -> "Родитель";"en" -> "Parent";  else -> "Ota-ona" }
     }
     val settingsTitle = when (language) { "ru" -> "Настройки"; "en" -> "Settings"; else -> "Sozlamalar" }
     val themeTitle    = when (language) { "ru" -> "Внешний вид"; "en" -> "Appearance"; else -> "Ko'rinish" }
@@ -75,15 +76,36 @@ fun SozlamalarScreen(
                     Modifier.size(56.dp).clip(CircleShape).background(accent.copy(0.15f)),
                     contentAlignment = Alignment.Center
                 ) {
-                    Icon(if (isTeacher) Icons.Default.School else Icons.Default.FamilyRestroom, null, tint = accent, modifier = Modifier.size(28.dp))
+                    Icon(
+                        when (role) {
+                            "teacher" -> Icons.Default.School
+                            "chef"    -> Icons.Default.Restaurant
+                            else      -> Icons.Default.FamilyRestroom
+                        },
+                        null, tint = accent, modifier = Modifier.size(28.dp)
+                    )
                 }
                 Column(Modifier.weight(1f)) {
-                    Text(if (isTeacher) "Karimova Nargiza" else "Karimov Bobur", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
+                    Text(
+                        when (role) {
+                            "teacher" -> "Karimova Nargiza"
+                            "chef"    -> "Toshmatov Sardor"
+                            else      -> "Karimov Bobur"
+                        },
+                        fontWeight = FontWeight.SemiBold, fontSize = 16.sp
+                    )
                     Spacer(Modifier.height(2.dp))
                     Text(roleName, fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     Spacer(Modifier.height(4.dp))
                     Box(Modifier.clip(RoundedCornerShape(4.dp)).background(accentContainer).padding(horizontal = 8.dp, vertical = 2.dp)) {
-                        Text(if (isTeacher) "Matematika o'qituvchisi" else "5-A sinf ota-onasi", fontSize = 11.sp, color = accent)
+                        Text(
+                            when (role) {
+                                "teacher" -> "Matematika o'qituvchisi"
+                                "chef"    -> "Kafeteriya oshpazi"
+                                else      -> "5-A sinf ota-onasi"
+                            },
+                            fontSize = 11.sp, color = accent
+                        )
                     }
                 }
             }

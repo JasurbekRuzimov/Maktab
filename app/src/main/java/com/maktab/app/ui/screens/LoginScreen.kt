@@ -35,8 +35,9 @@ fun LoginScreen(
     onBack: () -> Unit
 ) {
     val isTeacher = role == "teacher"
-    val accent = if (isTeacher) Teal10 else Blue10
-    val accentContainer = if (isTeacher) TealContainer else BlueContainer
+    val isChef = role == "chef"
+    val accent = when (role) { "teacher" -> Teal10; "chef" -> Amber10; else -> Blue10 }
+    val accentContainer = when (role) { "teacher" -> TealContainer; "chef" -> AmberContainer; else -> BlueContainer }
 
     var username by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
@@ -95,13 +96,21 @@ fun LoginScreen(
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                             Icon(
-                                if (isTeacher) Icons.Default.School else Icons.Default.FamilyRestroom,
+                                when (role) {
+                                    "teacher" -> Icons.Default.School
+                                    "chef"    -> Icons.Default.Restaurant
+                                    else      -> Icons.Default.FamilyRestroom
+                                },
                                 contentDescription = null,
                                 tint = accent,
                                 modifier = Modifier.size(16.dp)
                             )
                             Text(
-                                text = if (isTeacher) "O'qituvchi" else "Ota-ona",
+                                text = when (role) {
+                                    "teacher" -> "O'qituvchi"
+                                    "chef"    -> "Oshpaz"
+                                    else      -> "Ota-ona"
+                                },
                                 fontSize = 13.sp,
                                 fontWeight = FontWeight.Medium,
                                 color = accent

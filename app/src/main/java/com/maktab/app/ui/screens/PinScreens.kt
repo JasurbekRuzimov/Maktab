@@ -142,7 +142,11 @@ fun PinEntryScreen(
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
-                    if (isTeacher) Icons.Default.School else Icons.Default.FamilyRestroom,
+                    when (role) {
+                        "teacher" -> Icons.Default.School
+                        "chef"    -> Icons.Default.Restaurant
+                        else      -> Icons.Default.FamilyRestroom
+                    },
                     contentDescription = null,
                     tint = accent,
                     modifier = Modifier.size(30.dp)
@@ -300,7 +304,7 @@ private fun RowScope.PinKeyButton(
         modifier = Modifier.weight(1f).aspectRatio(1.25f).scale(scale),
         shape = RoundedCornerShape(16.dp),
         color = if (isDelete) MaterialTheme.colorScheme.surfaceVariant
-                else accent.copy(alpha = 0.09f),
+        else accent.copy(alpha = 0.09f),
         tonalElevation = 0.dp
     ) {
         Box(contentAlignment = Alignment.Center) {
