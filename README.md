@@ -20,8 +20,6 @@
 
 **Maktab** — o'quv jarayonini raqamlashtiruvchi Android mobil ilovasi. Har bir rol uchun alohida panel: o'qituvchi darslarini, ota-ona farzandini, oshpaz kafeteriyani — barchasini bitta ilovada boshqaradi.
 
-Backend: [Railway](https://maktab-backend-production.up.railway.app/) · API integratsiyasi tayyorlanmoqda
-
 ---
 
 ## ✨ Xususiyatlar
