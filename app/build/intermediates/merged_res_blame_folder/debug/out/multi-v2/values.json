@@ -1,7 +1,7 @@
 {
     "logs": [
         {
-            "outputFile": "com.maktab.app-mergeDebugResources-46:/values/values.xml",
+            "outputFile": "com.maktab.app-mergeDebugResources-44:/values/values.xml",
             "map": [
                 {
                     "source": "C:\\Users\\ruzim\\.gradle\\caches\\transforms-3\\a8bb623963dccfbaf142c4cc7cd79c07\\transformed\\startup-runtime-1.1.1\\res\\values\\values.xml",

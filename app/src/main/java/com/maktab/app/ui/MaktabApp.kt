@@ -25,6 +25,13 @@ import androidx.compose.ui.unit.sp
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
 import com.maktab.app.ui.screens.*
+import com.maktab.app.ui.screens.auth.*
+import com.maktab.app.ui.screens.teacher.*
+import com.maktab.app.ui.screens.student.*
+import com.maktab.app.ui.screens.parent.*
+import com.maktab.app.ui.screens.chef.*
+import com.maktab.app.ui.screens.hr.*
+import com.maktab.app.ui.screens.common.*
 import com.maktab.app.ui.theme.*
 import kotlinx.coroutines.launch
 
@@ -116,14 +123,13 @@ val hrDrawerItems = listOf(
     NavItem("analitika",   "HR analitika",        Icons.Default.BarChart,       "Hisobotlar"),
     NavItem("hujjatlar",   "Hujjatlar",           Icons.Default.Description,    "Hisobotlar"),
 )
-val chefDrawerItems = listOf(
-    NavItem("dashboard",  "Bosh panel",            Icons.Default.Dashboard,      "Asosiy"),
-    NavItem("ombor",      "Oziq-ovqat ombori",     Icons.Default.Inventory,      "Asosiy"),
-    NavItem("ingredient", "Ingredientlar",          Icons.Default.Grass,          "Asosiy"),
-    NavItem("retsept",    "Taom retseptlari",       Icons.Default.RestaurantMenu, "Taomlar"),
-    NavItem("menyu",      "Menyu kalendari",        Icons.Default.CalendarMonth,  "Taomlar"),
-    NavItem("harakat",    "Stock harakatlari",      Icons.Default.SwapVert,       "Hisobotlar"),
-    NavItem("analitika",  "Kafeteriya analitikasi", Icons.Default.BarChart,       "Hisobotlar"),
+val chefDrawerItems = listOf(NavItem("dashboard",  "Bosh panel",            Icons.Default.Dashboard,      "Asosiy"),
+NavItem("ombor",      "Oziq-ovqat ombori",     Icons.Default.Inventory,      "Asosiy"),
+NavItem("ingredient", "Ingredientlar",          Icons.Default.Grass,          "Asosiy"),
+NavItem("retsept",    "Taom retseptlari",       Icons.Default.RestaurantMenu, "Taomlar"),
+NavItem("menyu",      "Menyu kalendari",        Icons.Default.CalendarMonth,  "Taomlar"),
+NavItem("harakat",    "Stock harakatlari",      Icons.Default.SwapVert,       "Hisobotlar"),
+NavItem("analitika",  "Kafeteriya analitikasi", Icons.Default.BarChart,       "Hisobotlar"),
 )
 
 // ─────────────────────────────────────────────
@@ -194,20 +200,43 @@ fun MaktabApp() {
     val activity = context as? Activity
     val prefs = remember { getSecurePrefs(context) }
 
-    var savedPin  by remember { mutableStateOf(prefs.getString("pin", "") ?: "") }
-    var savedRole by remember { mutableStateOf(prefs.getString("role", "") ?: "") }
-    var isDark    by remember { mutableStateOf(false) }
-    var language  by remember { mutableStateOf("uz") }
-    var screen    by remember { mutableStateOf<Screen>(Screen.Splash) }
+    var savedPin      by remember { mutableStateOf(prefs.getString("pin", "") ?: "") }
+    var savedRole     by remember { mutableStateOf(prefs.getString("role", "") ?: "") }
+    var savedFullname by remember { mutableStateOf(prefs.getString("fullname", "") ?: "") }
+    var savedUsername by remember { mutableStateOf(prefs.getString("username", "") ?: "") }
+    var savedBranch   by remember { mutableStateOf(prefs.getString("branch", "") ?: "") }
+    var isDark        by remember { mutableStateOf(false) }
+    var language      by remember { mutableStateOf("uz") }
+    var screen        by remember { mutableStateOf<Screen>(Screen.Splash) }
     var showExitDialog by remember { mutableStateOf(false) }
 
     fun saveSession(pin: String, role: String) {
         prefs.edit().putString("pin", pin).putString("role", role).apply()
         savedPin = pin; savedRole = role
     }
+    fun saveUserInfo(session: com.maktab.app.network.SessionInfo) {
+        prefs.edit()
+            .putString("role", session.role)
+            .putString("fullname", session.fullname)
+            .putString("username", session.username)
+            .putString("branch", session.branchName)   // ID emas, nom saqlanadi
+            .putString("accessToken", session.accessToken)
+            .putString("refreshToken", session.refreshToken)
+            .putString("renewEndpoint", session.renewEndpoint)
+            .apply()
+        savedRole     = session.role
+        savedFullname = session.fullname
+        savedUsername = session.username
+        savedBranch   = session.branchName
+        com.maktab.app.network.RetrofitClient.accessToken = session.accessToken
+    }
     fun clearSession() {
-        prefs.edit().remove("pin").remove("role").apply()
-        savedPin = ""; savedRole = ""
+        prefs.edit()
+            .remove("pin").remove("role").remove("fullname")
+            .remove("username").remove("branch")
+            .remove("accessToken").remove("refreshToken").remove("renewEndpoint")
+            .apply()
+        savedPin = ""; savedRole = ""; savedFullname = ""; savedUsername = ""
     }
 
     MaktabTheme(isDark = isDark, language = language) {
@@ -234,9 +263,10 @@ fun MaktabApp() {
                 BackHandler { screen = Screen.RoleSelect }
                 LoginScreen(
                     role = s.role,
-                    onSuccess = {
-                        screen = if (savedPin.isEmpty()) Screen.PinSetup(s.role)
-                        else Screen.Dashboard(s.role)
+                    onSuccess = { session ->
+                        saveUserInfo(session)
+                        screen = if (savedPin.isEmpty()) Screen.PinSetup(session.role)
+                        else Screen.Dashboard(session.role)
                     },
                     onBack = { screen = Screen.RoleSelect }
                 )
@@ -249,21 +279,25 @@ fun MaktabApp() {
 
             is Screen.PinEntry -> PinEntryScreen(
                 role = s.role, savedPin = savedPin,
-                userName = when (s.role) {
-                    "teacher" -> "Karimova Nargiza"
-                    "chef"    -> "Toshmatov Sardor"
-                    else      -> "Karimov Bobur"
+                userName = savedFullname.ifEmpty {
+                    when (s.role) {
+                        "teacher" -> "O'qituvchi"
+                        "chef"    -> "Oshpaz"
+                        "hr"      -> "HR"
+                        "student" -> "O'quvchi"
+                        else      -> "Foydalanuvchi"
+                    }
                 },
                 onSuccess = { screen = Screen.Dashboard(s.role) },
                 onForgotPin = { clearSession(); screen = Screen.RoleSelect }
             )
 
             is Screen.Dashboard -> {
-                // Back bosilganda exit dialog ko'rsat
                 BackHandler { showExitDialog = true }
-
                 RoleApp(
                     role = s.role, language = language, isDark = isDark,
+                    fullname = savedFullname,
+                    username = savedUsername,
                     onToggleDark = { isDark = !isDark },
                     onLanguageChange = { language = it },
                     onLogout = { clearSession(); screen = Screen.RoleSelect }
@@ -280,13 +314,14 @@ fun MaktabApp() {
 @Composable
 fun RoleApp(
     role: String, language: String, isDark: Boolean,
+    fullname: String = "", username: String = "",
     onToggleDark: () -> Unit, onLanguageChange: (String) -> Unit, onLogout: () -> Unit
 ) {
     when (role) {
-        "chef"    -> ChefApp(language, isDark, onToggleDark, onLanguageChange, onLogout)
-        "student" -> DrawerApp(role, language, isDark, onToggleDark, onLanguageChange, onLogout)
-        "hr"      -> DrawerApp(role, language, isDark, onToggleDark, onLanguageChange, onLogout)
-        else      -> DrawerApp(role, language, isDark, onToggleDark, onLanguageChange, onLogout)
+        "chef"    -> ChefApp(language, isDark, onToggleDark, onLanguageChange, onLogout, fullname)
+        "student" -> DrawerApp(role, language, isDark, onToggleDark, onLanguageChange, onLogout, fullname, username)
+        "hr"      -> DrawerApp(role, language, isDark, onToggleDark, onLanguageChange, onLogout, fullname, username)
+        else      -> DrawerApp(role, language, isDark, onToggleDark, onLanguageChange, onLogout, fullname, username)
     }
 }
 
@@ -298,7 +333,8 @@ fun RoleApp(
 @Composable
 fun DrawerApp(
     role: String, language: String, isDark: Boolean,
-    onToggleDark: () -> Unit, onLanguageChange: (String) -> Unit, onLogout: () -> Unit
+    onToggleDark: () -> Unit, onLanguageChange: (String) -> Unit, onLogout: () -> Unit,
+    fullname: String = "", username: String = ""
 ) {
     val isTeacher = role == "teacher"
     val isStudent = role == "student"
@@ -324,17 +360,18 @@ fun DrawerApp(
 
     val currentTitle = drawerItems.find { it.id == selectedId }?.labelUz ?: drawerItems.first().labelUz
 
-    val userName = when (role) {
-        "teacher" -> "Karimova Nargiza"
-        "student" -> "Asilbek Karimov"
-        "hr"      -> "Rahimova Aziza"
-        else      -> "Karimov Bobur"
+    // Real backend ma'lumoti, yo'q bo'lsa fallback
+    val userName = fullname.ifEmpty {
+        when (role) {
+            "teacher" -> "O'qituvchi"; "student" -> "O'quvchi"
+            "hr" -> "HR"; else -> "Foydalanuvchi"
+        }
     }
     val userSub = when (role) {
-        "teacher" -> "O'qituvchi · 5-A sinf"
-        "student" -> "O'quvchi · 5-A sinf"
+        "teacher" -> "O'qituvchi"
+        "student" -> "O'quvchi"
         "hr"      -> "HR mutaxassis"
-        else      -> "Ota-ona · 5-A sinf"
+        else      -> "Ota-ona"
     }
     val roleIcon = when (role) {
         "teacher" -> Icons.Default.School
@@ -342,6 +379,13 @@ fun DrawerApp(
         "hr"      -> Icons.Default.People
         else      -> Icons.Default.FamilyRestroom
     }
+
+    // Initials — fullname dan olamiz
+    val initials = userName.trim().split(" ")
+        .filter { it.isNotEmpty() }
+        .take(2)
+        .joinToString("") { it.first().uppercaseChar().toString() }
+        .ifEmpty { "?" }
 
     BackHandler(enabled = drawerState.isOpen) { scope.launch { drawerState.close() } }
     BackHandler(enabled = showSettings) { showSettings = false }
@@ -362,16 +406,27 @@ fun DrawerApp(
                         .padding(20.dp)
                 ) {
                     Column {
+                        // Avatar — initials circle
                         Box(
                             modifier = Modifier.size(52.dp).clip(CircleShape)
                                 .background(accent.copy(0.18f)),
                             contentAlignment = Alignment.Center
                         ) {
-                            Icon(roleIcon, null, tint = accent, modifier = Modifier.size(26.dp))
+                            if (initials != "?") {
+                                Text(
+                                    initials, fontSize = 18.sp,
+                                    fontWeight = FontWeight.SemiBold, color = accent
+                                )
+                            } else {
+                                Icon(roleIcon, null, tint = accent, modifier = Modifier.size(26.dp))
+                            }
                         }
                         Spacer(Modifier.height(10.dp))
                         Text(userName, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = accent)
                         Text(userSub, fontSize = 12.sp, color = accent.copy(0.7f))
+                        if (username.isNotEmpty()) {
+                            Text("@$username", fontSize = 11.sp, color = accent.copy(0.5f))
+                        }
                     }
                 }
 
@@ -456,7 +511,8 @@ fun DrawerApp(
         if (showSettings) {
             SozlamalarScreen(
                 role = role, isDark = isDark, language = language,
-                onToggleDark = onToggleDark, onLanguageChange = onLanguageChange, onLogout = onLogout
+                onToggleDark = onToggleDark, onLanguageChange = onLanguageChange, onLogout = onLogout,
+                fullname = fullname, username = username
             )
             return@ModalNavigationDrawer
         }
@@ -472,8 +528,13 @@ fun DrawerApp(
                     title = {
                         Column {
                             Text(currentTitle, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
-                            Text("$userName · ${if (isTeacher) "5-A" else "5-A sinf"}",
-                                fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text(
+                                if (userName.isNotEmpty() && userName != "Foydalanuvchi")
+                                    "$userName · $userSub"
+                                else userSub,
+                                fontSize = 11.sp,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
                         }
                     },
                     actions = {
@@ -554,7 +615,8 @@ fun DrawerApp(
 @Composable
 fun ChefApp(
     language: String, isDark: Boolean,
-    onToggleDark: () -> Unit, onLanguageChange: (String) -> Unit, onLogout: () -> Unit
+    onToggleDark: () -> Unit, onLanguageChange: (String) -> Unit, onLogout: () -> Unit,
+    fullname: String = ""
 ) {
     val accent = Amber10
     val drawerState = rememberDrawerState(DrawerValue.Closed)
@@ -563,6 +625,11 @@ fun ChefApp(
     var showSettings by remember { mutableStateOf(false) }
 
     val currentTitle = chefDrawerItems.find { it.id == selectedId }?.labelUz ?: "Bosh panel"
+    val chefName = fullname.ifEmpty { "Oshpaz" }
+    val chefInitials = chefName.trim().split(" ")
+        .filter { it.isNotEmpty() }.take(2)
+        .joinToString("") { it.first().uppercaseChar().toString() }
+        .ifEmpty { "O" }
 
     BackHandler(enabled = drawerState.isOpen) { scope.launch { drawerState.close() } }
     BackHandler(enabled = showSettings) { showSettings = false }
@@ -587,10 +654,10 @@ fun ChefApp(
                                 .background(Amber10.copy(0.2f)),
                             contentAlignment = Alignment.Center
                         ) {
-                            Icon(Icons.Default.Restaurant, null, tint = Amber10, modifier = Modifier.size(26.dp))
+                            Text(chefInitials, fontSize = 18.sp, fontWeight = FontWeight.SemiBold, color = Amber10)
                         }
                         Spacer(Modifier.height(10.dp))
-                        Text("Toshmatov Sardor", fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = Amber10)
+                        Text(chefName, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = Amber10)
                         Text("Oshpaz · Kafeteriya", fontSize = 12.sp, color = Amber10.copy(0.7f))
                     }
                 }
@@ -673,7 +740,8 @@ fun ChefApp(
         if (showSettings) {
             SozlamalarScreen(
                 role = "chef", isDark = isDark, language = language,
-                onToggleDark = onToggleDark, onLanguageChange = onLanguageChange, onLogout = onLogout
+                onToggleDark = onToggleDark, onLanguageChange = onLanguageChange, onLogout = onLogout,
+                fullname = fullname
             )
             return@ModalNavigationDrawer
         }
@@ -689,7 +757,7 @@ fun ChefApp(
                     title = {
                         Column {
                             Text(currentTitle, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
-                            Text("Toshmatov Sardor · Kafeteriya",
+                            Text("$chefName · Kafeteriya",
                                 fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                     },
