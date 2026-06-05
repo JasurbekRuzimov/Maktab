@@ -848,10 +848,15 @@ fun ChefRecipesScreen(vm: ChefViewModel) {
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun RecipeCard(recipe: Recipe, modifier: Modifier = Modifier) {
+    var showSheet by remember { mutableStateOf(false) }
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val scope = rememberCoroutineScope()
+
     Card(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth().clickable { showSheet = true },
         colors = CardDefaults.cardColors(containerColor = Color.White),
         shape = RoundedCornerShape(12.dp),
         border = BorderStroke(0.5.dp, Outline),
@@ -891,6 +896,97 @@ private fun RecipeCard(recipe: Recipe, modifier: Modifier = Modifier) {
                 }
             }
             Icon(Icons.Default.ChevronRight, null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+    }
+
+    if (showSheet) {
+        ModalBottomSheet(
+            onDismissRequest = { showSheet = false },
+            sheetState = sheetState,
+            shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp),
+            containerColor = MaterialTheme.colorScheme.surface,
+            windowInsets = WindowInsets.navigationBars
+        ) {
+            Column(
+                modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState())
+                    .padding(horizontal = 20.dp).padding(bottom = 32.dp)
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Box(
+                        Modifier.size(48.dp).clip(RoundedCornerShape(12.dp))
+                            .background(if (recipe.isActive) TealContainer else MaterialTheme.colorScheme.surfaceVariant),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(Icons.Default.RestaurantMenu, null,
+                            tint = if (recipe.isActive) Teal10 else MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(24.dp))
+                    }
+                    Column(Modifier.weight(1f)) {
+                        Text(recipe.name, fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
+                        Text(recipe.category, fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                    IconButton(onClick = { scope.launch { sheetState.hide() }.invokeOnCompletion { showSheet = false } }) {
+                        Icon(Icons.Default.Close, null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                }
+                Spacer(Modifier.height(20.dp))
+                HorizontalDivider(color = Outline, thickness = 0.5.dp)
+                Spacer(Modifier.height(20.dp))
+
+                StatusChip(
+                    if (recipe.isActive) "Faol retsept" else "Nofaol retsept",
+                    if (recipe.isActive) Teal10 else MaterialTheme.colorScheme.onSurfaceVariant,
+                    if (recipe.isActive) TealContainer else MaterialTheme.colorScheme.surfaceVariant
+                )
+                Spacer(Modifier.height(16.dp))
+
+                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Card(
+                        modifier = Modifier.weight(1f),
+                        colors = CardDefaults.cardColors(containerColor = BlueContainer),
+                        shape = RoundedCornerShape(12.dp),
+                        border = BorderStroke(0.5.dp, Blue10.copy(0.2f)),
+                        elevation = CardDefaults.cardElevation(0.dp)
+                    ) {
+                        Column(Modifier.padding(14.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                            Icon(Icons.Default.People, null, tint = Blue10, modifier = Modifier.size(28.dp))
+                            Spacer(Modifier.height(6.dp))
+                            Text("${recipe.portionCount}", fontSize = 22.sp, fontWeight = FontWeight.Bold, color = Blue10)
+                            Text("Porsiya", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                    }
+                    Card(
+                        modifier = Modifier.weight(1f),
+                        colors = CardDefaults.cardColors(containerColor = AmberContainer),
+                        shape = RoundedCornerShape(12.dp),
+                        border = BorderStroke(0.5.dp, Amber10.copy(0.2f)),
+                        elevation = CardDefaults.cardElevation(0.dp)
+                    ) {
+                        Column(Modifier.padding(14.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                            Icon(Icons.Default.Inventory, null, tint = Amber10, modifier = Modifier.size(28.dp))
+                            Spacer(Modifier.height(6.dp))
+                            Text("${recipe.ingredientCount}", fontSize = 22.sp, fontWeight = FontWeight.Bold, color = Amber10)
+                            Text("Ingredient", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                    }
+                }
+                Spacer(Modifier.height(20.dp))
+
+                Text("Kategoriya", fontSize = 13.sp, fontWeight = FontWeight.Medium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Spacer(Modifier.height(6.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(10.dp))
+                        .background(MaterialTheme.colorScheme.surfaceVariant)
+                        .padding(12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Icon(Icons.Default.Category, null, tint = Teal10, modifier = Modifier.size(18.dp))
+                    Text(recipe.category.ifEmpty { "Belgilanmagan" }, fontSize = 14.sp)
+                }
+            }
         }
     }
 }
