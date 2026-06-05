@@ -220,22 +220,44 @@ class ChefViewModel : ViewModel() {
         } catch (e: Exception) { ChefDashboardUi() }
     }
 
+    private fun parseNumber(v: Any?): Double = when (v) {
+        is Number -> v.toDouble()
+        is String -> v.toDoubleOrNull() ?: 0.0
+        else -> 0.0
+    }
+
+    private fun normalizeUnit(unit: String): String = when (unit.lowercase().trim()) {
+        "liter", "litre", "litres", "liters" -> "litr"
+        "kilogram", "kilograms", "kilo" -> "kg"
+        "gram", "grams" -> "g"
+        "milliliter", "milliliters", "millilitre", "millilitres" -> "ml"
+        "piece", "pieces", "pcs", "unit", "units" -> "dona"
+        else -> unit
+    }
+
     @Suppress("UNCHECKED_CAST")
     private fun parseIngredients(data: Any?): List<IngredientItem> {
         if (data == null) return emptyList()
         return try {
             val list: List<*> = when (data) {
                 is List<*> -> data
-                is Map<*, *> -> (data["items"] as? List<*>) ?: (data["data"] as? List<*>) ?: return emptyList()
+                is Map<*, *> -> (data["items"] as? List<*>)
+                    ?: (data["data"] as? List<*>)
+                    ?: (data["ingredients"] as? List<*>)
+                    ?: return emptyList()
                 else -> return emptyList()
             }
             list.mapNotNull { item ->
                 val m = item as? Map<*, *> ?: return@mapNotNull null
-                val qty = (m["quantity"] as? Number)?.toDouble() ?: 0.0
-                val minQty = (m["min_quantity"] as? Number)?.toDouble() ?: 0.0
+                val qty = parseNumber(m["quantity"] ?: m["current_quantity"] ?: m["stock"])
+                val minQty = parseNumber(m["min_quantity"] ?: m["minimum_quantity"] ?: m["min_stock"])
+                val apiStatus = m["status"]?.toString()?.lowercase()
                 val status = when {
+                    apiStatus == "out_of_stock" || apiStatus == "tugagan" -> StockStatus.TUGAGAN
+                    apiStatus == "low" || apiStatus == "low_stock" || apiStatus == "kam" -> StockStatus.KAM
+                    apiStatus == "ok" || apiStatus == "available" || apiStatus == "yetarli" -> StockStatus.YETARLI
                     qty <= 0 -> StockStatus.TUGAGAN
-                    qty < minQty -> StockStatus.KAM
+                    minQty > 0 && qty < minQty -> StockStatus.KAM
                     else -> StockStatus.YETARLI
                 }
                 IngredientItem(
@@ -243,7 +265,7 @@ class ChefViewModel : ViewModel() {
                     name = m["name"]?.toString() ?: "",
                     category = m["category"]?.toString() ?: "",
                     quantity = qty,
-                    unit = m["unit"]?.toString() ?: "kg",
+                    unit = normalizeUnit(m["unit"]?.toString() ?: "kg"),
                     minQuantity = minQty,
                     expiryDate = m["expiry_date"]?.toString()?.substringBefore("T") ?: "",
                     status = status
@@ -282,7 +304,12 @@ class ChefViewModel : ViewModel() {
         return try {
             val list: List<*> = when (data) {
                 is List<*> -> data
-                is Map<*, *> -> (data["items"] as? List<*>) ?: (data["data"] as? List<*>) ?: return emptyList()
+                is Map<*, *> -> (data["items"] as? List<*>)
+                    ?: (data["data"] as? List<*>)
+                    ?: (data["movements"] as? List<*>)
+                    ?: (data["stock_movements"] as? List<*>)
+                    ?: (data["records"] as? List<*>)
+                    ?: return emptyList()
                 else -> return emptyList()
             }
             list.mapNotNull { item ->
@@ -291,9 +318,13 @@ class ChefViewModel : ViewModel() {
                 val datePart = createdAt.substringBefore("T")
                 val timePart = createdAt.substringAfter("T", "").take(5)
                 val ingMap = m["ingredient"] as? Map<*, *>
-                val ingName = ingMap?.get("name")?.toString() ?: m["ingredient_name"]?.toString() ?: ""
-                val unit = ingMap?.get("unit")?.toString() ?: m["unit"]?.toString() ?: ""
-                val typeStr = m["movement_type"]?.toString() ?: m["type"]?.toString() ?: ""
+                val ingName = ingMap?.get("name")?.toString()
+                    ?: m["ingredient_name"]?.toString()
+                    ?: m["product_name"]?.toString() ?: ""
+                val rawUnit = ingMap?.get("unit")?.toString() ?: m["unit"]?.toString() ?: ""
+                val unit = normalizeUnit(rawUnit)
+                val typeStr = m["movement_type"]?.toString() ?: m["type"]?.toString()
+                    ?: m["action"]?.toString() ?: ""
                 val type = when (typeStr.lowercase()) {
                     "in", "kirim", "income", "receipt" -> MovementType.KIRIM
                     "out", "chiqim", "outcome", "consumption" -> MovementType.CHIQIM
@@ -305,10 +336,10 @@ class ChefViewModel : ViewModel() {
                     ingredient = ingName,
                     unit = unit,
                     type = type,
-                    amount = (m["quantity"] as? Number)?.toDouble() ?: (m["amount"] as? Number)?.toDouble() ?: 0.0,
-                    prevQty = (m["before_quantity"] as? Number)?.toDouble() ?: (m["previous_quantity"] as? Number)?.toDouble() ?: 0.0,
-                    newQty = (m["after_quantity"] as? Number)?.toDouble() ?: (m["new_quantity"] as? Number)?.toDouble() ?: 0.0,
-                    reason = m["reason"]?.toString() ?: m["note"]?.toString() ?: ""
+                    amount = parseNumber(m["quantity"] ?: m["amount"] ?: m["changed_quantity"]),
+                    prevQty = parseNumber(m["before_quantity"] ?: m["previous_quantity"] ?: m["old_quantity"]),
+                    newQty = parseNumber(m["after_quantity"] ?: m["new_quantity"] ?: m["current_quantity"]),
+                    reason = m["reason"]?.toString() ?: m["note"]?.toString() ?: m["description"]?.toString() ?: ""
                 )
             }
         } catch (e: Exception) { emptyList() }
@@ -325,12 +356,28 @@ class ChefViewModel : ViewModel() {
         )
         val todayStr = LocalDate.now().format(fmt)
         return try {
-            val map = data as? Map<*, *>
+            // API may return a Map keyed by date OR a flat List of meal entries
+            val map: Map<String, List<*>> = when (data) {
+                is Map<*, *> -> @Suppress("UNCHECKED_CAST") (data as Map<String, List<*>>)
+                is List<*> -> {
+                    // Flat list: group entries by date key
+                    val grouped = mutableMapOf<String, MutableList<Any?>>()
+                    data.forEach { entry ->
+                        val m = entry as? Map<*, *> ?: return@forEach
+                        val key = m["date_key"]?.toString()
+                            ?: m["date"]?.toString()?.substringBefore("T")
+                            ?: return@forEach
+                        grouped.getOrPut(key) { mutableListOf() }.add(entry)
+                    }
+                    grouped
+                }
+                else -> emptyMap()
+            }
             (0..6).map { idx ->
                 val date = weekMonday.plusDays(idx.toLong())
                 val dateStr = date.format(fmt)
                 val dayMeals = mutableListOf<MenuMealUi>()
-                (map?.get(dateStr) as? List<*>)?.forEach { mealItem ->
+                (map[dateStr])?.forEach { mealItem ->
                     val mm = mealItem as? Map<*, *> ?: return@forEach
                     val recipe = mm["recipe"] as? Map<*, *>
                     val mealType = mm["meal_type"]?.toString() ?: ""
