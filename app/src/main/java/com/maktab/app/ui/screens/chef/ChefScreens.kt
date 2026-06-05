@@ -22,13 +22,15 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.maktab.app.network.ApiResult
+import com.maktab.app.network.models.IngredientRequest
 import com.maktab.app.ui.components.*
 import com.maktab.app.ui.theme.*
-import kotlinx.coroutines.delay
+import com.maktab.app.viewmodel.*
 import kotlinx.coroutines.launch
 
 // ─────────────────────────────────────────────
-// DATA MODELS
+// MealSlot — ImageVector borligi uchun bu yerda qoladi
 // ─────────────────────────────────────────────
 
 data class MealSlot(
@@ -40,98 +42,33 @@ data class MealSlot(
     val status: MealStatus = MealStatus.EMPTY
 )
 
-enum class MealStatus { EMPTY, ASSIGNED, CONFIRMED }
-
-data class IngredientItem(
-    val id: Int,
-    val name: String,
-    val category: String,
-    val quantity: Double,
-    val unit: String,
-    val minQuantity: Double,
-    val expiryDate: String,
-    val status: StockStatus
+private val defaultTodaySlots = listOf(
+    MealSlot("nonushta", "Nonushta", Icons.Default.WbSunny, "Kun boshidagi issiq ovqat"),
+    MealSlot("tushlik", "Tushlik", Icons.Default.LunchDining, "Asosiy tushlik menyusi"),
+    MealSlot("peshinlik", "Peshinlik", Icons.Default.Coffee, "Peshin payti beriladigan ovqat"),
+    MealSlot("kechki", "Kechki ovqat", Icons.Default.DinnerDining, "Kechki navbat uchun taom")
 )
 
-enum class StockStatus { YETARLI, KAM, TUGAGAN }
-
-data class StockMovement(
-    val date: String,
-    val time: String,
-    val ingredient: String,
-    val unit: String,
-    val type: MovementType,
-    val amount: Double,
-    val prevQty: Double,
-    val newQty: Double,
-    val reason: String
-)
-
-enum class MovementType { KIRIM, CHIQIM, TUZATISH }
-
-data class Recipe(
-    val id: Int,
-    val name: String,
-    val category: String,
-    val portionCount: Int,
-    val isActive: Boolean,
-    val ingredientCount: Int
-)
-
-// ─────────────────────────────────────────────
-// MOCK DATA
-// ─────────────────────────────────────────────
-
-private object ChefMock {
-    val todaySlots = listOf(
-        MealSlot("nonushta", "Nonushta", Icons.Default.WbSunny, "Kun boshidagi issiq ovqat", null, MealStatus.EMPTY),
-        MealSlot("tushlik", "Tushlik", Icons.Default.LunchDining, "Asosiy tushlik menyusi", null, MealStatus.EMPTY),
-        MealSlot("peshinlik", "Peshinlik", Icons.Default.Coffee, "Peshin payti beriladigan ovqat", null, MealStatus.EMPTY),
-        MealSlot("kechki", "Kechki ovqat", Icons.Default.DinnerDining, "Kechki navbat uchun taom", null, MealStatus.EMPTY)
-    )
-    val weekDays = listOf("Dush 1", "Sesh 2", "Chor 3", "Pay 4", "Jum 5", "Shan 6", "Yak 7")
-    val mealTimes = listOf("Nonushta", "Tushlik", "Kechki ovqat", "Kechki tamaddi")
-
-    val ingredients = listOf(
-        IngredientItem(1, "Kartoshka", "Sabzavot", 100.0, "kg", 10.0, "29.05.2026", StockStatus.YETARLI),
-        IngredientItem(2, "Piyoz", "Sabzavot", 5.0, "kg", 8.0, "01.06.2026", StockStatus.KAM),
-        IngredientItem(3, "Guruch", "Don mahsulot", 50.0, "kg", 20.0, "31.12.2026", StockStatus.YETARLI),
-        IngredientItem(4, "Go'sht", "Et mahsulot", 0.0, "kg", 15.0, "30.05.2026", StockStatus.TUGAGAN),
-        IngredientItem(5, "Qovoq", "Sabzavot", 30.0, "kg", 5.0, "03.06.2026", StockStatus.YETARLI),
-        IngredientItem(6, "Sut", "Sut mahsulot", 3.0, "l", 10.0, "31.05.2026", StockStatus.KAM)
-    )
-
-    val movements = listOf(
-        StockMovement("May 29, 2026", "7:17 PM", "Kartoshka", "KG", MovementType.KIRIM, 100.0, 0.0, 100.0, "Keldi"),
-        StockMovement("May 29, 2026", "8:00 AM", "Piyoz", "KG", MovementType.CHIQIM, 3.0, 8.0, 5.0, "Ishlatildi"),
-        StockMovement("May 28, 2026", "6:30 PM", "Guruch", "KG", MovementType.KIRIM, 50.0, 0.0, 50.0, "Keldi"),
-        StockMovement("May 28, 2026", "12:00 PM", "Go'sht", "KG", MovementType.CHIQIM, 15.0, 15.0, 0.0, "Tushlik uchun"),
-        StockMovement("May 27, 2026", "9:00 AM", "Sut", "L", MovementType.TUZATISH, 3.0, 0.0, 3.0, "Inventarizatsiya")
-    )
-
-    val recipes = listOf(
-        Recipe(1, "Osh (Palov)", "Asosiy taom", 100, true, 7),
-        Recipe(2, "Sho'rva", "Sho'rva", 80, true, 6),
-        Recipe(3, "Moshxo'rda", "Sho'rva", 60, false, 5),
-        Recipe(4, "Qovoq bo'g'irsoq", "Xamirli", 50, true, 4),
-        Recipe(5, "Mastava", "Sho'rva", 70, false, 8)
-    )
-}
+private val defaultMealTimes = listOf("Nonushta", "Tushlik", "Kechki ovqat", "Kechki tamaddi")
 
 // ─────────────────────────────────────────────
 // 1. OSHXONA DASHBOARDI
 // ─────────────────────────────────────────────
 
 @Composable
-fun ChefDashboardScreen() {
+fun ChefDashboardScreen(vm: ChefViewModel) {
+    val dashboardState by vm.dashboardState.collectAsState()
     val tabs = listOf("Bugun", "Ertaga", "Kecha")
     var selectedTab by remember { mutableStateOf(0) }
+
+    LaunchedEffect(Unit) { vm.loadDashboard() }
+
+    val dashboard = (dashboardState as? ApiResult.Success)?.data ?: ChefDashboardUi()
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(bottom = 24.dp)
     ) {
-        // Summary stat cards
         item {
             Column(Modifier.padding(16.dp)) {
                 SectionHeader("Oshpaz bosh paneli") {}
@@ -143,18 +80,29 @@ fun ChefDashboardScreen() {
                 )
                 Spacer(Modifier.height(14.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    ChefStatCard("Bugungi taomlar", "0", "Bugun rejalashtirilgan", Blue10, BlueContainer, Modifier.weight(1f))
-                    ChefStatCard("Tasdiq navbati", "0", "Bugun tasdiq kutilmoqda", Amber10, AmberContainer, Modifier.weight(1f))
+                    ChefStatCard(
+                        "Bugungi taomlar", "${dashboard.todayMeals}", "Bugun rejalashtirilgan",
+                        Blue10, BlueContainer, Modifier.weight(1f)
+                    )
+                    ChefStatCard(
+                        "Tasdiq navbati", "${dashboard.pendingConfirmations}", "Bugun tasdiq kutilmoqda",
+                        Amber10, AmberContainer, Modifier.weight(1f)
+                    )
                 }
                 Spacer(Modifier.height(10.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    ChefStatCard("Ertangi taomlar", "0", "Ertaga rejalashtirilgan", Teal10, TealContainer, Modifier.weight(1f))
-                    ChefStatCard("Ombor eslatmalari", "0", "Kam qolgan mahsulotlar", Red10, RedContainer, Modifier.weight(1f))
+                    ChefStatCard(
+                        "Ertangi taomlar", "${dashboard.tomorrowMeals}", "Ertaga rejalashtirilgan",
+                        Teal10, TealContainer, Modifier.weight(1f)
+                    )
+                    ChefStatCard(
+                        "Ombor eslatmalari", "${dashboard.warehouseAlerts}", "Kam qolgan mahsulotlar",
+                        Red10, RedContainer, Modifier.weight(1f)
+                    )
                 }
             }
         }
 
-        // Tab selector
         item {
             ScrollableTabRow(
                 selectedTabIndex = selectedTab,
@@ -177,10 +125,8 @@ fun ChefDashboardScreen() {
                             containerColor = MaterialTheme.colorScheme.surfaceVariant
                         ),
                         border = FilterChipDefaults.filterChipBorder(
-                            enabled = true,
-                            selected = selected,
-                            borderColor = Outline,
-                            selectedBorderColor = Color.Transparent
+                            enabled = true, selected = selected,
+                            borderColor = Outline, selectedBorderColor = Color.Transparent
                         )
                     )
                 }
@@ -188,50 +134,46 @@ fun ChefDashboardScreen() {
             Spacer(Modifier.height(12.dp))
         }
 
-        // Meal slots
         item {
             val dayLabel = when (selectedTab) {
                 0 -> "Bugungi tayyorlangan taomlar"
                 1 -> "Ertangi tayyorgarlik"
                 else -> "Kechagi taomlar"
             }
-            Text(
-                dayLabel,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.SemiBold,
-                modifier = Modifier.padding(horizontal = 16.dp)
-            )
+            Text(dayLabel, fontSize = 16.sp, fontWeight = FontWeight.SemiBold,
+                modifier = Modifier.padding(horizontal = 16.dp))
             Spacer(Modifier.height(10.dp))
         }
 
-        items(ChefMock.todaySlots) { slot ->
+        items(defaultTodaySlots) { slot ->
             MealSlotCard(slot, modifier = Modifier.padding(horizontal = 16.dp, vertical = 5.dp))
         }
 
-        // Warehouse alerts
-        item {
-            Spacer(Modifier.height(16.dp))
-            Card(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
-                colors = CardDefaults.cardColors(containerColor = RedContainer),
-                shape = RoundedCornerShape(12.dp),
-                border = BorderStroke(0.5.dp, Red10.copy(0.3f)),
-                elevation = CardDefaults.cardElevation(0.dp)
-            ) {
-                Row(
-                    modifier = Modifier.padding(14.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+        if (dashboard.warehouseAlerts > 0) {
+            item {
+                Spacer(Modifier.height(16.dp))
+                Card(
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+                    colors = CardDefaults.cardColors(containerColor = RedContainer),
+                    shape = RoundedCornerShape(12.dp),
+                    border = BorderStroke(0.5.dp, Red10.copy(0.3f)),
+                    elevation = CardDefaults.cardElevation(0.dp)
                 ) {
-                    Box(
-                        Modifier.size(40.dp).clip(RoundedCornerShape(10.dp)).background(Red10.copy(0.15f)),
-                        contentAlignment = Alignment.Center
-                    ) { Icon(Icons.Default.Warning, null, tint = Red10, modifier = Modifier.size(20.dp)) }
-                    Column(Modifier.weight(1f)) {
-                        Text("Ombor ogohlantirishlari", fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = Red10)
-                        Text("2 ta mahsulot kam qolgan", fontSize = 12.sp, color = Red10.copy(0.7f))
+                    Row(
+                        modifier = Modifier.padding(14.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Box(
+                            Modifier.size(40.dp).clip(RoundedCornerShape(10.dp)).background(Red10.copy(0.15f)),
+                            contentAlignment = Alignment.Center
+                        ) { Icon(Icons.Default.Warning, null, tint = Red10, modifier = Modifier.size(20.dp)) }
+                        Column(Modifier.weight(1f)) {
+                            Text("Ombor ogohlantirishlari", fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = Red10)
+                            Text("${dashboard.warehouseAlerts} ta mahsulot kam qolgan", fontSize = 12.sp, color = Red10.copy(0.7f))
+                        }
+                        Icon(Icons.Default.ArrowForward, null, tint = Red10, modifier = Modifier.size(18.dp))
                     }
-                    Icon(Icons.Default.ArrowForward, null, tint = Red10, modifier = Modifier.size(18.dp))
                 }
             }
         }
@@ -294,7 +236,8 @@ private fun ChefStatCard(
         elevation = CardDefaults.cardElevation(0.dp)
     ) {
         Column(Modifier.padding(12.dp)) {
-            Text(label.uppercase(), fontSize = 10.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSurfaceVariant, letterSpacing = 0.5.sp)
+            Text(label.uppercase(), fontSize = 10.sp, fontWeight = FontWeight.Medium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant, letterSpacing = 0.5.sp)
             Spacer(Modifier.height(4.dp))
             Text(value, fontSize = 28.sp, fontWeight = FontWeight.Bold, color = color)
             Text(subtitle, fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, lineHeight = 15.sp)
@@ -307,9 +250,20 @@ private fun ChefStatCard(
 // ─────────────────────────────────────────────
 
 @Composable
-fun ChefOmborScreen() {
+fun ChefOmborScreen(vm: ChefViewModel) {
+    val ingredientsState by vm.ingredientsState.collectAsState()
+    val movementsState by vm.movementsState.collectAsState()
     var searchQuery by remember { mutableStateOf("") }
-    val filtered = ChefMock.ingredients.filter {
+
+    LaunchedEffect(Unit) {
+        vm.loadIngredients()
+        vm.loadMovements()
+    }
+
+    val allIngredients = (ingredientsState as? ApiResult.Success)?.data ?: emptyList()
+    val allMovements = (movementsState as? ApiResult.Success)?.data ?: emptyList()
+
+    val filtered = allIngredients.filter {
         it.name.contains(searchQuery, ignoreCase = true) || it.category.contains(searchQuery, ignoreCase = true)
     }
     val yetarli = filtered.count { it.status == StockStatus.YETARLI }
@@ -328,15 +282,30 @@ fun ChefOmborScreen() {
                     fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, lineHeight = 18.sp
                 )
                 Spacer(Modifier.height(14.dp))
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    ChefStatCard("Ingredientlar", "${filtered.size}", "Jami", Blue10, BlueContainer, Modifier.weight(1f))
-                    ChefStatCard("Ombor ogoh.", "$kam", "Kam qolgan", Amber10, AmberContainer, Modifier.weight(1f))
-                    ChefStatCard("Tugagan", "$tugagan", "Zaxira yo'q", Red10, RedContainer, Modifier.weight(1f))
+
+                when (ingredientsState) {
+                    is ApiResult.Loading -> {
+                        Box(Modifier.fillMaxWidth().height(60.dp), contentAlignment = Alignment.Center) {
+                            CircularProgressIndicator(color = Amber10, modifier = Modifier.size(24.dp))
+                        }
+                    }
+                    is ApiResult.Error -> {
+                        val msg = (ingredientsState as ApiResult.Error).message
+                        Text(msg, color = Red10, fontSize = 13.sp)
+                        Spacer(Modifier.height(8.dp))
+                        TextButton(onClick = { vm.loadIngredients() }) { Text("Qayta urinish", color = Amber10) }
+                    }
+                    else -> {
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            ChefStatCard("Ingredientlar", "${filtered.size}", "Jami", Blue10, BlueContainer, Modifier.weight(1f))
+                            ChefStatCard("Ombor ogoh.", "$kam", "Kam qolgan", Amber10, AmberContainer, Modifier.weight(1f))
+                            ChefStatCard("Tugagan", "$tugagan", "Zaxira yo'q", Red10, RedContainer, Modifier.weight(1f))
+                        }
+                    }
                 }
             }
         }
 
-        // Ingredient katalogi
         item {
             Column(Modifier.padding(horizontal = 16.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -361,13 +330,9 @@ fun ChefOmborScreen() {
                     singleLine = true,
                     shape = RoundedCornerShape(10.dp),
                     leadingIcon = { Icon(Icons.Default.Search, null, modifier = Modifier.size(20.dp)) },
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = Teal10,
-                        unfocusedBorderColor = Outline
-                    )
+                    colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = Teal10, unfocusedBorderColor = Outline)
                 )
                 Spacer(Modifier.height(8.dp))
-                // Filter chips
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     StatusChip("$yetarli Yetarli", Teal10, TealContainer)
                     StatusChip("$kam Kam qolgan", Amber10, AmberContainer)
@@ -377,21 +342,34 @@ fun ChefOmborScreen() {
             }
         }
 
-        // Ingredient list
         items(filtered) { ing ->
-            IngredientRow(ing, modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp))
+            IngredientRow(
+                ing = ing,
+                onSave = { req -> vm.updateIngredient(ing.id, req) },
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
+            )
         }
 
-        // So'nggi harakatlar
         item {
             Spacer(Modifier.height(16.dp))
             Column(Modifier.padding(horizontal = 16.dp)) {
                 Text("So'nggi ombor harakatlari", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
                 Spacer(Modifier.height(10.dp))
+                when (movementsState) {
+                    is ApiResult.Loading -> {
+                        Box(Modifier.fillMaxWidth().height(60.dp), contentAlignment = Alignment.Center) {
+                            CircularProgressIndicator(color = Amber10, modifier = Modifier.size(24.dp))
+                        }
+                    }
+                    is ApiResult.Error -> {
+                        Text((movementsState as ApiResult.Error).message, color = Red10, fontSize = 13.sp)
+                    }
+                    else -> {}
+                }
             }
         }
 
-        items(ChefMock.movements.take(3)) { mv ->
+        items(allMovements.take(3)) { mv ->
             MovementRow(mv, modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp))
         }
     }
@@ -399,31 +377,32 @@ fun ChefOmborScreen() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun IngredientRow(ing: IngredientItem, modifier: Modifier = Modifier) {
+private fun IngredientRow(
+    ing: IngredientItem,
+    onSave: (IngredientRequest) -> Unit,
+    modifier: Modifier = Modifier
+) {
     val (color, container) = when (ing.status) {
         StockStatus.YETARLI -> Pair(Teal10, TealContainer)
         StockStatus.KAM     -> Pair(Amber10, AmberContainer)
         StockStatus.TUGAGAN -> Pair(Red10, RedContainer)
     }
 
-    // Edit sheet holati
     var showSheet by remember { mutableStateOf(false) }
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
-    // Tahrirlash maydonlari
-    var editName     by remember { mutableStateOf(ing.name) }
-    var editCategory by remember { mutableStateOf(ing.category) }
-    var editQuantity by remember { mutableStateOf(ing.quantity.toInt().toString()) }
-    var editMin      by remember { mutableStateOf(ing.minQuantity.toInt().toString()) }
-    var editUnit     by remember { mutableStateOf(ing.unit) }
-    var editExpiry   by remember { mutableStateOf(ing.expiryDate) }
+    var editName     by remember(ing.id) { mutableStateOf(ing.name) }
+    var editCategory by remember(ing.id) { mutableStateOf(ing.category) }
+    var editQuantity by remember(ing.id) { mutableStateOf(ing.quantity.toLong().toString()) }
+    var editMin      by remember(ing.id) { mutableStateOf(ing.minQuantity.toLong().toString()) }
+    var editUnit     by remember(ing.id) { mutableStateOf(ing.unit) }
+    var editExpiry   by remember(ing.id) { mutableStateOf(ing.expiryDate) }
     var saved        by remember { mutableStateOf(false) }
     val scope        = rememberCoroutineScope()
 
     val units = listOf("kg", "g", "l", "ml", "dona", "litr")
     val categories = listOf("Sabzavot", "Don mahsulot", "Go'sht mahsulot", "Sut mahsulot", "Meva", "Boshqa")
 
-    // ── CARD ──
     Card(
         modifier = modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = Color.White),
@@ -444,30 +423,26 @@ private fun IngredientRow(ing: IngredientItem, modifier: Modifier = Modifier) {
             }
             Column(Modifier.weight(1f)) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(editName, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+                    Text(ing.name, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
                     StatusChip(ing.status.name, color, container)
                 }
                 Spacer(Modifier.height(2.dp))
-                Text("$editCategory · min: $editMin $editUnit",
+                Text("${ing.category} · min: ${ing.minQuantity.toLong()} ${ing.unit}",
                     fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                Text("Tugash: $editExpiry",
-                    fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                if (ing.expiryDate.isNotEmpty()) {
+                    Text("Tugash: ${ing.expiryDate}",
+                        fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
             }
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
                 modifier = Modifier.padding(end = 4.dp)
             ) {
-                Text(
-                    "$editQuantity $editUnit",
-                    fontSize = 15.sp, fontWeight = FontWeight.Bold, color = color
-                )
+                Text("${ing.quantity.toLong()} ${ing.unit}", fontSize = 15.sp, fontWeight = FontWeight.Bold, color = color)
                 Box(
-                    modifier = Modifier
-                        .size(38.dp)
-                        .clip(RoundedCornerShape(10.dp))
-                        .clickable { showSheet = true }
-                        .background(Blue10.copy(0.09f)),
+                    modifier = Modifier.size(38.dp).clip(RoundedCornerShape(10.dp))
+                        .clickable { showSheet = true }.background(Blue10.copy(0.09f)),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(Icons.Default.Edit, "Tahrirlash", tint = Blue10, modifier = Modifier.size(20.dp))
@@ -476,7 +451,6 @@ private fun IngredientRow(ing: IngredientItem, modifier: Modifier = Modifier) {
         }
     }
 
-    // ── BOTTOM SHEET ──
     if (showSheet) {
         ModalBottomSheet(
             onDismissRequest = { showSheet = false },
@@ -486,22 +460,13 @@ private fun IngredientRow(ing: IngredientItem, modifier: Modifier = Modifier) {
             windowInsets = WindowInsets.navigationBars
         ) {
             Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .verticalScroll(rememberScrollState())
-                    .padding(horizontal = 20.dp)
-                    .padding(bottom = 32.dp)
+                modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState())
+                    .padding(horizontal = 20.dp).padding(bottom = 32.dp)
             ) {
-                // Header
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    Box(
-                        Modifier.size(44.dp).clip(RoundedCornerShape(10.dp)).background(AmberContainer),
-                        contentAlignment = Alignment.Center
-                    ) {
+                Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Box(Modifier.size(44.dp).clip(RoundedCornerShape(10.dp)).background(AmberContainer),
+                        contentAlignment = Alignment.Center) {
                         Icon(Icons.Default.Inventory, null, tint = Amber10, modifier = Modifier.size(22.dp))
                     }
                     Column(Modifier.weight(1f)) {
@@ -512,111 +477,63 @@ private fun IngredientRow(ing: IngredientItem, modifier: Modifier = Modifier) {
                         Icon(Icons.Default.Close, null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
-
                 Spacer(Modifier.height(20.dp))
                 HorizontalDivider(color = Outline, thickness = 0.5.dp)
                 Spacer(Modifier.height(20.dp))
 
-                // Nom
-                SheetField(
-                    label = "Ingredient nomi",
-                    value = editName,
-                    onValueChange = { editName = it },
-                    icon = Icons.Default.Label,
-                    placeholder = "Masalan: Kartoshka"
-                )
+                SheetField("Ingredient nomi", editName, { editName = it }, Icons.Default.Label, "Masalan: Kartoshka")
                 Spacer(Modifier.height(14.dp))
 
-                // Kategoriya
                 Text("Kategoriya", fontSize = 13.sp, fontWeight = FontWeight.Medium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Spacer(Modifier.height(8.dp))
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     items(categories) { cat ->
                         val isSel = editCategory == cat
-                        FilterChip(
-                            selected = isSel,
-                            onClick = { editCategory = cat },
+                        FilterChip(selected = isSel, onClick = { editCategory = cat },
                             label = { Text(cat, fontSize = 12.sp) },
-                            colors = FilterChipDefaults.filterChipColors(
-                                selectedContainerColor = Amber10,
-                                selectedLabelColor = Color.White
-                            ),
-                            border = FilterChipDefaults.filterChipBorder(
-                                enabled = true, selected = isSel,
-                                borderColor = Outline, selectedBorderColor = Color.Transparent
-                            )
-                        )
+                            colors = FilterChipDefaults.filterChipColors(selectedContainerColor = Amber10, selectedLabelColor = Color.White),
+                            border = FilterChipDefaults.filterChipBorder(enabled = true, selected = isSel, borderColor = Outline, selectedBorderColor = Color.Transparent))
                     }
                 }
                 Spacer(Modifier.height(14.dp))
 
-                // O'lchov birligi
                 Text("O'lchov birligi", fontSize = 13.sp, fontWeight = FontWeight.Medium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Spacer(Modifier.height(8.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     units.forEach { u ->
                         val isSel = editUnit == u
-                        FilterChip(
-                            selected = isSel,
-                            onClick = { editUnit = u },
+                        FilterChip(selected = isSel, onClick = { editUnit = u },
                             label = { Text(u, fontSize = 12.sp) },
-                            colors = FilterChipDefaults.filterChipColors(
-                                selectedContainerColor = Amber10,
-                                selectedLabelColor = Color.White
-                            ),
-                            border = FilterChipDefaults.filterChipBorder(
-                                enabled = true, selected = isSel,
-                                borderColor = Outline, selectedBorderColor = Color.Transparent
-                            )
-                        )
+                            colors = FilterChipDefaults.filterChipColors(selectedContainerColor = Amber10, selectedLabelColor = Color.White),
+                            border = FilterChipDefaults.filterChipBorder(enabled = true, selected = isSel, borderColor = Outline, selectedBorderColor = Color.Transparent))
                     }
                 }
                 Spacer(Modifier.height(14.dp))
 
-                // Miqdor va Minimal miqdor — ikki ustun
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     Column(Modifier.weight(1f)) {
-                        SheetField(
-                            label = "Joriy miqdor",
-                            value = editQuantity,
-                            onValueChange = { editQuantity = it.filter { c -> c.isDigit() } },
-                            icon = Icons.Default.Inventory,
-                            placeholder = "0",
-                            keyboardType = KeyboardType.Number
-                        )
+                        SheetField("Joriy miqdor", editQuantity,
+                            { editQuantity = it.filter { c -> c.isDigit() } },
+                            Icons.Default.Inventory, "0", KeyboardType.Number)
                     }
                     Column(Modifier.weight(1f)) {
-                        SheetField(
-                            label = "Minimal miqdor",
-                            value = editMin,
-                            onValueChange = { editMin = it.filter { c -> c.isDigit() } },
-                            icon = Icons.Default.Warning,
-                            placeholder = "0",
-                            keyboardType = KeyboardType.Number
-                        )
+                        SheetField("Minimal miqdor", editMin,
+                            { editMin = it.filter { c -> c.isDigit() } },
+                            Icons.Default.Warning, "0", KeyboardType.Number)
                     }
                 }
                 Spacer(Modifier.height(14.dp))
 
-                // Yaroqlilik muddati
-                SheetField(
-                    label = "Yaroqlilik muddati",
-                    value = editExpiry,
-                    onValueChange = { editExpiry = it },
-                    icon = Icons.Default.CalendarToday,
-                    placeholder = "DD.MM.YYYY"
-                )
+                SheetField("Yaroqlilik muddati", editExpiry, { editExpiry = it },
+                    Icons.Default.CalendarToday, "YYYY-MM-DD")
                 Spacer(Modifier.height(24.dp))
 
-                // Saqlash tugmasi
                 if (saved) {
                     Row(
-                        modifier = Modifier.fillMaxWidth()
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(TealContainer)
-                            .padding(14.dp),
+                        modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp))
+                            .background(TealContainer).padding(14.dp),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
@@ -626,20 +543,24 @@ private fun IngredientRow(ing: IngredientItem, modifier: Modifier = Modifier) {
                 } else {
                     Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                         OutlinedButton(
-                            onClick = {
-                                scope.launch { sheetState.hide() }.invokeOnCompletion { showSheet = false }
-                            },
+                            onClick = { scope.launch { sheetState.hide() }.invokeOnCompletion { showSheet = false } },
                             modifier = Modifier.weight(1f).height(50.dp),
                             shape = RoundedCornerShape(12.dp),
                             border = BorderStroke(0.5.dp, Outline)
-                        ) {
-                            Text("Bekor qilish", fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurface)
-                        }
+                        ) { Text("Bekor qilish", fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurface) }
                         Button(
                             onClick = {
+                                onSave(IngredientRequest(
+                                    name = editName,
+                                    category = editCategory.ifEmpty { null },
+                                    unit = editUnit,
+                                    quantity = editQuantity.toDoubleOrNull() ?: ing.quantity,
+                                    minQuantity = editMin.toDoubleOrNull() ?: ing.minQuantity,
+                                    expiryDate = editExpiry.ifEmpty { null }
+                                ))
                                 saved = true
                                 scope.launch {
-                                    delay(1500)
+                                    kotlinx.coroutines.delay(800)
                                     sheetState.hide()
                                     showSheet = false
                                     saved = false
@@ -662,30 +583,21 @@ private fun IngredientRow(ing: IngredientItem, modifier: Modifier = Modifier) {
 
 @Composable
 private fun SheetField(
-    label: String,
-    value: String,
-    onValueChange: (String) -> Unit,
-    icon: ImageVector,
-    placeholder: String,
-    keyboardType: KeyboardType = KeyboardType.Text
+    label: String, value: String, onValueChange: (String) -> Unit,
+    icon: ImageVector, placeholder: String, keyboardType: KeyboardType = KeyboardType.Text
 ) {
     Column {
         Text(label, fontSize = 13.sp, fontWeight = FontWeight.Medium,
             color = MaterialTheme.colorScheme.onSurfaceVariant)
         Spacer(Modifier.height(6.dp))
         OutlinedTextField(
-            value = value,
-            onValueChange = onValueChange,
-            modifier = Modifier.fillMaxWidth(),
-            singleLine = true,
+            value = value, onValueChange = onValueChange,
+            modifier = Modifier.fillMaxWidth(), singleLine = true,
             shape = RoundedCornerShape(10.dp),
             placeholder = { Text(placeholder, fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant) },
             leadingIcon = { Icon(icon, null, tint = Amber10, modifier = Modifier.size(18.dp)) },
             keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = Amber10,
-                unfocusedBorderColor = Outline
-            )
+            colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = Amber10, unfocusedBorderColor = Outline)
         )
     }
 }
@@ -695,19 +607,21 @@ private fun SheetField(
 // ─────────────────────────────────────────────
 
 @Composable
-fun ChefIngredientsScreen() {
+fun ChefIngredientsScreen(vm: ChefViewModel) {
+    val ingredientsState by vm.ingredientsState.collectAsState()
     var searchQuery by remember { mutableStateOf("") }
     var selectedFilter by remember { mutableStateOf("Barchasi") }
     val filters = listOf("Barchasi", "Sabzavot", "Don mahsulot", "Et mahsulot", "Sut mahsulot")
-    val filtered = ChefMock.ingredients.filter { ing ->
+
+    LaunchedEffect(Unit) { vm.loadIngredients() }
+
+    val allIngredients = (ingredientsState as? ApiResult.Success)?.data ?: emptyList()
+    val filtered = allIngredients.filter { ing ->
         (selectedFilter == "Barchasi" || ing.category == selectedFilter) &&
                 ing.name.contains(searchQuery, ignoreCase = true)
     }
 
-    LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(bottom = 24.dp)
-    ) {
+    LazyColumn(modifier = Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = 24.dp)) {
         item {
             Column(Modifier.padding(16.dp)) {
                 SectionHeader("Ingredient boshqaruvi") {
@@ -723,44 +637,51 @@ fun ChefIngredientsScreen() {
                     }
                 }
                 Text(
-                    "Ingredient kartalari, o'lchov birliklari, rasm yuklash, minimal qoldiq va yaroqlilik muddatlarini yuriting.",
+                    "Ingredient kartalari, o'lchov birliklari, minimal qoldiq va yaroqlilik muddatlarini yuriting.",
                     fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, lineHeight = 18.sp
                 )
                 Spacer(Modifier.height(12.dp))
+
+                when (ingredientsState) {
+                    is ApiResult.Loading -> {
+                        Box(Modifier.fillMaxWidth().height(48.dp), contentAlignment = Alignment.Center) {
+                            CircularProgressIndicator(color = Amber10, modifier = Modifier.size(24.dp))
+                        }
+                        return@Column
+                    }
+                    is ApiResult.Error -> {
+                        Text((ingredientsState as ApiResult.Error).message, color = Red10, fontSize = 13.sp)
+                        TextButton(onClick = { vm.loadIngredients() }) { Text("Qayta urinish", color = Amber10) }
+                        return@Column
+                    }
+                    else -> {}
+                }
+
                 OutlinedTextField(
-                    value = searchQuery,
-                    onValueChange = { searchQuery = it },
+                    value = searchQuery, onValueChange = { searchQuery = it },
                     placeholder = { Text("Ingredient yoki kategoriya qidirish", fontSize = 13.sp) },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(), singleLine = true,
                     shape = RoundedCornerShape(10.dp),
                     leadingIcon = { Icon(Icons.Default.Search, null, modifier = Modifier.size(20.dp)) },
                     colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = Teal10, unfocusedBorderColor = Outline)
                 )
                 Spacer(Modifier.height(8.dp))
-                // Summary chips
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    StatusChip("${ChefMock.ingredients.size} Ingredientlar", Blue10, BlueContainer)
-                    StatusChip("${ChefMock.ingredients.count { it.status == StockStatus.KAM }} Kam qolgan", Amber10, AmberContainer)
-                    StatusChip("1 Yaroqlilik muddati", Red10, RedContainer)
+                    StatusChip("${allIngredients.size} Ingredientlar", Blue10, BlueContainer)
+                    StatusChip("${allIngredients.count { it.status == StockStatus.KAM }} Kam qolgan", Amber10, AmberContainer)
+                    StatusChip("${allIngredients.count { it.status == StockStatus.TUGAGAN }} Tugagan", Red10, RedContainer)
                 }
                 Spacer(Modifier.height(10.dp))
-                // Category filter scroll
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     items(filters) { f ->
                         FilterChip(
-                            selected = selectedFilter == f,
-                            onClick = { selectedFilter = f },
+                            selected = selectedFilter == f, onClick = { selectedFilter = f },
                             label = { Text(f, fontSize = 12.sp) },
                             colors = FilterChipDefaults.filterChipColors(
-                                selectedContainerColor = Teal10,
-                                selectedLabelColor = Color.White,
+                                selectedContainerColor = Teal10, selectedLabelColor = Color.White,
                                 containerColor = MaterialTheme.colorScheme.surfaceVariant
                             ),
-                            border = FilterChipDefaults.filterChipBorder(
-                                enabled = true, selected = selectedFilter == f,
-                                borderColor = Outline, selectedBorderColor = Color.Transparent
-                            )
+                            border = FilterChipDefaults.filterChipBorder(enabled = true, selected = selectedFilter == f, borderColor = Outline, selectedBorderColor = Color.Transparent)
                         )
                     }
                 }
@@ -768,48 +689,56 @@ fun ChefIngredientsScreen() {
             }
         }
 
-        // Table header
-        item {
-            Row(
-                modifier = Modifier.fillMaxWidth()
-                    .padding(horizontal = 16.dp)
-                    .clip(RoundedCornerShape(topStart = 10.dp, topEnd = 10.dp))
-                    .background(MaterialTheme.colorScheme.surfaceVariant)
-                    .padding(horizontal = 12.dp, vertical = 8.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text("Ingredient", fontSize = 12.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(1.8f))
-                Text("Min.qoldiq", fontSize = 12.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(1f), textAlign = TextAlign.Center)
-                Text("Qoldiq", fontSize = 12.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(1f), textAlign = TextAlign.Center)
-                Text("Holat", fontSize = 12.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(1f), textAlign = TextAlign.End)
-            }
-        }
-
-        itemsIndexed(filtered) { idx, ing ->
-            val (color, container) = when (ing.status) {
-                StockStatus.YETARLI -> Pair(Teal10, TealContainer)
-                StockStatus.KAM -> Pair(Amber10, AmberContainer)
-                StockStatus.TUGAGAN -> Pair(Red10, RedContainer)
-            }
-            Column(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)
-                    .let { if (idx == filtered.lastIndex) it.clip(RoundedCornerShape(bottomStart = 10.dp, bottomEnd = 10.dp)) else it }
-                    .background(Color.White)
-                    .border(0.5.dp, Outline)
-            ) {
-                if (idx > 0) HorizontalDivider(color = Outline, thickness = 0.5.dp)
+        if (ingredientsState is ApiResult.Success) {
+            item {
                 Row(
-                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)
+                        .clip(RoundedCornerShape(topStart = 10.dp, topEnd = 10.dp))
+                        .background(MaterialTheme.colorScheme.surfaceVariant)
+                        .padding(horizontal = 12.dp, vertical = 8.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Column(Modifier.weight(1.8f)) {
-                        Text(ing.name, fontSize = 13.sp, fontWeight = FontWeight.Medium)
-                        Text(ing.category, fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text("Ingredient", fontSize = 12.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(1.8f))
+                    Text("Min.qoldiq", fontSize = 12.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(1f), textAlign = TextAlign.Center)
+                    Text("Qoldiq", fontSize = 12.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(1f), textAlign = TextAlign.Center)
+                    Text("Holat", fontSize = 12.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(1f), textAlign = TextAlign.End)
+                }
+            }
+
+            itemsIndexed(filtered) { idx, ing ->
+                val (color, container) = when (ing.status) {
+                    StockStatus.YETARLI -> Pair(Teal10, TealContainer)
+                    StockStatus.KAM -> Pair(Amber10, AmberContainer)
+                    StockStatus.TUGAGAN -> Pair(Red10, RedContainer)
+                }
+                Column(
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)
+                        .let { if (idx == filtered.lastIndex) it.clip(RoundedCornerShape(bottomStart = 10.dp, bottomEnd = 10.dp)) else it }
+                        .background(Color.White).border(0.5.dp, Outline)
+                ) {
+                    if (idx > 0) HorizontalDivider(color = Outline, thickness = 0.5.dp)
+                    Row(modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Column(Modifier.weight(1.8f)) {
+                            Text(ing.name, fontSize = 13.sp, fontWeight = FontWeight.Medium)
+                            Text(ing.category, fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                        Text("${ing.minQuantity.toLong()} ${ing.unit}", fontSize = 12.sp, modifier = Modifier.weight(1f), textAlign = TextAlign.Center, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text("${ing.quantity.toLong()} ${ing.unit}", fontSize = 12.sp, fontWeight = FontWeight.Medium, modifier = Modifier.weight(1f), textAlign = TextAlign.Center, color = color)
+                        Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.CenterEnd) {
+                            StatusChip(ing.status.name.lowercase().replaceFirstChar { it.uppercase() }, color, container)
+                        }
                     }
-                    Text("${ing.minQuantity} ${ing.unit}", fontSize = 12.sp, modifier = Modifier.weight(1f), textAlign = TextAlign.Center, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Text("${ing.quantity} ${ing.unit}", fontSize = 12.sp, fontWeight = FontWeight.Medium, modifier = Modifier.weight(1f), textAlign = TextAlign.Center, color = color)
-                    Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.CenterEnd) {
-                        StatusChip(ing.status.name.lowercase().replaceFirstChar { it.uppercase() }, color, container)
+                }
+            }
+
+            if (filtered.isEmpty()) {
+                item {
+                    Box(Modifier.fillMaxWidth().padding(40.dp), contentAlignment = Alignment.Center) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Icon(Icons.Default.Inventory, null, tint = Outline, modifier = Modifier.size(48.dp))
+                            Spacer(Modifier.height(8.dp))
+                            Text("Ingredientlar topilmadi", fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
                     }
                 }
             }
@@ -822,18 +751,20 @@ fun ChefIngredientsScreen() {
 // ─────────────────────────────────────────────
 
 @Composable
-fun ChefRecipesScreen() {
+fun ChefRecipesScreen(vm: ChefViewModel) {
+    val recipesState by vm.recipesState.collectAsState()
     var searchQuery by remember { mutableStateOf("") }
     var filterActive by remember { mutableStateOf<Boolean?>(null) }
-    val filtered = ChefMock.recipes.filter { r ->
+
+    LaunchedEffect(Unit) { vm.loadRecipes() }
+
+    val allRecipes = (recipesState as? ApiResult.Success)?.data ?: emptyList()
+    val filtered = allRecipes.filter { r ->
         r.name.contains(searchQuery, ignoreCase = true) &&
                 (filterActive == null || r.isActive == filterActive)
     }
 
-    LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(bottom = 24.dp)
-    ) {
+    LazyColumn(modifier = Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = 24.dp)) {
         item {
             Column(Modifier.padding(16.dp)) {
                 SectionHeader("Taom retseptlari") {
@@ -853,28 +784,40 @@ fun ChefRecipesScreen() {
                     fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, lineHeight = 18.sp
                 )
                 Spacer(Modifier.height(12.dp))
+
+                when (recipesState) {
+                    is ApiResult.Loading -> {
+                        Box(Modifier.fillMaxWidth().height(48.dp), contentAlignment = Alignment.Center) {
+                            CircularProgressIndicator(color = Amber10, modifier = Modifier.size(24.dp))
+                        }
+                        return@Column
+                    }
+                    is ApiResult.Error -> {
+                        Text((recipesState as ApiResult.Error).message, color = Red10, fontSize = 13.sp)
+                        TextButton(onClick = { vm.loadRecipes() }) { Text("Qayta urinish", color = Amber10) }
+                        return@Column
+                    }
+                    else -> {}
+                }
+
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     OutlinedTextField(
-                        value = searchQuery,
-                        onValueChange = { searchQuery = it },
+                        value = searchQuery, onValueChange = { searchQuery = it },
                         placeholder = { Text("Qidirish", fontSize = 13.sp) },
-                        modifier = Modifier.weight(1f),
-                        singleLine = true,
+                        modifier = Modifier.weight(1f), singleLine = true,
                         shape = RoundedCornerShape(10.dp),
                         leadingIcon = { Icon(Icons.Default.Search, null, modifier = Modifier.size(18.dp)) },
                         colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = Teal10, unfocusedBorderColor = Outline)
                     )
                     FilterChip(
-                        selected = filterActive == true,
-                        onClick = { filterActive = if (filterActive == true) null else true },
+                        selected = filterActive == true, onClick = { filterActive = if (filterActive == true) null else true },
                         label = { Text("Faol", fontSize = 12.sp) },
                         leadingIcon = { Icon(Icons.Default.CheckCircle, null, modifier = Modifier.size(14.dp)) },
                         colors = FilterChipDefaults.filterChipColors(selectedContainerColor = TealContainer, selectedLabelColor = Teal10),
                         border = FilterChipDefaults.filterChipBorder(enabled = true, selected = filterActive == true, borderColor = Outline, selectedBorderColor = Teal10)
                     )
                     FilterChip(
-                        selected = filterActive == false,
-                        onClick = { filterActive = if (filterActive == false) null else false },
+                        selected = filterActive == false, onClick = { filterActive = if (filterActive == false) null else false },
                         label = { Text("Nofaol", fontSize = 12.sp) },
                         leadingIcon = { Icon(Icons.Default.Cancel, null, modifier = Modifier.size(14.dp)) },
                         colors = FilterChipDefaults.filterChipColors(selectedContainerColor = RedContainer, selectedLabelColor = Red10),
@@ -882,12 +825,12 @@ fun ChefRecipesScreen() {
                     )
                 }
                 Spacer(Modifier.height(4.dp))
-                Text("${filtered.size} / ${ChefMock.recipes.size}", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text("${filtered.size} / ${allRecipes.size}", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Spacer(Modifier.height(12.dp))
             }
         }
 
-        if (filtered.isEmpty()) {
+        if (filtered.isEmpty() && recipesState is ApiResult.Success) {
             item {
                 Box(Modifier.fillMaxWidth().padding(40.dp), contentAlignment = Alignment.Center) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -914,21 +857,16 @@ private fun RecipeCard(recipe: Recipe, modifier: Modifier = Modifier) {
         border = BorderStroke(0.5.dp, Outline),
         elevation = CardDefaults.cardElevation(0.dp)
     ) {
-        Row(
-            modifier = Modifier.padding(14.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
+        Row(modifier = Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             Box(
                 Modifier.size(44.dp).clip(RoundedCornerShape(10.dp))
                     .background(if (recipe.isActive) TealContainer else MaterialTheme.colorScheme.surfaceVariant),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(
-                    Icons.Default.RestaurantMenu, null,
+                Icon(Icons.Default.RestaurantMenu, null,
                     tint = if (recipe.isActive) Teal10 else MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.size(22.dp)
-                )
+                    modifier = Modifier.size(22.dp))
             }
             Column(Modifier.weight(1f)) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -962,43 +900,35 @@ private fun RecipeCard(recipe: Recipe, modifier: Modifier = Modifier) {
 // ─────────────────────────────────────────────
 
 @Composable
-fun ChefMenuCalendarScreen() {
-    var viewMode by remember { mutableStateOf("hafta") } // hafta / kun / oy
+fun ChefMenuCalendarScreen(vm: ChefViewModel) {
+    val menuState by vm.menuCalendarState.collectAsState()
+    var viewMode by remember { mutableStateOf("hafta") }
     val viewModes = listOf("Hafta", "Kun", "Oy")
 
-    LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(bottom = 24.dp)
-    ) {
+    LaunchedEffect(Unit) { vm.loadMenuCalendar() }
+
+    val days = (menuState as? ApiResult.Success)?.data ?: emptyList()
+
+    LazyColumn(modifier = Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = 24.dp)) {
         item {
             Column(Modifier.padding(16.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text("Menyu kalendari", fontSize = 20.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
                     Row {
                         IconButton(onClick = {}) { Icon(Icons.Default.ChevronLeft, null) }
-                        TextButton(onClick = {}) { Text("Bugun", color = Teal10) }
+                        TextButton(onClick = { vm.loadMenuCalendar() }) { Text("Bugun", color = Teal10) }
                         IconButton(onClick = {}) { Icon(Icons.Default.ChevronRight, null) }
                     }
                 }
-                Text("1 - 7-iyun, 2026", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Spacer(Modifier.height(10.dp))
-                // View mode selector
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     viewModes.forEach { mode ->
                         val selected = viewMode == mode.lowercase()
                         FilterChip(
-                            selected = selected,
-                            onClick = { viewMode = mode.lowercase() },
+                            selected = selected, onClick = { viewMode = mode.lowercase() },
                             label = { Text(mode, fontSize = 13.sp) },
-                            colors = FilterChipDefaults.filterChipColors(
-                                selectedContainerColor = Teal10,
-                                selectedLabelColor = Color.White,
-                                containerColor = MaterialTheme.colorScheme.surfaceVariant
-                            ),
-                            border = FilterChipDefaults.filterChipBorder(
-                                enabled = true, selected = selected,
-                                borderColor = Outline, selectedBorderColor = Color.Transparent
-                            )
+                            colors = FilterChipDefaults.filterChipColors(selectedContainerColor = Teal10, selectedLabelColor = Color.White, containerColor = MaterialTheme.colorScheme.surfaceVariant),
+                            border = FilterChipDefaults.filterChipBorder(enabled = true, selected = selected, borderColor = Outline, selectedBorderColor = Color.Transparent)
                         )
                     }
                 }
@@ -1006,49 +936,68 @@ fun ChefMenuCalendarScreen() {
             }
         }
 
-        // Weekly calendar — show days as vertical cards
-        items(ChefMock.weekDays) { day ->
-            WeekDayMenuCard(
-                day = day,
-                isToday = day == "Sesh 2",
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 5.dp)
-            )
+        when (menuState) {
+            is ApiResult.Loading -> {
+                item {
+                    Box(Modifier.fillMaxWidth().height(120.dp), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator(color = Teal10)
+                    }
+                }
+            }
+            is ApiResult.Error -> {
+                item {
+                    Column(Modifier.padding(16.dp)) {
+                        Text((menuState as ApiResult.Error).message, color = Red10, fontSize = 13.sp)
+                        TextButton(onClick = { vm.loadMenuCalendar() }) { Text("Qayta urinish", color = Teal10) }
+                    }
+                }
+            }
+            else -> {
+                items(days) { day ->
+                    WeekDayMenuCard(day, modifier = Modifier.padding(horizontal = 16.dp, vertical = 5.dp))
+                }
+            }
         }
     }
 }
 
 @Composable
-private fun WeekDayMenuCard(day: String, isToday: Boolean, modifier: Modifier = Modifier) {
+private fun WeekDayMenuCard(day: MenuDayUi, modifier: Modifier = Modifier) {
     Card(
         modifier = modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = if (isToday) TealContainer else Color.White),
+        colors = CardDefaults.cardColors(containerColor = if (day.isToday) TealContainer else Color.White),
         shape = RoundedCornerShape(12.dp),
-        border = BorderStroke(if (isToday) 1.dp else 0.5.dp, if (isToday) Teal10.copy(0.5f) else Outline),
+        border = BorderStroke(if (day.isToday) 1.dp else 0.5.dp, if (day.isToday) Teal10.copy(0.5f) else Outline),
         elevation = CardDefaults.cardElevation(0.dp)
     ) {
         Column(Modifier.padding(12.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    day, fontSize = 14.sp, fontWeight = FontWeight.SemiBold,
-                    color = if (isToday) Teal10 else MaterialTheme.colorScheme.onSurface,
+                    day.dayLabel, fontSize = 14.sp, fontWeight = FontWeight.SemiBold,
+                    color = if (day.isToday) Teal10 else MaterialTheme.colorScheme.onSurface,
                     modifier = Modifier.weight(1f)
                 )
-                if (isToday) StatusChip("Bugun", Teal10, TealContainer)
+                if (day.isToday) StatusChip("Bugun", Teal10, TealContainer)
             }
             Spacer(Modifier.height(8.dp))
-            ChefMock.mealTimes.forEach { meal ->
-                DayMealSlot(meal)
+            if (day.meals.isEmpty()) {
+                defaultMealTimes.forEach { mealName -> DayMealSlot(mealName, null) }
+            } else {
+                val mealTypeLabels = listOf("Nonushta" to "breakfast", "Tushlik" to "lunch",
+                    "Kechki ovqat" to "dinner", "Kechki tamaddi" to "snack")
+                mealTypeLabels.forEach { (label, type) ->
+                    val meal = day.meals.find { it.mealType == type }
+                    DayMealSlot(label, meal?.recipeName)
+                }
             }
         }
     }
 }
 
 @Composable
-private fun DayMealSlot(mealName: String) {
+private fun DayMealSlot(mealName: String, recipeName: String?) {
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 4.dp)
+        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
             .clip(RoundedCornerShape(8.dp))
             .border(0.5.dp, Outline, RoundedCornerShape(8.dp))
             .clickable { }
@@ -1056,8 +1005,14 @@ private fun DayMealSlot(mealName: String) {
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        Icon(Icons.Default.Add, null, tint = Teal10, modifier = Modifier.size(16.dp))
-        Text(mealName, fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        if (recipeName != null) {
+            Icon(Icons.Default.CheckCircle, null, tint = Teal10, modifier = Modifier.size(16.dp))
+            Text(recipeName, fontSize = 13.sp, modifier = Modifier.weight(1f))
+            Text(mealName, fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        } else {
+            Icon(Icons.Default.Add, null, tint = Teal10, modifier = Modifier.size(16.dp))
+            Text(mealName, fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
     }
 }
 
@@ -1066,18 +1021,20 @@ private fun DayMealSlot(mealName: String) {
 // ─────────────────────────────────────────────
 
 @Composable
-fun ChefStockMovementsScreen() {
+fun ChefStockMovementsScreen(vm: ChefViewModel) {
+    val movementsState by vm.movementsState.collectAsState()
     var searchQuery by remember { mutableStateOf("") }
     var selectedType by remember { mutableStateOf<MovementType?>(null) }
-    val filtered = ChefMock.movements.filter { mv ->
+
+    LaunchedEffect(Unit) { vm.loadMovements() }
+
+    val allMovements = (movementsState as? ApiResult.Success)?.data ?: emptyList()
+    val filtered = allMovements.filter { mv ->
         mv.ingredient.contains(searchQuery, ignoreCase = true) &&
                 (selectedType == null || mv.type == selectedType)
     }
 
-    LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(bottom = 24.dp)
-    ) {
+    LazyColumn(modifier = Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = 24.dp)) {
         item {
             Column(Modifier.padding(16.dp)) {
                 SectionHeader("Ombor harakatlari") {}
@@ -1086,38 +1043,47 @@ fun ChefStockMovementsScreen() {
                     fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, lineHeight = 18.sp
                 )
                 Spacer(Modifier.height(12.dp))
+
+                when (movementsState) {
+                    is ApiResult.Loading -> {
+                        Box(Modifier.fillMaxWidth().height(48.dp), contentAlignment = Alignment.Center) {
+                            CircularProgressIndicator(color = Amber10, modifier = Modifier.size(24.dp))
+                        }
+                        return@Column
+                    }
+                    is ApiResult.Error -> {
+                        Text((movementsState as ApiResult.Error).message, color = Red10, fontSize = 13.sp)
+                        TextButton(onClick = { vm.loadMovements() }) { Text("Qayta urinish", color = Amber10) }
+                        return@Column
+                    }
+                    else -> {}
+                }
+
                 OutlinedTextField(
-                    value = searchQuery,
-                    onValueChange = { searchQuery = it },
+                    value = searchQuery, onValueChange = { searchQuery = it },
                     placeholder = { Text("Harakat, sabab yoki ingredient qidirish", fontSize = 13.sp) },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(), singleLine = true,
                     shape = RoundedCornerShape(10.dp),
                     leadingIcon = { Icon(Icons.Default.Search, null, modifier = Modifier.size(18.dp)) },
                     colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = Teal10, unfocusedBorderColor = Outline)
                 )
                 Spacer(Modifier.height(8.dp))
-                // Type filters
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    listOf(null to "Barchasi", MovementType.KIRIM to "Kirim", MovementType.CHIQIM to "Chiqim", MovementType.TUZATISH to "Tuzatish")
+                    listOf(null to "Barchasi", MovementType.KIRIM to "Kirim",
+                        MovementType.CHIQIM to "Chiqim", MovementType.TUZATISH to "Tuzatish")
                         .forEach { (type, label) ->
                             val sel = selectedType == type
                             FilterChip(
-                                selected = sel,
-                                onClick = { selectedType = type },
+                                selected = sel, onClick = { selectedType = type },
                                 label = { Text(label, fontSize = 12.sp) },
                                 colors = FilterChipDefaults.filterChipColors(
                                     selectedContainerColor = when (type) {
-                                        MovementType.KIRIM -> TealContainer
-                                        MovementType.CHIQIM -> RedContainer
-                                        MovementType.TUZATISH -> AmberContainer
-                                        null -> MaterialTheme.colorScheme.primary
+                                        MovementType.KIRIM -> TealContainer; MovementType.CHIQIM -> RedContainer
+                                        MovementType.TUZATISH -> AmberContainer; null -> MaterialTheme.colorScheme.primary
                                     },
                                     selectedLabelColor = when (type) {
-                                        MovementType.KIRIM -> Teal10
-                                        MovementType.CHIQIM -> Red10
-                                        MovementType.TUZATISH -> Amber10
-                                        null -> MaterialTheme.colorScheme.onPrimary
+                                        MovementType.KIRIM -> Teal10; MovementType.CHIQIM -> Red10
+                                        MovementType.TUZATISH -> Amber10; null -> MaterialTheme.colorScheme.onPrimary
                                     }
                                 ),
                                 border = FilterChipDefaults.filterChipBorder(enabled = true, selected = sel, borderColor = Outline, selectedBorderColor = Color.Transparent)
@@ -1130,59 +1096,64 @@ fun ChefStockMovementsScreen() {
             }
         }
 
-        // Table header
-        item {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth().padding(horizontal = 16.dp)
-                    .clip(RoundedCornerShape(topStart = 10.dp, topEnd = 10.dp))
-                    .background(MaterialTheme.colorScheme.surfaceVariant)
-                    .padding(horizontal = 12.dp, vertical = 8.dp)
-            ) {
-                Text("Sana", fontSize = 11.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(1.2f))
-                Text("Ingredient", fontSize = 11.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(1.5f))
-                Text("Tur", fontSize = 11.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(0.8f))
-                Text("Miqdor", fontSize = 11.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(1f), textAlign = TextAlign.End)
-            }
-        }
-
-        itemsIndexed(filtered) { idx, mv ->
-            val (color, container) = when (mv.type) {
-                MovementType.KIRIM -> Pair(Teal10, TealContainer)
-                MovementType.CHIQIM -> Pair(Red10, RedContainer)
-                MovementType.TUZATISH -> Pair(Amber10, AmberContainer)
-            }
-            val amountText = when (mv.type) {
-                MovementType.KIRIM -> "+${mv.amount.toInt()} ${mv.unit}"
-                MovementType.CHIQIM -> "-${mv.amount.toInt()} ${mv.unit}"
-                MovementType.TUZATISH -> "~${mv.amount.toInt()} ${mv.unit}"
-            }
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth().padding(horizontal = 16.dp)
-                    .let { if (idx == filtered.lastIndex) it.clip(RoundedCornerShape(bottomStart = 10.dp, bottomEnd = 10.dp)) else it }
-                    .background(Color.White)
-                    .border(0.5.dp, Outline)
-            ) {
-                if (idx > 0) HorizontalDivider(color = Outline, thickness = 0.5.dp)
+        if (movementsState is ApiResult.Success) {
+            item {
                 Row(
-                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)
+                        .clip(RoundedCornerShape(topStart = 10.dp, topEnd = 10.dp))
+                        .background(MaterialTheme.colorScheme.surfaceVariant)
+                        .padding(horizontal = 12.dp, vertical = 8.dp)
                 ) {
-                    Column(Modifier.weight(1.2f)) {
-                        Text(mv.date, fontSize = 12.sp, fontWeight = FontWeight.Medium)
-                        Text(mv.time, fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text("Sana", fontSize = 11.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(1.2f))
+                    Text("Ingredient", fontSize = 11.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(1.5f))
+                    Text("Tur", fontSize = 11.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(0.8f))
+                    Text("Miqdor", fontSize = 11.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(1f), textAlign = TextAlign.End)
+                }
+            }
+
+            itemsIndexed(filtered) { idx, mv ->
+                val (color, container) = when (mv.type) {
+                    MovementType.KIRIM -> Pair(Teal10, TealContainer)
+                    MovementType.CHIQIM -> Pair(Red10, RedContainer)
+                    MovementType.TUZATISH -> Pair(Amber10, AmberContainer)
+                }
+                val amountText = when (mv.type) {
+                    MovementType.KIRIM -> "+${mv.amount.toLong()} ${mv.unit}"
+                    MovementType.CHIQIM -> "-${mv.amount.toLong()} ${mv.unit}"
+                    MovementType.TUZATISH -> "~${mv.amount.toLong()} ${mv.unit}"
+                }
+                Column(
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)
+                        .let { if (idx == filtered.lastIndex) it.clip(RoundedCornerShape(bottomStart = 10.dp, bottomEnd = 10.dp)) else it }
+                        .background(Color.White).border(0.5.dp, Outline)
+                ) {
+                    if (idx > 0) HorizontalDivider(color = Outline, thickness = 0.5.dp)
+                    Row(modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Column(Modifier.weight(1.2f)) {
+                            Text(mv.date, fontSize = 12.sp, fontWeight = FontWeight.Medium)
+                            Text(mv.time, fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                        Column(Modifier.weight(1.5f)) {
+                            Text(mv.ingredient, fontSize = 13.sp, fontWeight = FontWeight.Medium)
+                            Text(mv.unit, fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                        Box(Modifier.weight(0.8f)) { StatusChip(mv.type.name, color, container) }
+                        Column(Modifier.weight(1f), horizontalAlignment = Alignment.End) {
+                            Text(amountText, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = color)
+                            Text("${mv.prevQty.toLong()} → ${mv.newQty.toLong()} ${mv.unit}", fontSize = 10.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
                     }
-                    Column(Modifier.weight(1.5f)) {
-                        Text(mv.ingredient, fontSize = 13.sp, fontWeight = FontWeight.Medium)
-                        Text(mv.unit, fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
-                    Box(Modifier.weight(0.8f)) {
-                        StatusChip(mv.type.name, color, container)
-                    }
-                    Column(Modifier.weight(1f), horizontalAlignment = Alignment.End) {
-                        Text(amountText, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = color)
-                        Text("${mv.prevQty.toInt()} → ${mv.newQty.toInt()} ${mv.unit}", fontSize = 10.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
+
+            if (filtered.isEmpty()) {
+                item {
+                    Box(Modifier.fillMaxWidth().padding(40.dp), contentAlignment = Alignment.Center) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Icon(Icons.Default.SwapVert, null, tint = Outline, modifier = Modifier.size(48.dp))
+                            Spacer(Modifier.height(8.dp))
+                            Text("Harakatlar topilmadi", fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
                     }
                 }
             }
@@ -1204,10 +1175,7 @@ fun ChefAnalyticsScreen() {
         Triple("Qovoq", "60 kg", 20)
     )
 
-    LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(bottom = 24.dp)
-    ) {
+    LazyColumn(modifier = Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = 24.dp)) {
         item {
             Column(Modifier.padding(16.dp)) {
                 SectionHeader("Oshxona analitikasi") {}
@@ -1219,7 +1187,6 @@ fun ChefAnalyticsScreen() {
             }
         }
 
-        // Sarf trendi chart (simplified bar chart)
         item {
             Card(
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
@@ -1246,22 +1213,13 @@ fun ChefAnalyticsScreen() {
                                 verticalArrangement = Arrangement.Bottom,
                                 modifier = Modifier.weight(1f)
                             ) {
-                                Box(
-                                    modifier = Modifier
-                                        .width(28.dp)
-                                        .height((100 * value).dp)
-                                        .clip(RoundedCornerShape(topStart = 4.dp, topEnd = 4.dp))
-                                        .background(Teal10.copy(if (day == "Pay") 1f else 0.5f))
-                                )
+                                Box(modifier = Modifier.width(28.dp).height((100 * value).dp)
+                                    .clip(RoundedCornerShape(topStart = 4.dp, topEnd = 4.dp))
+                                    .background(Teal10.copy(if (day == "Pay") 1f else 0.5f)))
                                 Spacer(Modifier.height(4.dp))
                                 Text(day, fontSize = 10.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             }
                         }
-                    }
-                    Spacer(Modifier.height(8.dp))
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        Box(Modifier.size(10.dp).clip(RoundedCornerShape(2.dp)).background(Teal10))
-                        Text("Consumed", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
             }
@@ -1269,7 +1227,6 @@ fun ChefAnalyticsScreen() {
 
         item { Spacer(Modifier.height(12.dp)) }
 
-        // Ombor ishlatilishi donut chart (simplified)
         item {
             Card(
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
@@ -1282,14 +1239,9 @@ fun ChefAnalyticsScreen() {
                     Text("Ombor ishlatilishi", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
                     Spacer(Modifier.height(16.dp))
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        // Simplified donut visual
                         Box(Modifier.size(120.dp), contentAlignment = Alignment.Center) {
-                            Box(
-                                Modifier.size(120.dp).clip(CircleShape).background(Teal10)
-                            )
-                            Box(
-                                Modifier.size(70.dp).clip(CircleShape).background(Color.White)
-                            )
+                            Box(Modifier.size(120.dp).clip(CircleShape).background(Teal10))
+                            Box(Modifier.size(70.dp).clip(CircleShape).background(Color.White))
                             Text("75%", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Teal10)
                         }
                         Spacer(Modifier.width(16.dp))
@@ -1305,7 +1257,6 @@ fun ChefAnalyticsScreen() {
 
         item { Spacer(Modifier.height(12.dp)) }
 
-        // Eng ko'p ishlatilgan ingredientlar
         item {
             Column(Modifier.padding(horizontal = 16.dp)) {
                 Text("Eng ko'p ishlatilgan ingredientlar", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
@@ -1322,12 +1273,8 @@ fun ChefAnalyticsScreen() {
                 elevation = CardDefaults.cardElevation(0.dp)
             ) {
                 Column {
-                    Row(
-                        modifier = Modifier
-                            .background(MaterialTheme.colorScheme.surfaceVariant)
-                            .padding(horizontal = 14.dp, vertical = 8.dp)
-                            .fillMaxWidth()
-                    ) {
+                    Row(modifier = Modifier.background(MaterialTheme.colorScheme.surfaceVariant)
+                        .padding(horizontal = 14.dp, vertical = 8.dp).fillMaxWidth()) {
                         Text("Ingredient", fontSize = 11.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(1f))
                         Text("Miqdor", fontSize = 11.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(0.8f), textAlign = TextAlign.Center)
                         Text("Harakatlar", fontSize = 11.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(1f), textAlign = TextAlign.End)
@@ -1341,12 +1288,8 @@ fun ChefAnalyticsScreen() {
                                 Text("$pct harakatlar", fontSize = 12.sp, modifier = Modifier.weight(1f), textAlign = TextAlign.End, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             }
                             Spacer(Modifier.height(6.dp))
-                            Box(
-                                modifier = Modifier.fillMaxWidth().height(4.dp).clip(RoundedCornerShape(2.dp)).background(MaterialTheme.colorScheme.surfaceVariant)
-                            ) {
-                                Box(
-                                    modifier = Modifier.fillMaxWidth(pct / 100f).fillMaxHeight().clip(RoundedCornerShape(2.dp)).background(Teal10)
-                                )
+                            Box(modifier = Modifier.fillMaxWidth().height(4.dp).clip(RoundedCornerShape(2.dp)).background(MaterialTheme.colorScheme.surfaceVariant)) {
+                                Box(modifier = Modifier.fillMaxWidth(pct / 100f).fillMaxHeight().clip(RoundedCornerShape(2.dp)).background(Teal10))
                             }
                         }
                     }
@@ -1393,8 +1336,8 @@ private fun MovementRow(mv: StockMovement, modifier: Modifier = Modifier) {
             }
             Column(horizontalAlignment = Alignment.End) {
                 val sign = when (mv.type) { MovementType.KIRIM -> "+"; MovementType.CHIQIM -> "-"; else -> "~" }
-                Text("$sign${mv.amount.toInt()} ${mv.unit}", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = color)
-                Text("${mv.prevQty.toInt()} → ${mv.newQty.toInt()}", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text("$sign${mv.amount.toLong()} ${mv.unit}", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = color)
+                Text("${mv.prevQty.toLong()} → ${mv.newQty.toLong()}", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
     }

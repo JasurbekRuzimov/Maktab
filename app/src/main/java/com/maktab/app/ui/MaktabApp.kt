@@ -767,6 +767,8 @@ fun ChefApp(
             return@ModalNavigationDrawer
         }
 
+        val chefVm: com.maktab.app.viewmodel.ChefViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
+
         Scaffold(
             topBar = {
                 Column(
@@ -834,14 +836,14 @@ fun ChefApp(
         ) { padding ->
             Box(Modifier.fillMaxSize().padding(padding)) {
                 when (selectedId) {
-                    "dashboard"  -> ChefDashboardScreen()
-                    "ombor"      -> ChefOmborScreen()
-                    "ingredient" -> ChefIngredientsScreen()
-                    "retsept"    -> ChefRecipesScreen()
-                    "menyu"      -> ChefMenuCalendarScreen()
-                    "harakat"    -> ChefStockMovementsScreen()
+                    "dashboard"  -> ChefDashboardScreen(chefVm)
+                    "ombor"      -> ChefOmborScreen(chefVm)
+                    "ingredient" -> ChefIngredientsScreen(chefVm)
+                    "retsept"    -> ChefRecipesScreen(chefVm)
+                    "menyu"      -> ChefMenuCalendarScreen(chefVm)
+                    "harakat"    -> ChefStockMovementsScreen(chefVm)
                     "analitika"  -> ChefAnalyticsScreen()
-                    else         -> ChefDashboardScreen()
+                    else         -> ChefDashboardScreen(chefVm)
                 }
             }
         }
