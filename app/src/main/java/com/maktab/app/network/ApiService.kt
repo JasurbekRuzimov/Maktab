@@ -1,6 +1,7 @@
 package com.maktab.app.network
 
 import com.maktab.app.network.models.*
+import okhttp3.ResponseBody
 import retrofit2.Response
 import retrofit2.http.*
 
@@ -271,27 +272,17 @@ interface StudentApiService {
 }
 
 // ─────────────────────────────────────────────
-// CHEF (CAFETERIA)
-// GET  /api/cafeteria/dashboard       → bosh panel
-// GET  /api/cafeteria/ingredients     → ingredientlar
-// POST /api/cafeteria/ingredients     → yangi ingredient
-// PUT  /api/cafeteria/ingredients/{id}→ ingredient tahrirlash
-// GET  /api/cafeteria/recipes         → retseptlar
-// GET  /api/cafeteria/calendar        → menyu kalendari
-// POST /api/cafeteria/calendar        → yangi menyu yozuvi
-// GET  /api/cafeteria/movements       → stock harakatlari
+// CHEF (CAFETERIA) — ResponseBody bilan raw JSON olish
+// Moshi Any? muammosini hal qilish uchun ResponseBody ishlatiladi
 // ─────────────────────────────────────────────
 interface ChefApiService {
 
-    // Kafeteriya dashboard
     @GET("api/cafeteria/dashboard")
-    suspend fun getDashboard(): Response<BaseResponse>
+    suspend fun getDashboard(): Response<ResponseBody>
 
-    // Tasdiqlanishi kerak bo'lganlar
     @GET("api/cafeteria/confirmations/pending")
-    suspend fun getPendingConfirmations(): Response<BaseResponse>
+    suspend fun getPendingConfirmations(): Response<ResponseBody>
 
-    // Ingredientlar ro'yxati
     @GET("api/cafeteria/ingredients")
     suspend fun getIngredients(
         @Query("search") search: String? = null,
@@ -299,80 +290,55 @@ interface ChefApiService {
         @Query("status") status: String? = null,
         @Query("page") page: Int? = null,
         @Query("per_page") perPage: Int? = null
-    ): Response<BaseResponse>
+    ): Response<ResponseBody>
 
-    // Ingredient yaratish
     @POST("api/cafeteria/ingredients")
-    suspend fun createIngredient(
-        @Body request: IngredientRequest
-    ): Response<BaseResponse>
+    suspend fun createIngredient(@Body request: IngredientRequest): Response<ResponseBody>
 
-    // Ingredient tahrirlash
     @PUT("api/cafeteria/ingredients/{id}")
     suspend fun updateIngredient(
         @Path("id") id: String,
         @Body request: IngredientRequest
-    ): Response<BaseResponse>
+    ): Response<ResponseBody>
 
-    // Ingredient o'chirish
     @DELETE("api/cafeteria/ingredients/{id}")
-    suspend fun deleteIngredient(
-        @Path("id") id: String
-    ): Response<BaseResponse>
+    suspend fun deleteIngredient(@Path("id") id: String): Response<ResponseBody>
 
-    // Retseptlar
     @GET("api/cafeteria/recipes")
     suspend fun getRecipes(
         @Query("search") search: String? = null,
         @Query("is_active") isActive: Boolean? = null
-    ): Response<BaseResponse>
+    ): Response<ResponseBody>
 
-    // Retsept yaratish
     @POST("api/cafeteria/recipes")
-    suspend fun createRecipe(
-        @Body request: RecipeRequest
-    ): Response<BaseResponse>
+    suspend fun createRecipe(@Body request: RecipeRequest): Response<ResponseBody>
 
-    // Retsept o'chirish
     @DELETE("api/cafeteria/recipes/{id}")
-    suspend fun deleteRecipe(
-        @Path("id") id: String
-    ): Response<BaseResponse>
+    suspend fun deleteRecipe(@Path("id") id: String): Response<ResponseBody>
 
-    // Menyu kalendari
     @GET("api/cafeteria/calendar")
     suspend fun getMenuCalendar(
         @Query("from") from: String? = null,
         @Query("to") to: String? = null,
         @Query("meal_type") mealType: String? = null
-    ): Response<BaseResponse>
+    ): Response<ResponseBody>
 
-    // Menyu yozuvi yaratish
     @POST("api/cafeteria/calendar")
-    suspend fun createMenuEntry(
-        @Body request: MenuEntryRequest
-    ): Response<BaseResponse>
+    suspend fun createMenuEntry(@Body request: MenuEntryRequest): Response<ResponseBody>
 
-    // Menyuni tasdiqlash
     @POST("api/cafeteria/calendar/{id}/confirm")
-    suspend fun confirmMenuEntry(
-        @Path("id") id: String
-    ): Response<BaseResponse>
+    suspend fun confirmMenuEntry(@Path("id") id: String): Response<ResponseBody>
 
-    // Menyu yozuvini o'chirish
     @DELETE("api/cafeteria/calendar/{id}")
-    suspend fun deleteMenuEntry(
-        @Path("id") id: String
-    ): Response<BaseResponse>
+    suspend fun deleteMenuEntry(@Path("id") id: String): Response<ResponseBody>
 
-    // Stock harakatlari (kirim/chiqim)
     @GET("api/cafeteria/movements")
     suspend fun getMovements(
         @Query("from") from: String? = null,
         @Query("to") to: String? = null,
         @Query("movement_type") movementType: String? = null,
         @Query("ingredient_id") ingredientId: String? = null
-    ): Response<BaseResponse>
+    ): Response<ResponseBody>
 }
 
 // ─────────────────────────────────────────────
