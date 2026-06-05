@@ -2,6 +2,8 @@ package com.maktab.app.network.repositories
 
 import com.maktab.app.network.*
 import com.maktab.app.network.models.JournalCellRequest
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 
 class TeacherRepository {
     private val api = RetrofitClient.teacherService
@@ -11,9 +13,19 @@ class TeacherRepository {
         api.getLessonsBoard(fromDate = fromDate, toDate = toDate)
     }
 
-    // Jurnal options — api/teacher/journal/options
-    suspend fun getJournalOptions() = safeApiCall {
-        api.getJournalOptions()
+    // Jurnal options — 3 ta endpointni parallel chaqiramiz:
+    // journal/options bo'sh qaytsa ham classes/subjects/quarters alohida to'liq keladi
+    suspend fun getJournalOptionsParallel() = coroutineScope {
+        val journalOpts = async { safeApiCall { api.getJournalOptions() } }
+        val classes     = async { safeApiCall { api.getClasses() } }
+        val subjects    = async { safeApiCall { api.getSubjects() } }
+        val quarters    = async { safeApiCall { api.getAcademicQuarters() } }
+        listOf(
+            journalOpts.await(),
+            classes.await(),
+            subjects.await(),
+            quarters.await()
+        )
     }
 
     // Jurnal — api/teacher/journal
@@ -31,7 +43,7 @@ class TeacherRepository {
         api.updateJournalCell(request)
     }
 
-    // Davomat — api/teacher/attendance/lessons
+    // Davomat — api/teacher/attendance/lessons (ishlayapti ✅)
     suspend fun getAttendance(
         classId: String? = null,
         from: String? = null,

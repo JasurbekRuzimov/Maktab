@@ -60,18 +60,167 @@ fun OquvRejaScreen() {
 fun DavomatScreen(vm: TeacherViewModel = viewModel()) {
     val attendanceState by vm.attendanceState.collectAsState()
 
-    // Davomat yuklash
     LaunchedEffect(Unit) { vm.loadAttendance() }
 
-    val att = remember { mutableStateMapOf<Int,MutableList<Boolean>>().apply{MockData.initialAttendance.forEach{(k,v)->put(k,v.toMutableList())}} }
-    val todayPresent by remember(att){derivedStateOf{att.values.count{it[1]==true}}}
-    LazyColumn(modifier=Modifier.fillMaxSize(),contentPadding=PaddingValues(16.dp),verticalArrangement=Arrangement.spacedBy(10.dp)) {
-        item{SectionHeader("Davomat — 5-A sinf"){Text("19 May 2026",fontSize=12.sp,color=MaterialTheme.colorScheme.onSurfaceVariant,modifier=Modifier.clip(RoundedCornerShape(6.dp)).background(MaterialTheme.colorScheme.surfaceVariant).padding(horizontal=10.dp,vertical=4.dp))}}
-        item{Row(horizontalArrangement=Arrangement.spacedBy(10.dp)){StatCard("Jami","${MockData.students.size}",Blue10,Modifier.weight(1f));StatCard("Keldi","$todayPresent",Teal10,Modifier.weight(1f));StatCard("Kelmadi","${MockData.students.size-todayPresent}",Red10,Modifier.weight(1f))}}
-        item{Card(modifier=Modifier.fillMaxWidth(),colors=CardDefaults.cardColors(containerColor=Color.White),shape=RoundedCornerShape(12.dp),border=BorderStroke(0.5.dp,Outline),elevation=CardDefaults.cardElevation(0.dp)){Column{Row(Modifier.background(MaterialTheme.colorScheme.surfaceVariant).padding(horizontal=14.dp,vertical=8.dp).fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(8.dp),verticalAlignment=Alignment.CenterVertically){Text("O'quvchi",fontSize=11.sp,fontWeight=FontWeight.Medium,color=MaterialTheme.colorScheme.onSurfaceVariant,modifier=Modifier.weight(1f));MockData.weekDays.forEach{d->Text(d,fontSize=11.sp,fontWeight=FontWeight.Medium,color=MaterialTheme.colorScheme.onSurfaceVariant,modifier=Modifier.width(36.dp),textAlign=TextAlign.Center)}}
-            MockData.students.forEachIndexed{idx,student->val sa=att[student.id]?:mutableListOf();if(idx>0)HorizontalDivider(color=Outline,thickness=0.5.dp);Row(Modifier.padding(horizontal=14.dp,vertical=9.dp).fillMaxWidth(),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(8.dp)){Row(verticalAlignment=Alignment.CenterVertically,modifier=Modifier.weight(1f),horizontalArrangement=Arrangement.spacedBy(8.dp)){AvatarCircle(student.initials,Teal10,28.dp);Text(student.name.split(" ")[0],fontSize=13.sp)};sa.forEachIndexed{di,isP->Box(Modifier.width(36.dp),contentAlignment=Alignment.Center){AttendanceDot(isP){val n=sa.toMutableList();n[di]=!isP;att[student.id]=n}}}}}}}}
+    when (val state = attendanceState) {
+
+        ApiResult.Loading -> {
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    CircularProgressIndicator(color = Teal10, strokeWidth = 2.dp)
+                    Text("Davomat yuklanmoqda...", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
+        }
+
+        is ApiResult.Error -> {
+            LazyColumn(modifier = Modifier.fillMaxSize(), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                item {
+                    SectionHeader("Davomat") {}
+                    Spacer(Modifier.height(8.dp))
+                    Row(
+                        Modifier.fillMaxWidth().clip(RoundedCornerShape(10.dp))
+                            .background(RedContainer).padding(12.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(Icons.Default.WifiOff, null, tint = Red10, modifier = Modifier.size(16.dp))
+                        Column(Modifier.weight(1f)) {
+                            Text("Ma'lumot yuklanmadi", fontSize = 13.sp, fontWeight = FontWeight.Medium, color = Red10)
+                            Text(state.message, fontSize = 12.sp, color = Red10)
+                        }
+                        TextButton(onClick = { vm.loadAttendance() }) {
+                            Text("Qayta", fontSize = 12.sp, color = Red10)
+                        }
+                    }
+                }
+            }
+        }
+
+        is ApiResult.Success -> {
+            val records = state.data
+
+            // O'quvchilarni nom bo'yicha guruhlash
+            val studentNames = records.map { it.studentName }.distinct().sorted()
+            // Sanalarni olish (oxirgi 5 ta, yoki barchasi)
+            val dates = records.map { it.date }.distinct().sortedDescending().take(5).reversed()
+            val shortDates = dates.map { it.takeLast(5).replace("-", ".") } // "05.05" formatida
+
+            val presentCount = records.count { it.status == "present" || it.status == "keldi" }
+            val absentCount  = records.count { it.status == "absent"  || it.status == "kelmadi" }
+            val totalStudents = studentNames.size
+
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(16.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                item {
+                    SectionHeader("Davomat") {
+                        TextButton(onClick = { vm.loadAttendance() }) {
+                            Icon(Icons.Default.Refresh, null, modifier = Modifier.size(16.dp), tint = Teal10)
+                        }
+                    }
+                }
+
+                // Statistika kartochkalari
+                item {
+                    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        StatCard("Jami", "$totalStudents", Blue10, Modifier.weight(1f))
+                        StatCard("Keldi", "$presentCount", Teal10, Modifier.weight(1f))
+                        StatCard("Kelmadi", "$absentCount", Red10, Modifier.weight(1f))
+                    }
+                }
+
+                // Jadval
+                if (studentNames.isEmpty()) {
+                    item {
+                        Box(
+                            Modifier.fillMaxWidth().padding(vertical = 32.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Icon(Icons.Default.EventBusy, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(40.dp))
+                                Text("Bu hafta davomat yozuvi yo'q", fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            }
+                        }
+                    }
+                } else {
+                    item {
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = CardDefaults.cardColors(containerColor = Color.White),
+                            shape = RoundedCornerShape(12.dp),
+                            border = BorderStroke(0.5.dp, Outline),
+                            elevation = CardDefaults.cardElevation(0.dp)
+                        ) {
+                            Column {
+                                // Header qator — sanalar
+                                Row(
+                                    Modifier.background(MaterialTheme.colorScheme.surfaceVariant)
+                                        .padding(horizontal = 14.dp, vertical = 8.dp)
+                                        .fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text("O'quvchi", fontSize = 11.sp, fontWeight = FontWeight.Medium,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(1f))
+                                    shortDates.forEach { d ->
+                                        Text(d, fontSize = 11.sp, fontWeight = FontWeight.Medium,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            modifier = Modifier.width(40.dp), textAlign = TextAlign.Center)
+                                    }
+                                }
+
+                                // Har bir o'quvchi uchun qator
+                                studentNames.forEachIndexed { idx, name ->
+                                    if (idx > 0) HorizontalDivider(color = Outline, thickness = 0.5.dp)
+                                    val parts    = name.trim().split(" ")
+                                    val initials = parts.take(2).joinToString("") { it.firstOrNull()?.uppercase() ?: "" }
+                                    val firstName = parts.firstOrNull() ?: name
+
+                                    Row(
+                                        Modifier.padding(horizontal = 14.dp, vertical = 9.dp).fillMaxWidth(),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                    ) {
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            modifier = Modifier.weight(1f),
+                                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                        ) {
+                                            AvatarCircle(initials, Teal10, 28.dp)
+                                            Text(firstName, fontSize = 13.sp)
+                                        }
+                                        dates.forEach { date ->
+                                            val rec = records.find { it.studentName == name && it.date.startsWith(date) }
+                                            val isPresent = rec == null || rec.status == "present" || rec.status == "keldi"
+                                            Box(Modifier.width(40.dp), contentAlignment = Alignment.Center) {
+                                                Box(
+                                                    Modifier.size(26.dp).clip(RoundedCornerShape(6.dp))
+                                                        .background(if (isPresent) TealContainer else RedContainer),
+                                                    contentAlignment = Alignment.Center
+                                                ) {
+                                                    Text(
+                                                        if (isPresent) "✓" else "✗",
+                                                        color = if (isPresent) Teal10 else Red10,
+                                                        fontSize = 12.sp,
+                                                        fontWeight = FontWeight.Bold
+                                                    )
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 }
+
 
 @Composable
 fun OylikHisobiScreen() {

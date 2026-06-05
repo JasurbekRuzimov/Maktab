@@ -57,6 +57,15 @@ data class AttendanceRecord(
     val status: String
 )
 
+// Sinflar ekrani uchun
+data class ClassUi(
+    val id: String,
+    val name: String,
+    val classNo: Int,
+    val academicYear: String,
+    val studentCount: Int
+)
+
 // ─────────────────────────────────────────────
 // ViewModel
 // ─────────────────────────────────────────────
@@ -70,7 +79,7 @@ class TeacherViewModel : ViewModel() {
     private val _scheduleState = MutableStateFlow<ApiResult<List<ScheduleDay>>>(ApiResult.Loading)
     val scheduleState: StateFlow<ApiResult<List<ScheduleDay>>> = _scheduleState
 
-    // ── O'quv yili va filial (jadval API dan keladi) ──
+    // ── O'quv yili
     private val _academicYear = MutableStateFlow("")
     val academicYear: StateFlow<String> = _academicYear
 
@@ -85,40 +94,36 @@ class TeacherViewModel : ViewModel() {
     private val _attendanceState = MutableStateFlow<ApiResult<List<AttendanceRecord>>>(ApiResult.Loading)
     val attendanceState: StateFlow<ApiResult<List<AttendanceRecord>>> = _attendanceState
 
-    // ── Umumiy xato xabari ──────────────────
+    // ── Sinflar ─────────────────────────────
+    private val _classesState = MutableStateFlow<ApiResult<List<ClassUi>>>(ApiResult.Loading)
+    val classesState: StateFlow<ApiResult<List<ClassUi>>> = _classesState
+
+    // ── Umumiy xato ─────────────────────────
     private val _errorMsg = MutableStateFlow<String?>(null)
     val errorMsg: StateFlow<String?> = _errorMsg
 
     // ─────────────────────────────────────────
-    // Haftalik jadval yuklash
-    // weekOffset: 0 = joriy/so'nggi o'quv haftasi
+    // Haftalik jadval
     // ─────────────────────────────────────────
     fun loadSchedule(weekOffset: Int = 0) {
         viewModelScope.launch {
             _scheduleState.value = ApiResult.Loading
 
-            // O'quv yili: 2025-09-01 dan 2026-05-31 gacha
-            // Bugun (2026-06-04) o'quv yilidan tashqarida,
-            // shuning uchun o'quv yilining so'nggi haftasini ishlatamiz
-            val academicYearEnd = java.time.LocalDate.of(2026, 5, 31)
-            val today = java.time.LocalDate.now()
-
-            // Asosiy sana — o'quv yili ichida bo'lsa bugun, bo'lmasa oxirgi kun
-            val basDate = if (today.isBefore(academicYearEnd) || today == academicYearEnd) {
+            val academicYearEnd = LocalDate.of(2026, 5, 31)
+            val today = LocalDate.now()
+            val baseDate = if (!today.isAfter(academicYearEnd))
                 today.plusWeeks(weekOffset.toLong())
-            } else {
+            else
                 academicYearEnd.plusWeeks(weekOffset.toLong())
-            }
 
-            val monday = basDate.with(java.time.DayOfWeek.MONDAY)
+            val monday = baseDate.with(java.time.DayOfWeek.MONDAY)
             val friday = monday.plusDays(4)
 
             when (val result = repo.getSchedule(monday.format(fmt), friday.format(fmt))) {
                 is ApiResult.Success -> {
+                    parseAcademicYear(result.data.result?.data)
                     val days = parseScheduleResponse(result.data.result?.data, monday)
                     _scheduleState.value = ApiResult.Success(days)
-                    // O'quv yilini API javobidan olamiz
-                    parseAcademicYear(result.data.result?.data)
                 }
                 is ApiResult.Error -> {
                     _scheduleState.value = ApiResult.Error(result.message)
@@ -130,37 +135,71 @@ class TeacherViewModel : ViewModel() {
     }
 
     // ─────────────────────────────────────────
-    // Jurnal options (sinflar, fanlar, choraklar)
+    // Jurnal options — parallel 3 endpoint:
+    // 1) journal/options  (teacher ga biriktirilgan)
+    // 2) teacher/classes  (barcha sinflar — fallback)
+    // 3) teacher/subjects (barcha fanlar   — fallback)
+    // 4) academic-quarters (choraklar)
     // ─────────────────────────────────────────
     fun loadJournalOptions() {
         viewModelScope.launch {
-            when (val result = repo.getJournalOptions()) {
-                is ApiResult.Success -> {
-                    val options = parseJournalOptions(result.data.result?.data)
-                    _journalOptionsState.value = ApiResult.Success(options)
-                }
-                is ApiResult.Error -> {
-                    _journalOptionsState.value = ApiResult.Error(result.message)
-                }
-                else -> {}
+            val results = repo.getJournalOptionsParallel()
+            // results[0]=journalOpts, [1]=classes, [2]=subjects, [3]=quarters
+            val journalOptsResult = results[0]
+            val classesResult     = results[1]
+            val subjectsResult    = results[2]
+            val quartersResult    = results[3]
+
+            // journal/options dan olingan sinflar va fanlar (teacher ga biriktirilgan)
+            val (jClasses, jSubjects, jQuarters) = if (journalOptsResult is ApiResult.Success) {
+                parseJournalOptions(journalOptsResult.data.result?.data)
+            } else Triple(emptyList(), emptyList(), emptyList())
+
+            // Agar journal/options bo'sh — classes/subjects/quarters dan olamiz (fallback)
+            val finalClasses = jClasses.ifEmpty {
+                if (classesResult is ApiResult.Success)
+                    parseClassesList(classesResult.data.result?.data)
+                else emptyList()
+            }
+
+            val finalSubjects = jSubjects.ifEmpty {
+                if (subjectsResult is ApiResult.Success)
+                    parseSimpleList(subjectsResult.data.result?.data)
+                else emptyList()
+            }
+
+            val finalQuarters = jQuarters.ifEmpty {
+                if (quartersResult is ApiResult.Success)
+                    parseSimpleList(quartersResult.data.result?.data)
+                else emptyList()
+            }
+
+            if (finalClasses.isEmpty() && finalSubjects.isEmpty() && finalQuarters.isEmpty()) {
+                // Hech narsa yo'q — xato yoki bo'sh
+                val errMsg = (journalOptsResult as? ApiResult.Error)?.message
+                    ?: "O'qituvchiga sinf va fan biriktirilmagan"
+                _journalOptionsState.value = ApiResult.Error(errMsg)
+            } else {
+                _journalOptionsState.value = ApiResult.Success(
+                    Triple(finalClasses, finalSubjects, finalQuarters)
+                )
             }
         }
     }
 
     // ─────────────────────────────────────────
-    // Jurnal ma'lumotlari
+    // Jurnal
     // ─────────────────────────────────────────
     fun loadJournal(classId: String, quarterId: String, subjectId: String) {
         viewModelScope.launch {
             _journalState.value = ApiResult.Loading
             when (val result = repo.getJournal(classId, quarterId, subjectId)) {
                 is ApiResult.Success -> {
-                    val rows = parseJournalData(result.data.result?.data)
-                    _journalState.value = ApiResult.Success(rows)
+                    _journalState.value = ApiResult.Success(
+                        parseJournalData(result.data.result?.data)
+                    )
                 }
-                is ApiResult.Error -> {
-                    _journalState.value = ApiResult.Error(result.message)
-                }
+                is ApiResult.Error -> _journalState.value = ApiResult.Error(result.message)
                 else -> {}
             }
         }
@@ -180,20 +219,44 @@ class TeacherViewModel : ViewModel() {
     }
 
     // ─────────────────────────────────────────
-    // Davomat
+    // Davomat — api/teacher/attendance/lessons
+    // Response: {data: [{id, date, class_id, class_name, students:[{...}]}]}
     // ─────────────────────────────────────────
     fun loadAttendance(classId: String? = null) {
         viewModelScope.launch {
             _attendanceState.value = ApiResult.Loading
-            val today = LocalDate.now()
+            val today   = LocalDate.now()
             val weekAgo = today.minusWeeks(1)
             when (val result = repo.getAttendance(classId, weekAgo.format(fmt), today.format(fmt))) {
                 is ApiResult.Success -> {
-                    val records = parseAttendanceData(result.data.result?.data)
-                    _attendanceState.value = ApiResult.Success(records)
+                    _attendanceState.value = ApiResult.Success(
+                        parseAttendanceData(result.data.result?.data)
+                    )
                 }
                 is ApiResult.Error -> {
                     _attendanceState.value = ApiResult.Error(result.message)
+                    _errorMsg.value = result.message
+                }
+                else -> {}
+            }
+        }
+    }
+
+    // ─────────────────────────────────────────
+    // Sinflar — api/teacher/classes
+    // ─────────────────────────────────────────
+    fun loadClasses() {
+        viewModelScope.launch {
+            _classesState.value = ApiResult.Loading
+            when (val result = repo.getClasses()) {
+                is ApiResult.Success -> {
+                    _classesState.value = ApiResult.Success(
+                        parseClassesUi(result.data.result?.data)
+                    )
+                }
+                is ApiResult.Error -> {
+                    _classesState.value = ApiResult.Error(result.message)
+                    _errorMsg.value = result.message
                 }
                 else -> {}
             }
@@ -201,6 +264,10 @@ class TeacherViewModel : ViewModel() {
     }
 
     fun clearError() { _errorMsg.value = null }
+
+    // ─────────────────────────────────────────
+    // PARSE FUNKSIYALARI
+    // ─────────────────────────────────────────
 
     @Suppress("UNCHECKED_CAST")
     private fun parseAcademicYear(data: Any?) {
@@ -210,38 +277,29 @@ class TeacherViewModel : ViewModel() {
             val ay = selected["academic_year"] as? Map<*, *> ?: return
             val name = ay["name"]?.toString() ?: return
             if (name.isNotEmpty()) _academicYear.value = name
-        } catch (e: Exception) { }
+        } catch (_: Exception) {}
     }
 
-    // ─────────────────────────────────────────
-    // PARSE FUNKSIYALARI
-    // Backend dan kelgan Map<*, *> ni UI modellariga o'tkazish
-    // ─────────────────────────────────────────
+    // id yoki _id — backend ikki xil qaytaradi
+    private fun Map<*, *>.resolveId(): String =
+        this["id"]?.toString()?.takeIf { it.isNotEmpty() }
+            ?: this["_id"]?.toString() ?: ""
 
     @Suppress("UNCHECKED_CAST")
-    private fun parseScheduleResponse(data: Any?, weekMonday: java.time.LocalDate = java.time.LocalDate.now()): List<ScheduleDay> {
+    private fun parseScheduleResponse(
+        data: Any?,
+        weekMonday: LocalDate = LocalDate.now()
+    ): List<ScheduleDay> {
         val dayNames = listOf("Dushanba", "Seshanba", "Chorshanba", "Payshanba", "Juma", "Shanba")
-        if (data == null) return emptyList()
+        if (data == null) return emptySchedule(dayNames, weekMonday)
 
         return try {
-            val map = data as? Map<*, *> ?: return emptyList()
+            val map = data as? Map<*, *> ?: return emptySchedule(dayNames, weekMonday)
             val builder = map["builder"] as? Map<*, *>
             val scheduledLessons = builder?.get("scheduled_lessons") as? List<*>
-            val lessonSlots = builder?.get("lesson_slots") as? List<*>
 
-            // Agar dars yo'q bo'lsa — bo'sh jadval qaytaramiz (6 kun)
-            if (scheduledLessons.isNullOrEmpty()) {
-                return (0..5).map { idx ->
-                    ScheduleDay(
-                        dayIndex = idx,
-                        dayName = dayNames[idx],
-                        date = weekMonday.plusDays(idx.toLong()).format(fmt),
-                        lessons = emptyList()
-                    )
-                }
-            }
+            if (scheduledLessons.isNullOrEmpty()) return emptySchedule(dayNames, weekMonday)
 
-            // Darslarni kun bo'yicha guruhlash
             val lessonsByDay = mutableMapOf<Int, MutableList<LessonUi>>()
             (0..5).forEach { lessonsByDay[it] = mutableListOf() }
 
@@ -249,8 +307,8 @@ class TeacherViewModel : ViewModel() {
                 val l = item as? Map<*, *> ?: return@forEach
                 val dateStr = l["lesson_date"]?.toString() ?: return@forEach
                 val lessonDate = try {
-                    java.time.LocalDate.parse(dateStr.substringBefore("T"))
-                } catch (e: Exception) { return@forEach }
+                    LocalDate.parse(dateStr.substringBefore("T"))
+                } catch (_: Exception) { return@forEach }
 
                 val dayIdx = when (lessonDate.dayOfWeek) {
                     java.time.DayOfWeek.MONDAY    -> 0
@@ -262,28 +320,28 @@ class TeacherViewModel : ViewModel() {
                     else -> return@forEach
                 }
 
-                val slot = l["lesson_slot"] as? Map<*, *>
-                val subject = (l["subject"] as? Map<*, *>)?.get("name")?.toString()
+                val slot      = l["lesson_slot"] as? Map<*, *>
+                val subject   = (l["subject"] as? Map<*, *>)?.get("name")?.toString()
                     ?: l["subject_name"]?.toString() ?: ""
                 val className = (l["class"] as? Map<*, *>)?.get("name")?.toString()
                     ?: l["class_name"]?.toString() ?: ""
-                val room = (l["classroom"] as? Map<*, *>)?.get("name")?.toString()
+                val room      = (l["classroom"] as? Map<*, *>)?.get("name")?.toString()
                     ?: l["classroom_name"]?.toString() ?: ""
                 val startTime = slot?.get("start_time")?.toString() ?: l["start_time"]?.toString() ?: ""
-                val endTime = slot?.get("end_time")?.toString() ?: l["end_time"]?.toString() ?: ""
+                val endTime   = slot?.get("end_time")?.toString()   ?: l["end_time"]?.toString()   ?: ""
                 val lessonNum = (slot?.get("lesson_number") as? Number)?.toInt()
-                    ?: (l["lesson_number"] as? Number)?.toInt() ?: (lessonsByDay[dayIdx]!!.size + 1)
+                    ?: (l["lesson_number"] as? Number)?.toInt()
+                    ?: (lessonsByDay[dayIdx]!!.size + 1)
 
                 lessonsByDay[dayIdx]!!.add(
                     LessonUi(
-                        id = l["id"]?.toString() ?: "",
-                        period = lessonNum,
-                        time = if (startTime.isNotEmpty() && endTime.isNotEmpty())
-                            "$startTime–$endTime" else "",
-                        subject = subject,
+                        id        = l.resolveId(),
+                        period    = lessonNum,
+                        time      = if (startTime.isNotEmpty() && endTime.isNotEmpty()) "$startTime–$endTime" else "",
+                        subject   = subject,
                         className = className,
-                        teacher = "",
-                        room = room
+                        teacher   = "",
+                        room      = room
                     )
                 )
             }
@@ -291,18 +349,22 @@ class TeacherViewModel : ViewModel() {
             (0..5).map { idx ->
                 ScheduleDay(
                     dayIndex = idx,
-                    dayName = dayNames[idx],
-                    date = weekMonday.plusDays(idx.toLong()).format(fmt),
-                    lessons = lessonsByDay[idx]!!.sortedBy { it.period }
+                    dayName  = dayNames[idx],
+                    date     = weekMonday.plusDays(idx.toLong()).format(fmt),
+                    lessons  = lessonsByDay[idx]!!.sortedBy { it.period }
                 )
             }
-        } catch (e: Exception) {
-            (0..5).map { idx ->
-                ScheduleDay(idx, dayNames[idx], weekMonday.plusDays(idx.toLong()).format(fmt), emptyList())
-            }
+        } catch (_: Exception) {
+            emptySchedule(dayNames, weekMonday)
         }
     }
 
+    private fun emptySchedule(dayNames: List<String>, weekMonday: LocalDate) =
+        (0..5).map { idx ->
+            ScheduleDay(idx, dayNames[idx], weekMonday.plusDays(idx.toLong()).format(fmt), emptyList())
+        }
+
+    // journal/options dan: {classes:[], subjects:[], quarters:[]}
     @Suppress("UNCHECKED_CAST")
     private fun parseJournalOptions(data: Any?): Triple<List<JournalOption>, List<JournalOption>, List<JournalOption>> {
         if (data == null) return Triple(emptyList(), emptyList(), emptyList())
@@ -310,10 +372,75 @@ class TeacherViewModel : ViewModel() {
             val map = data as? Map<*, *> ?: return Triple(emptyList(), emptyList(), emptyList())
             fun parseList(key: String) = (map[key] as? List<*>)?.mapNotNull { item ->
                 val m = item as? Map<*, *> ?: return@mapNotNull null
-                JournalOption(m["id"]?.toString() ?: "", m["name"]?.toString() ?: "")
+                JournalOption(m.resolveId(), m["name"]?.toString() ?: "")
             } ?: emptyList()
             Triple(parseList("classes"), parseList("subjects"), parseList("quarters"))
-        } catch (e: Exception) { Triple(emptyList(), emptyList(), emptyList()) }
+        } catch (_: Exception) { Triple(emptyList(), emptyList(), emptyList()) }
+    }
+
+    // Umumiy list parse — id/name juftligi
+    @Suppress("UNCHECKED_CAST")
+    private fun parseSimpleList(data: Any?): List<JournalOption> {
+        if (data == null) return emptyList()
+        return try {
+            val list: List<*> = when (data) {
+                is List<*>   -> data
+                is Map<*, *> -> (data["items"] as? List<*>)
+                    ?: (data["data"] as? List<*>)
+                    ?: return emptyList()
+                else -> return emptyList()
+            }
+            list.mapNotNull { item ->
+                val m = item as? Map<*, *> ?: return@mapNotNull null
+                val id   = m.resolveId().takeIf { it.isNotEmpty() } ?: return@mapNotNull null
+                val name = m["name"]?.toString() ?: return@mapNotNull null
+                JournalOption(id, name)
+            }
+        } catch (_: Exception) { emptyList() }
+    }
+
+    // api/teacher/classes → JournalOption list (id, name)
+    @Suppress("UNCHECKED_CAST")
+    private fun parseClassesList(data: Any?): List<JournalOption> {
+        if (data == null) return emptyList()
+        return try {
+            val list: List<*> = when (data) {
+                is List<*>   -> data
+                is Map<*, *> -> (data["data"] as? List<*>) ?: return emptyList()
+                else -> return emptyList()
+            }
+            list.mapNotNull { item ->
+                val m = item as? Map<*, *> ?: return@mapNotNull null
+                val id   = m.resolveId().takeIf { it.isNotEmpty() } ?: return@mapNotNull null
+                val name = m["name"]?.toString() ?: m["class_name"]?.toString() ?: return@mapNotNull null
+                JournalOption(id, name)
+            }
+        } catch (_: Exception) { emptyList() }
+    }
+
+    // api/teacher/classes → ClassUi list (sinflarim ekrani uchun)
+    @Suppress("UNCHECKED_CAST")
+    private fun parseClassesUi(data: Any?): List<ClassUi> {
+        if (data == null) return emptyList()
+        return try {
+            val list: List<*> = when (data) {
+                is List<*>   -> data
+                is Map<*, *> -> (data["data"] as? List<*>) ?: return emptyList()
+                else -> return emptyList()
+            }
+            list.mapNotNull { item ->
+                val m = item as? Map<*, *> ?: return@mapNotNull null
+                val id   = m.resolveId().takeIf { it.isNotEmpty() } ?: return@mapNotNull null
+                val name = m["name"]?.toString() ?: m["class_name"]?.toString() ?: return@mapNotNull null
+                ClassUi(
+                    id           = id,
+                    name         = name,
+                    classNo      = (m["class"] as? Number)?.toInt() ?: 0,
+                    academicYear = m["academic_year"]?.toString() ?: "",
+                    studentCount = (m["capacity"] as? Number)?.toInt() ?: 0
+                )
+            }
+        } catch (_: Exception) { emptyList() }
     }
 
     @Suppress("UNCHECKED_CAST")
@@ -323,42 +450,82 @@ class TeacherViewModel : ViewModel() {
             val map = data as? Map<*, *> ?: return emptyList()
             val students = (map["students"] as? List<*>) ?: return emptyList()
             students.mapNotNull { item ->
-                val m = item as? Map<*, *> ?: return@mapNotNull null
+                val m    = item as? Map<*, *> ?: return@mapNotNull null
                 val name = m["name"]?.toString() ?: return@mapNotNull null
-                val parts = name.trim().split(" ")
+                val parts    = name.trim().split(" ")
                 val initials = parts.take(2).joinToString("") { it.firstOrNull()?.uppercaseChar()?.toString() ?: "" }
-                val entries = (m["entries"] as? Map<*, *>)?.mapNotNull { (k, v) ->
+                val entries  = (m["entries"] as? Map<*, *>)?.mapNotNull { (k, v) ->
                     val em = v as? Map<*, *> ?: return@mapNotNull null
                     k.toString() to JournalEntryUi(
-                        grade = (em["grade"] as? Number)?.toInt(),
+                        grade      = (em["grade"] as? Number)?.toInt(),
                         attendance = em["attendance"]?.toString() ?: "present",
-                        homework = em["homework"]?.toString() ?: "-"
+                        homework   = em["homework"]?.toString() ?: "-"
                     )
                 }?.toMap() ?: emptyMap()
                 JournalStudentRow(
-                    studentId = m["id"]?.toString() ?: "",
+                    studentId   = m.resolveId(),
                     studentName = name,
-                    initials = initials,
-                    entries = entries
+                    initials    = initials,
+                    entries     = entries
                 )
             }
-        } catch (e: Exception) { emptyList() }
+        } catch (_: Exception) { emptyList() }
     }
 
+    // attendance/lessons response:
+    // data: [{id, date, class_name, students:[{student_id, student_name, status, ...}]}]
+    // Yoki flat list: [{student_id, student_name, date, status}]
     @Suppress("UNCHECKED_CAST")
     private fun parseAttendanceData(data: Any?): List<AttendanceRecord> {
         if (data == null) return emptyList()
         return try {
-            val list = data as? List<*> ?: return emptyList()
-            list.mapNotNull { item ->
-                val m = item as? Map<*, *> ?: return@mapNotNull null
-                AttendanceRecord(
-                    studentId = m["student_id"]?.toString() ?: "",
-                    studentName = m["student_name"]?.toString() ?: "",
-                    date = m["date"]?.toString() ?: "",
-                    status = m["status"]?.toString() ?: "present"
-                )
+            val rawList: List<*> = when (data) {
+                is List<*>   -> data
+                is Map<*, *> -> (data["data"] as? List<*>)
+                    ?: (data["records"] as? List<*>)
+                    ?: return emptyList()
+                else -> return emptyList()
             }
-        } catch (e: Exception) { emptyList() }
+            if (rawList.isEmpty()) return emptyList()
+
+            // Birinchi elementga qarab formatni aniqlaymiz
+            val first = rawList.firstOrNull() as? Map<*, *>
+            val isNestedFormat = first?.containsKey("students") == true
+
+            if (isNestedFormat) {
+                // Nested format: [{date, class_name, students:[{student_id, student_name, status}]}]
+                val records = mutableListOf<AttendanceRecord>()
+                rawList.forEach { lessonItem ->
+                    val lesson   = lessonItem as? Map<*, *> ?: return@forEach
+                    val date     = lesson["date"]?.toString()?.substringBefore("T") ?: ""
+                    val students = lesson["students"] as? List<*> ?: return@forEach
+                    students.forEach { studentItem ->
+                        val s = studentItem as? Map<*, *> ?: return@forEach
+                        records.add(AttendanceRecord(
+                            studentId   = s["student_id"]?.toString() ?: s.resolveId(),
+                            studentName = s["student_name"]?.toString()
+                                ?: s["name"]?.toString()
+                                ?: s["fullname"]?.toString() ?: "",
+                            date        = date,
+                            status      = s["status"]?.toString() ?: "present"
+                        ))
+                    }
+                }
+                records
+            } else {
+                // Flat format: [{student_id, student_name, date, status}]
+                rawList.mapNotNull { item ->
+                    val m = item as? Map<*, *> ?: return@mapNotNull null
+                    AttendanceRecord(
+                        studentId   = m["student_id"]?.toString() ?: m.resolveId(),
+                        studentName = m["student_name"]?.toString()
+                            ?: m["name"]?.toString()
+                            ?: m["fullname"]?.toString() ?: "",
+                        date        = m["date"]?.toString()?.substringBefore("T") ?: "",
+                        status      = m["status"]?.toString() ?: "present"
+                    )
+                }
+            }
+        } catch (_: Exception) { emptyList() }
     }
 }

@@ -601,7 +601,7 @@ fun DrawerApp(
                         "kontent"  -> DarsKontentiScreen(language)
                         "davomat"  -> DavomatScreen(vm = teacherVm!!)
                         "baholash" -> BaholashScreen(language)
-                        "sinflar"  -> SinflarimScreen(language)
+                        "sinflar"  -> SinflarimScreen(language, vm = teacherVm!!)
                         else       -> TeacherScheduleScreen(vm = teacherVm!!)
                     }
                 } else if (isStudent) {

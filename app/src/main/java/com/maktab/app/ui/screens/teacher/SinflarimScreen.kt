@@ -17,98 +17,125 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.maktab.app.data.MockData
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.maktab.app.network.ApiResult
+import com.maktab.app.viewmodel.ClassUi
+import com.maktab.app.viewmodel.TeacherViewModel
 import com.maktab.app.ui.theme.*
 
 @Composable
-fun SinflarimScreen(language: String = "uz") {
-    val title      = when(language){ "ru"->"Мои классы"; "en"->"My Classes"; else->"Sinflarim" }
-    val subtitle   = when(language){ "ru"->"Список классов и учащихся"; "en"->"Classes and students"; else->"Biriktirilgan sinflar va o'quvchilar" }
-    val classLbl   = when(language){ "ru"->"Класс"; "en"->"Class"; else->"Sinf" }
-    val codeLbl    = when(language){ "ru"->"Код"; "en"->"Code"; else->"Sinf kodi" }
-    val yearLbl    = when(language){ "ru"->"Год"; "en"->"Year"; else->"O'quv yili" }
-    val studentLbl = when(language){ "ru"->"Учащиеся"; "en"->"Students"; else->"O'quvchilar" }
+fun SinflarimScreen(language: String = "uz", vm: TeacherViewModel = viewModel()) {
 
-    var expandedClassId by remember { mutableStateOf<Int?>(null) }
+    val classesState by vm.classesState.collectAsState()
+
+    LaunchedEffect(Unit) { vm.loadClasses() }
+
+    val title     = when(language){ "ru"->"Мои классы"; "en"->"My Classes"; else->"Sinflarim" }
+    val subtitle  = when(language){ "ru"->"Список классов"; "en"->"Assigned classes"; else->"Biriktirilgan sinflar" }
+    val classLbl  = when(language){ "ru"->"Класс"; "en"->"Class"; else->"Sinf" }
+    val yearLbl   = when(language){ "ru"->"Год"; "en"->"Year"; else->"O'quv yili" }
+    val noLbl     = when(language){ "ru"->"Нет классов"; "en"->"No classes"; else->"Sinflar yo'q" }
+
+    var expandedId by remember { mutableStateOf<String?>(null) }
 
     LazyColumn(
         Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background),
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
+        // Sarlavha
         item {
             Column {
-                Text(title, fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
+                Text(title,    fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
                 Spacer(Modifier.height(2.dp))
                 Text(subtitle, fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
-        // Stats
-        item {
-            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                StatCardSimple(when(language){"ru"->"Классов";"en"->"Classes";else->"Sinflar"}, "${MockData.schoolClasses.size}", Teal10, TealContainer, Modifier.weight(1f))
-                StatCardSimple(when(language){"ru"->"Учащихся";"en"->"Students";else->"O'quvchilar"}, "${MockData.classStudents.size}", Blue10, BlueContainer, Modifier.weight(1f))
-            }
-        }
-        // Table header
-        item {
-            Card(Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(MaterialTheme.colorScheme.surface),
-                shape = RoundedCornerShape(12.dp), border = BorderStroke(0.5.dp, MaterialTheme.colorScheme.outline),
-                elevation = CardDefaults.cardElevation(0.dp)) {
-                Column {
-                    // Header
-                    Row(Modifier.background(MaterialTheme.colorScheme.surfaceVariant).padding(horizontal = 14.dp, vertical = 8.dp).fillMaxWidth()) {
-                        Text(classLbl, fontSize = 11.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(1.2f))
-                        Text(codeLbl, fontSize = 11.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(1f))
-                        Text(yearLbl, fontSize = 11.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(1.2f))
-                        Text(studentLbl, fontSize = 11.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.width(60.dp), textAlign = TextAlign.End)
+
+        when (val state = classesState) {
+
+            ApiResult.Loading -> item {
+                Box(Modifier.fillMaxWidth().padding(vertical = 48.dp), Alignment.Center) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        CircularProgressIndicator(color = Teal10, strokeWidth = 2.dp)
+                        Text("Sinflar yuklanmoqda...", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
-                    HorizontalDivider(color = MaterialTheme.colorScheme.outline, thickness = 0.5.dp)
-                    // Class rows
-                    MockData.schoolClasses.forEachIndexed { idx, cls ->
-                        if (idx > 0) HorizontalDivider(color = MaterialTheme.colorScheme.outline, thickness = 0.5.dp)
-                        Column {
+                }
+            }
+
+            is ApiResult.Error -> item {
+                Row(
+                    Modifier.fillMaxWidth().clip(RoundedCornerShape(10.dp))
+                        .background(RedContainer).padding(12.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(Icons.Default.WifiOff, null, tint = Red10, modifier = Modifier.size(16.dp))
+                    Text(state.message, fontSize = 13.sp, color = Red10, modifier = Modifier.weight(1f))
+                    TextButton(onClick = { vm.loadClasses() }) {
+                        Text("Qayta", fontSize = 12.sp, color = Red10)
+                    }
+                }
+            }
+
+            is ApiResult.Success -> {
+                val classes = state.data
+
+                // Statistika
+                item {
+                    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        StatCardSimple(
+                            when(language){"ru"->"Классов";"en"->"Classes";else->"Sinflar"},
+                            "${classes.size}", Teal10, TealContainer, Modifier.weight(1f)
+                        )
+                        StatCardSimple(
+                            when(language){"ru"->"Уч. год";"en"->"Year";else->"O'quv yili"},
+                            classes.firstOrNull()?.academicYear ?: "–", Blue10, BlueContainer, Modifier.weight(1f)
+                        )
+                    }
+                }
+
+                if (classes.isEmpty()) {
+                    item {
+                        Box(Modifier.fillMaxWidth().padding(vertical = 40.dp), Alignment.Center) {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Icon(Icons.Default.School, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(40.dp))
+                                Text(noLbl, fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                Text("Backend da o'qituvchiga sinf biriktirilmagan", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            }
+                        }
+                    }
+                } else {
+                    // Sinflarni tartib raqami bo'yicha guruhlaymiz
+                    val grouped = classes.groupBy { it.classNo }.toSortedMap()
+
+                    grouped.forEach { (gradeNo, gradeClasses) ->
+                        // Guruh sarlavhasi
+                        item {
                             Row(
-                                Modifier.fillMaxWidth().clickable { expandedClassId = if (expandedClassId == cls.id) null else cls.id }.padding(horizontal = 14.dp, vertical = 12.dp),
+                                Modifier.fillMaxWidth()
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(MaterialTheme.colorScheme.surfaceVariant)
+                                    .padding(horizontal = 12.dp, vertical = 6.dp),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Row(Modifier.weight(1.2f), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                    Box(Modifier.size(30.dp).clip(RoundedCornerShape(8.dp)).background(TealContainer), Alignment.Center) {
-                                        Text(cls.name.first().toString(), fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Teal10)
-                                    }
-                                    Text(cls.name, fontSize = 14.sp, fontWeight = FontWeight.Medium)
-                                }
-                                Text(cls.code, fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(1f))
-                                Text(cls.year, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(1.2f))
-                                Row(Modifier.width(60.dp), horizontalArrangement = Arrangement.End, verticalAlignment = Alignment.CenterVertically) {
-                                    Box(Modifier.clip(RoundedCornerShape(6.dp)).background(BlueContainer).padding(horizontal = 8.dp, vertical = 3.dp)) {
-                                        Text("${cls.studentCount}", fontSize = 12.sp, color = Blue10, fontWeight = FontWeight.Medium)
-                                    }
-                                    Spacer(Modifier.width(4.dp))
-                                    Icon(if (expandedClassId == cls.id) Icons.Default.ExpandLess else Icons.Default.ExpandMore, null, Modifier.size(16.dp), MaterialTheme.colorScheme.onSurfaceVariant)
-                                }
+                                Text(
+                                    if (gradeNo == 0) "0-SINF" else "$gradeNo-sinf",
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
                             }
-                            // Expanded student list
-                            if (expandedClassId == cls.id) {
-                                val clsStudents = MockData.classStudents.filter { it.classId == cls.id }
-                                Column(Modifier.background(MaterialTheme.colorScheme.surfaceVariant).padding(vertical = 4.dp)) {
-                                    Row(Modifier.padding(horizontal = 14.dp, vertical = 4.dp)) {
-                                        Text(when(language){"ru"->"#";"en"->"#";else->"T/r"}, fontSize = 10.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.width(28.dp))
-                                        Text(when(language){"ru"->"Имя ученика";"en"->"Student Name";else->"O'quvchi ismi"}, fontSize = 10.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(1f))
-                                        Text("ID", fontSize = 10.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                    }
-                                    clsStudents.forEachIndexed { i, s ->
-                                        Row(Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-                                            Box(Modifier.width(28.dp).size(20.dp).clip(CircleShape).background(MaterialTheme.colorScheme.outline.copy(0.3f)), Alignment.Center) {
-                                                Text("${i+1}", fontSize = 9.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                            }
-                                            Text(s.name, fontSize = 12.sp, modifier = Modifier.weight(1f))
-                                            Text(s.studentId, fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                        }
-                                        if (i < clsStudents.size - 1) HorizontalDivider(Modifier.padding(horizontal = 14.dp), color = MaterialTheme.colorScheme.outline, thickness = 0.3.dp)
-                                    }
-                                }
-                            }
+                        }
+
+                        // Sinf qatorlari
+                        items(gradeClasses, key = { it.id }) { cls ->
+                            ClassRow(
+                                cls        = cls,
+                                language   = language,
+                                isExpanded = expandedId == cls.id,
+                                onToggle   = { expandedId = if (expandedId == cls.id) null else cls.id }
+                            )
                         }
                     }
                 }
@@ -118,8 +145,93 @@ fun SinflarimScreen(language: String = "uz") {
 }
 
 @Composable
+private fun ClassRow(
+    cls: ClassUi,
+    language: String,
+    isExpanded: Boolean,
+    onToggle: () -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        shape = RoundedCornerShape(12.dp),
+        border = BorderStroke(0.5.dp, Outline),
+        elevation = CardDefaults.cardElevation(0.dp)
+    ) {
+        Column {
+            Row(
+                Modifier.fillMaxWidth().clickable(onClick = onToggle).padding(horizontal = 14.dp, vertical = 12.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Sinf belgisi
+                Box(
+                    Modifier.size(36.dp).clip(RoundedCornerShape(9.dp)).background(TealContainer),
+                    Alignment.Center
+                ) {
+                    Text(
+                        cls.name.firstOrNull()?.toString() ?: "?",
+                        fontSize = 15.sp, fontWeight = FontWeight.Bold, color = Teal10
+                    )
+                }
+                Spacer(Modifier.width(12.dp))
+
+                Column(Modifier.weight(1f)) {
+                    Text(cls.name, fontSize = 14.sp, fontWeight = FontWeight.Medium)
+                    if (cls.academicYear.isNotEmpty()) {
+                        Text(cls.academicYear, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                }
+
+                if (cls.studentCount > 0) {
+                    Box(
+                        Modifier.clip(RoundedCornerShape(6.dp)).background(BlueContainer)
+                            .padding(horizontal = 8.dp, vertical = 3.dp)
+                    ) {
+                        Text("${cls.studentCount}", fontSize = 12.sp, color = Blue10, fontWeight = FontWeight.Medium)
+                    }
+                    Spacer(Modifier.width(8.dp))
+                }
+
+                Icon(
+                    if (isExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                    null, Modifier.size(18.dp), MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+
+            // Kengaytirilganda — sinf haqida qo'shimcha ma'lumot
+            if (isExpanded) {
+                HorizontalDivider(color = Outline, thickness = 0.5.dp)
+                Column(
+                    Modifier.background(MaterialTheme.colorScheme.surfaceVariant)
+                        .padding(horizontal = 14.dp, vertical = 10.dp),
+                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    InfoRow("Sinf raqami", if (cls.classNo == 0) "0 (tayyorlov)" else "${cls.classNo}")
+                    InfoRow("O'quv yili", cls.academicYear.ifEmpty { "–" })
+                    InfoRow("ID", cls.id)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun InfoRow(label: String, value: String) {
+    Row(
+        Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Text(label, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(value, fontSize = 12.sp, fontWeight = FontWeight.Medium)
+    }
+}
+
+@Composable
 private fun StatCardSimple(label: String, value: String, color: Color, bg: Color, modifier: Modifier) {
     Box(modifier.clip(RoundedCornerShape(10.dp)).background(bg).padding(14.dp)) {
-        Column { Text(value, fontSize = 22.sp, fontWeight = FontWeight.SemiBold, color = color); Text(label, fontSize = 11.sp, color = color.copy(0.75f)) }
+        Column {
+            Text(value, fontSize = 20.sp, fontWeight = FontWeight.SemiBold, color = color)
+            Text(label, fontSize = 11.sp, color = color.copy(0.75f))
+        }
     }
 }
