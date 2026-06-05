@@ -70,6 +70,10 @@ class TeacherViewModel : ViewModel() {
     private val _scheduleState = MutableStateFlow<ApiResult<List<ScheduleDay>>>(ApiResult.Loading)
     val scheduleState: StateFlow<ApiResult<List<ScheduleDay>>> = _scheduleState
 
+    // ── O'quv yili va filial (jadval API dan keladi) ──
+    private val _academicYear = MutableStateFlow("")
+    val academicYear: StateFlow<String> = _academicYear
+
     // ── Jurnal ──────────────────────────────
     private val _journalOptionsState = MutableStateFlow<ApiResult<Triple<List<JournalOption>, List<JournalOption>, List<JournalOption>>>>(ApiResult.Loading)
     val journalOptionsState: StateFlow<ApiResult<Triple<List<JournalOption>, List<JournalOption>, List<JournalOption>>>> = _journalOptionsState
@@ -113,6 +117,8 @@ class TeacherViewModel : ViewModel() {
                 is ApiResult.Success -> {
                     val days = parseScheduleResponse(result.data.result?.data, monday)
                     _scheduleState.value = ApiResult.Success(days)
+                    // O'quv yilini API javobidan olamiz
+                    parseAcademicYear(result.data.result?.data)
                 }
                 is ApiResult.Error -> {
                     _scheduleState.value = ApiResult.Error(result.message)
@@ -196,6 +202,17 @@ class TeacherViewModel : ViewModel() {
 
     fun clearError() { _errorMsg.value = null }
 
+    @Suppress("UNCHECKED_CAST")
+    private fun parseAcademicYear(data: Any?) {
+        try {
+            val map = data as? Map<*, *> ?: return
+            val selected = map["selected"] as? Map<*, *> ?: return
+            val ay = selected["academic_year"] as? Map<*, *> ?: return
+            val name = ay["name"]?.toString() ?: return
+            if (name.isNotEmpty()) _academicYear.value = name
+        } catch (e: Exception) { }
+    }
+
     // ─────────────────────────────────────────
     // PARSE FUNKSIYALARI
     // Backend dan kelgan Map<*, *> ni UI modellariga o'tkazish
@@ -203,7 +220,7 @@ class TeacherViewModel : ViewModel() {
 
     @Suppress("UNCHECKED_CAST")
     private fun parseScheduleResponse(data: Any?, weekMonday: java.time.LocalDate = java.time.LocalDate.now()): List<ScheduleDay> {
-        val dayNames = listOf("Dushanba", "Seshanba", "Chorshanba", "Payshanba", "Juma")
+        val dayNames = listOf("Dushanba", "Seshanba", "Chorshanba", "Payshanba", "Juma", "Shanba")
         if (data == null) return emptyList()
 
         return try {
@@ -212,9 +229,9 @@ class TeacherViewModel : ViewModel() {
             val scheduledLessons = builder?.get("scheduled_lessons") as? List<*>
             val lessonSlots = builder?.get("lesson_slots") as? List<*>
 
-            // Agar dars yo'q bo'lsa — bo'sh jadval qaytaramiz (5 kun)
+            // Agar dars yo'q bo'lsa — bo'sh jadval qaytaramiz (6 kun)
             if (scheduledLessons.isNullOrEmpty()) {
-                return (0..4).map { idx ->
+                return (0..5).map { idx ->
                     ScheduleDay(
                         dayIndex = idx,
                         dayName = dayNames[idx],
@@ -226,7 +243,7 @@ class TeacherViewModel : ViewModel() {
 
             // Darslarni kun bo'yicha guruhlash
             val lessonsByDay = mutableMapOf<Int, MutableList<LessonUi>>()
-            (0..4).forEach { lessonsByDay[it] = mutableListOf() }
+            (0..5).forEach { lessonsByDay[it] = mutableListOf() }
 
             scheduledLessons.forEach { item ->
                 val l = item as? Map<*, *> ?: return@forEach
@@ -241,6 +258,7 @@ class TeacherViewModel : ViewModel() {
                     java.time.DayOfWeek.WEDNESDAY -> 2
                     java.time.DayOfWeek.THURSDAY  -> 3
                     java.time.DayOfWeek.FRIDAY    -> 4
+                    java.time.DayOfWeek.SATURDAY  -> 5
                     else -> return@forEach
                 }
 
@@ -270,7 +288,7 @@ class TeacherViewModel : ViewModel() {
                 )
             }
 
-            (0..4).map { idx ->
+            (0..5).map { idx ->
                 ScheduleDay(
                     dayIndex = idx,
                     dayName = dayNames[idx],
@@ -279,7 +297,7 @@ class TeacherViewModel : ViewModel() {
                 )
             }
         } catch (e: Exception) {
-            (0..4).map { idx ->
+            (0..5).map { idx ->
                 ScheduleDay(idx, dayNames[idx], weekMonday.plusDays(idx.toLong()).format(fmt), emptyList())
             }
         }

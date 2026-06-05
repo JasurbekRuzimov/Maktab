@@ -68,7 +68,7 @@ data class NavItem(
 )
 
 // ─────────────────────────────────────────────
-// DRAWER ITEMS — Teacher
+// DRAWER ITEMS
 // ─────────────────────────────────────────────
 
 val teacherDrawerItems = listOf(
@@ -79,10 +79,6 @@ val teacherDrawerItems = listOf(
     NavItem("baholash", "Baholash",       Icons.Default.Assessment,  "Nazorat"),
     NavItem("sinflar",  "Sinflarim",      Icons.Default.People,      "Nazorat"),
 )
-
-// ─────────────────────────────────────────────
-// DRAWER ITEMS — Parent
-// ─────────────────────────────────────────────
 
 val parentDrawerItems = listOf(
     NavItem("dashboard",  "Dashboard",       Icons.Default.Dashboard,       "Bosh sahifa"),
@@ -98,38 +94,36 @@ val parentDrawerItems = listOf(
     NavItem("murojaatlar","Murojaatlar",     Icons.Default.Feedback,        "Faollik"),
 )
 
-// ─────────────────────────────────────────────
-// DRAWER ITEMS — Chef
-// ─────────────────────────────────────────────
-
 val studentDrawerItems = listOf(
-    NavItem("jadval",       "Dars jadvali",     Icons.Default.TableChart,    "O'qish"),
-    NavItem("darsliklar",   "Darsliklar",        Icons.Default.MenuBook,      "O'qish"),
+    NavItem("jadval",       "Dars jadvali",     Icons.Default.TableChart,         "O'qish"),
+    NavItem("darsliklar",   "Darsliklar",        Icons.Default.MenuBook,           "O'qish"),
     NavItem("vazifa",       "Uy vazifalari",     Icons.Default.AssignmentTurnedIn, "O'qish"),
-    NavItem("baholar",      "Baholar",           Icons.Default.Star,          "Natijalar"),
-    NavItem("davomat",      "Davomat",           Icons.Default.HowToReg,      "Natijalar"),
-    NavItem("imtihonlar",   "Imtihonlar",        Icons.Default.Assignment,    "Natijalar"),
-    NavItem("xabarnomalar", "Xabarnomalar",      Icons.Default.Notifications, "Boshqa"),
-    NavItem("surveylar",    "So'rovnomalar",     Icons.Default.Poll,          "Boshqa"),
+    NavItem("baholar",      "Baholar",           Icons.Default.Star,               "Natijalar"),
+    NavItem("davomat",      "Davomat",           Icons.Default.HowToReg,           "Natijalar"),
+    NavItem("imtihonlar",   "Imtihonlar",        Icons.Default.Assignment,         "Natijalar"),
+    NavItem("xabarnomalar", "Xabarnomalar",      Icons.Default.Notifications,      "Boshqa"),
+    NavItem("surveylar",    "So'rovnomalar",     Icons.Default.Poll,               "Boshqa"),
 )
 
 val hrDrawerItems = listOf(
-    NavItem("xodimlar",    "Xodimlar ro'yxati",  Icons.Default.People,         "Xodimlar"),
-    NavItem("yangi",       "Yangi xodim",         Icons.Default.PersonAdd,      "Xodimlar"),
-    NavItem("lavozimlar",  "Lavozimlar",          Icons.Default.Business,       "Xodimlar"),
-    NavItem("davomat",     "Xodimlar davomati",   Icons.Default.CalendarToday,  "Davomat va Ta'til"),
-    NavItem("tatil",       "Ta'til va ruxsatlar", Icons.Default.BeachAccess,    "Davomat va Ta'til"),
-    NavItem("maosh",       "Maosh hisob-kitobi",  Icons.Default.Payments,       "Moliya"),
-    NavItem("analitika",   "HR analitika",        Icons.Default.BarChart,       "Hisobotlar"),
-    NavItem("hujjatlar",   "Hujjatlar",           Icons.Default.Description,    "Hisobotlar"),
+    NavItem("xodimlar",   "Xodimlar ro'yxati",  Icons.Default.People,        "Xodimlar"),
+    NavItem("yangi",      "Yangi xodim",         Icons.Default.PersonAdd,     "Xodimlar"),
+    NavItem("lavozimlar", "Lavozimlar",          Icons.Default.Business,      "Xodimlar"),
+    NavItem("davomat",    "Xodimlar davomati",   Icons.Default.CalendarToday, "Davomat va Ta'til"),
+    NavItem("tatil",      "Ta'til va ruxsatlar", Icons.Default.BeachAccess,   "Davomat va Ta'til"),
+    NavItem("maosh",      "Maosh hisob-kitobi",  Icons.Default.Payments,      "Moliya"),
+    NavItem("analitika",  "HR analitika",        Icons.Default.BarChart,      "Hisobotlar"),
+    NavItem("hujjatlar",  "Hujjatlar",           Icons.Default.Description,   "Hisobotlar"),
 )
-val chefDrawerItems = listOf(NavItem("dashboard",  "Bosh panel",            Icons.Default.Dashboard,      "Asosiy"),
-NavItem("ombor",      "Oziq-ovqat ombori",     Icons.Default.Inventory,      "Asosiy"),
-NavItem("ingredient", "Ingredientlar",          Icons.Default.Grass,          "Asosiy"),
-NavItem("retsept",    "Taom retseptlari",       Icons.Default.RestaurantMenu, "Taomlar"),
-NavItem("menyu",      "Menyu kalendari",        Icons.Default.CalendarMonth,  "Taomlar"),
-NavItem("harakat",    "Stock harakatlari",      Icons.Default.SwapVert,       "Hisobotlar"),
-NavItem("analitika",  "Kafeteriya analitikasi", Icons.Default.BarChart,       "Hisobotlar"),
+
+val chefDrawerItems = listOf(
+    NavItem("dashboard",  "Bosh panel",            Icons.Default.Dashboard,      "Asosiy"),
+    NavItem("ombor",      "Oziq-ovqat ombori",     Icons.Default.Inventory,      "Asosiy"),
+    NavItem("ingredient", "Ingredientlar",          Icons.Default.Grass,          "Asosiy"),
+    NavItem("retsept",    "Taom retseptlari",       Icons.Default.RestaurantMenu, "Taomlar"),
+    NavItem("menyu",      "Menyu kalendari",        Icons.Default.CalendarMonth,  "Taomlar"),
+    NavItem("harakat",    "Stock harakatlari",      Icons.Default.SwapVert,       "Hisobotlar"),
+    NavItem("analitika",  "Kafeteriya analitikasi", Icons.Default.BarChart,       "Hisobotlar"),
 )
 
 // ─────────────────────────────────────────────
@@ -142,46 +136,30 @@ fun ExitAppDialog(onConfirm: () -> Unit, onDismiss: () -> Unit) {
         onDismissRequest = onDismiss,
         icon = {
             Box(
-                modifier = Modifier
-                    .size(48.dp)
-                    .clip(CircleShape)
-                    .background(RedContainer),
+                modifier = Modifier.size(48.dp).clip(CircleShape).background(RedContainer),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(Icons.Default.ExitToApp, null, tint = Red10, modifier = Modifier.size(24.dp))
             }
         },
         title = {
-            Text(
-                "Ilovadan chiqasizmi?",
-                fontSize = 17.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onSurface
-            )
+            Text("Ilovadan chiqasizmi?", fontSize = 17.sp,
+                fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface)
         },
         text = {
-            Text(
-                "Ilovani yopmoqchimisiz? Keyingi kirishda PIN kod so'raladi.",
-                fontSize = 14.sp,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                lineHeight = 20.sp
-            )
+            Text("Ilovani yopmoqchimisiz? Keyingi kirishda PIN kod so'raladi.",
+                fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, lineHeight = 20.sp)
         },
         confirmButton = {
-            Button(
-                onClick = onConfirm,
+            Button(onClick = onConfirm,
                 colors = ButtonDefaults.buttonColors(containerColor = Red10),
-                shape = RoundedCornerShape(10.dp)
-            ) {
+                shape = RoundedCornerShape(10.dp)) {
                 Text("Ha, chiqish", fontSize = 14.sp)
             }
         },
         dismissButton = {
-            OutlinedButton(
-                onClick = onDismiss,
-                shape = RoundedCornerShape(10.dp),
-                border = androidx.compose.foundation.BorderStroke(0.5.dp, Outline)
-            ) {
+            OutlinedButton(onClick = onDismiss, shape = RoundedCornerShape(10.dp),
+                border = androidx.compose.foundation.BorderStroke(0.5.dp, Outline)) {
                 Text("Bekor qilish", fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurface)
             }
         },
@@ -216,13 +194,13 @@ fun MaktabApp() {
     }
     fun saveUserInfo(session: com.maktab.app.network.SessionInfo) {
         prefs.edit()
-            .putString("role", session.role)
-            .putString("fullname", session.fullname)
-            .putString("username", session.username)
-            .putString("branch", session.branchName)   // ID emas, nom saqlanadi
-            .putString("accessToken", session.accessToken)
+            .putString("role",         session.role)
+            .putString("fullname",     session.fullname)
+            .putString("username",     session.username)
+            .putString("branch",       session.branchName)   // ID emas, "Shahar" kabi nom
+            .putString("accessToken",  session.accessToken)
             .putString("refreshToken", session.refreshToken)
-            .putString("renewEndpoint", session.renewEndpoint)
+            .putString("renewEndpoint",session.renewEndpoint)
             .apply()
         savedRole     = session.role
         savedFullname = session.fullname
@@ -241,7 +219,6 @@ fun MaktabApp() {
 
     MaktabTheme(isDark = isDark, language = language) {
 
-        // Ilovadan chiqish dialogi
         if (showExitDialog) {
             ExitAppDialog(
                 onConfirm = { activity?.finish() },
@@ -281,11 +258,8 @@ fun MaktabApp() {
                 role = s.role, savedPin = savedPin,
                 userName = savedFullname.ifEmpty {
                     when (s.role) {
-                        "teacher" -> "O'qituvchi"
-                        "chef"    -> "Oshpaz"
-                        "hr"      -> "HR"
-                        "student" -> "O'quvchi"
-                        else      -> "Foydalanuvchi"
+                        "teacher" -> "O'qituvchi"; "chef" -> "Oshpaz"
+                        "hr" -> "HR"; "student" -> "O'quvchi"; else -> "Foydalanuvchi"
                     }
                 },
                 onSuccess = { screen = Screen.Dashboard(s.role) },
@@ -296,8 +270,7 @@ fun MaktabApp() {
                 BackHandler { showExitDialog = true }
                 RoleApp(
                     role = s.role, language = language, isDark = isDark,
-                    fullname = savedFullname,
-                    username = savedUsername,
+                    fullname = savedFullname, username = savedUsername,
                     onToggleDark = { isDark = !isDark },
                     onLanguageChange = { language = it },
                     onLogout = { clearSession(); screen = Screen.RoleSelect }
@@ -326,7 +299,7 @@ fun RoleApp(
 }
 
 // ─────────────────────────────────────────────
-// DRAWER APP — Teacher, Parent, Chef uchun umumiy
+// DRAWER APP — Teacher, Parent, Student, HR
 // ─────────────────────────────────────────────
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -346,10 +319,8 @@ fun DrawerApp(
         "teacher" -> TealContainer; "student" -> BlueContainer; "hr" -> PurpleContainer; else -> BlueContainer
     }
     val drawerItems = when (role) {
-        "teacher" -> teacherDrawerItems
-        "student" -> studentDrawerItems
-        "hr"      -> hrDrawerItems
-        else      -> parentDrawerItems
+        "teacher" -> teacherDrawerItems; "student" -> studentDrawerItems
+        "hr" -> hrDrawerItems; else -> parentDrawerItems
     }
     val defaultId = drawerItems.first().id
 
@@ -360,32 +331,48 @@ fun DrawerApp(
 
     val currentTitle = drawerItems.find { it.id == selectedId }?.labelUz ?: drawerItems.first().labelUz
 
-    // Real backend ma'lumoti, yo'q bo'lsa fallback
     val userName = fullname.ifEmpty {
-        when (role) {
-            "teacher" -> "O'qituvchi"; "student" -> "O'quvchi"
-            "hr" -> "HR"; else -> "Foydalanuvchi"
-        }
+        when (role) { "teacher" -> "O'qituvchi"; "student" -> "O'quvchi"; "hr" -> "HR"; else -> "Foydalanuvchi" }
     }
     val userSub = when (role) {
-        "teacher" -> "O'qituvchi"
-        "student" -> "O'quvchi"
-        "hr"      -> "HR mutaxassis"
-        else      -> "Ota-ona"
+        "teacher" -> "O'qituvchi"; "student" -> "O'quvchi"; "hr" -> "HR mutaxassis"; else -> "Ota-ona"
     }
     val roleIcon = when (role) {
-        "teacher" -> Icons.Default.School
-        "student" -> Icons.Default.Person
-        "hr"      -> Icons.Default.People
-        else      -> Icons.Default.FamilyRestroom
+        "teacher" -> Icons.Default.School; "student" -> Icons.Default.Person
+        "hr" -> Icons.Default.People; else -> Icons.Default.FamilyRestroom
+    }
+    val initials = userName.trim().split(" ").filter { it.isNotEmpty() }.take(2)
+        .joinToString("") { it.first().uppercaseChar().toString() }.ifEmpty { "?" }
+
+    // Teacher uchun ViewModel — o'quv yili uchun
+    val teacherVm: com.maktab.app.viewmodel.TeacherViewModel? =
+        if (isTeacher) androidx.lifecycle.viewmodel.compose.viewModel() else null
+    val academicYear by (teacherVm?.academicYear
+        ?: kotlinx.coroutines.flow.MutableStateFlow("")).collectAsState()
+
+    // Prefs dan filial nomini olamiz
+    val context = LocalContext.current
+    val savedBranch = remember {
+        try {
+            val mk = androidx.security.crypto.MasterKey.Builder(context)
+                .setKeyScheme(androidx.security.crypto.MasterKey.KeyScheme.AES256_GCM).build()
+            androidx.security.crypto.EncryptedSharedPreferences.create(
+                context, "maktab_secure_prefs", mk,
+                androidx.security.crypto.EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+                androidx.security.crypto.EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+            ).getString("branch", "") ?: ""
+        } catch (e: Exception) { "" }
     }
 
-    // Initials — fullname dan olamiz
-    val initials = userName.trim().split(" ")
-        .filter { it.isNotEmpty() }
-        .take(2)
-        .joinToString("") { it.first().uppercaseChar().toString() }
-        .ifEmpty { "?" }
+    // TopBar subtitle: 2 qator
+    // 1-qator: "Karimova Nargiza · O'qituvchi"
+    // 2-qator: "2025/2026 · Shahar"
+    val subtitleLine1 = if (userName.isNotEmpty() && userName != "Foydalanuvchi")
+        "$userName · $userSub" else userSub
+    val subtitleLine2 = listOfNotNull(
+        academicYear.ifEmpty { null },
+        savedBranch.ifEmpty { null }
+    ).joinToString(" · ")
 
     BackHandler(enabled = drawerState.isOpen) { scope.launch { drawerState.close() } }
     BackHandler(enabled = showSettings) { showSettings = false }
@@ -399,24 +386,16 @@ fun DrawerApp(
             ) {
                 // Header
                 Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(accentContainer)
-                        .windowInsetsPadding(WindowInsets.statusBars)
-                        .padding(20.dp)
+                    modifier = Modifier.fillMaxWidth().background(accentContainer)
+                        .windowInsetsPadding(WindowInsets.statusBars).padding(20.dp)
                 ) {
                     Column {
-                        // Avatar — initials circle
                         Box(
-                            modifier = Modifier.size(52.dp).clip(CircleShape)
-                                .background(accent.copy(0.18f)),
+                            modifier = Modifier.size(52.dp).clip(CircleShape).background(accent.copy(0.18f)),
                             contentAlignment = Alignment.Center
                         ) {
                             if (initials != "?") {
-                                Text(
-                                    initials, fontSize = 18.sp,
-                                    fontWeight = FontWeight.SemiBold, color = accent
-                                )
+                                Text(initials, fontSize = 18.sp, fontWeight = FontWeight.SemiBold, color = accent)
                             } else {
                                 Icon(roleIcon, null, tint = accent, modifier = Modifier.size(26.dp))
                             }
@@ -430,20 +409,13 @@ fun DrawerApp(
                     }
                 }
 
-                // Guruh bo'yicha scrollable menyu
-                LazyColumn(
-                    modifier = Modifier.weight(1f),
-                    contentPadding = PaddingValues(top = 8.dp, bottom = 8.dp)
-                ) {
+                // Scrollable menyu
+                LazyColumn(modifier = Modifier.weight(1f), contentPadding = PaddingValues(top = 8.dp, bottom = 8.dp)) {
                     drawerItems.map { it.group }.distinct().forEach { group ->
                         item {
-                            Text(
-                                text = group.uppercase(),
-                                fontSize = 10.sp, fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                letterSpacing = 0.8.sp,
-                                modifier = Modifier.padding(horizontal = 20.dp, vertical = 6.dp)
-                            )
+                            Text(group.uppercase(), fontSize = 10.sp, fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant, letterSpacing = 0.8.sp,
+                                modifier = Modifier.padding(horizontal = 20.dp, vertical = 6.dp))
                         }
                         items(drawerItems.filter { it.group == group }) { item ->
                             val isSelected = selectedId == item.id
@@ -465,10 +437,7 @@ fun DrawerApp(
                                         color = if (isSelected) accent else MaterialTheme.colorScheme.onSurface)
                                 },
                                 selected = isSelected,
-                                onClick = {
-                                    selectedId = item.id
-                                    scope.launch { drawerState.close() }
-                                },
+                                onClick = { selectedId = item.id; scope.launch { drawerState.close() } },
                                 modifier = Modifier.padding(horizontal = 12.dp, vertical = 1.dp),
                                 colors = NavigationDrawerItemDefaults.colors(
                                     selectedContainerColor = accentContainer,
@@ -477,15 +446,13 @@ fun DrawerApp(
                             )
                         }
                         item {
-                            HorizontalDivider(
-                                modifier = Modifier.padding(horizontal = 20.dp, vertical = 6.dp),
-                                color = Outline, thickness = 0.5.dp
-                            )
+                            HorizontalDivider(modifier = Modifier.padding(horizontal = 20.dp, vertical = 6.dp),
+                                color = Outline, thickness = 0.5.dp)
                         }
                     }
                 }
 
-                // Sozlamalar + Chiqish — har doim pastda ko'rinadi
+                // Sozlamalar + Chiqish
                 HorizontalDivider(color = Outline, thickness = 0.5.dp)
                 Column(modifier = Modifier.navigationBarsPadding().padding(vertical = 6.dp)) {
                     NavigationDrawerItem(
@@ -512,55 +479,130 @@ fun DrawerApp(
             SozlamalarScreen(
                 role = role, isDark = isDark, language = language,
                 onToggleDark = onToggleDark, onLanguageChange = onLanguageChange, onLogout = onLogout,
-                fullname = fullname, username = username
+                fullname = fullname, username = username,
+                academicYear = if (isTeacher) academicYear else ""
             )
             return@ModalNavigationDrawer
         }
 
+        var showLangMenu by remember { mutableStateOf(false) }
+
         Scaffold(
             topBar = {
-                TopAppBar(
-                    navigationIcon = {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(MaterialTheme.colorScheme.surface)
+                        .windowInsetsPadding(WindowInsets.statusBars)
+                ) {
+                    // 1-qator: hamburger + sarlavha + til tanlash
+                    Row(
+                        modifier = Modifier.fillMaxWidth().height(56.dp).padding(horizontal = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
                         IconButton(onClick = { scope.launch { drawerState.open() } }) {
                             Icon(Icons.Default.Menu, "Menyu", tint = MaterialTheme.colorScheme.onSurface)
                         }
-                    },
-                    title = {
-                        Column {
-                            Text(currentTitle, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
-                            Text(
-                                if (userName.isNotEmpty() && userName != "Foydalanuvchi")
-                                    "$userName · $userSub"
-                                else userSub,
-                                fontSize = 11.sp,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                    },
-                    actions = {
-                        Box(Modifier.padding(end = 12.dp)) {
-                            Surface(shape = RoundedCornerShape(6.dp), color = accent.copy(0.1f)) {
-                                Text(language.uppercase(),
-                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 4.dp),
-                                    fontSize = 11.sp, fontWeight = FontWeight.Bold, color = accent)
+                        Text(
+                            currentTitle, fontSize = 17.sp, fontWeight = FontWeight.SemiBold,
+                            modifier = Modifier.weight(1f)
+                        )
+                        // Til tanlash dropdown
+                        Box {
+                            Surface(
+                                onClick = { showLangMenu = true },
+                                shape = RoundedCornerShape(6.dp),
+                                color = accent.copy(0.1f),
+                                modifier = Modifier.padding(end = 8.dp)
+                            ) {
+                                Row(
+                                    Modifier.padding(horizontal = 8.dp, vertical = 5.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(3.dp)
+                                ) {
+                                    Icon(Icons.Default.Translate, null, tint = accent, modifier = Modifier.size(13.dp))
+                                    Text(language.uppercase(), fontSize = 11.sp, fontWeight = FontWeight.Bold, color = accent)
+                                    Icon(Icons.Default.ArrowDropDown, null, tint = accent, modifier = Modifier.size(14.dp))
+                                }
+                            }
+                            DropdownMenu(
+                                expanded = showLangMenu,
+                                onDismissRequest = { showLangMenu = false }
+                            ) {
+                                listOf(
+                                    Triple("🇺🇿", "O'zbek", "uz"),
+                                    Triple("🇷🇺", "Русский", "ru"),
+                                    Triple("🇬🇧", "English", "en")
+                                ).forEach { (flag, name, code) ->
+                                    DropdownMenuItem(
+                                        text = {
+                                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                                                Text(flag, fontSize = 16.sp)
+                                                Text(name, fontSize = 13.sp)
+                                                if (language == code) {
+                                                    Spacer(Modifier.weight(1f))
+                                                    Icon(Icons.Default.Check, null, tint = accent, modifier = Modifier.size(14.dp))
+                                                }
+                                            }
+                                        },
+                                        onClick = { onLanguageChange(code); showLangMenu = false }
+                                    )
+                                }
                             }
                         }
-                    },
-                    colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.surface)
-                )
+                    }
+
+                    // 2-qator: filial + o'quv yili + ism chips
+                    if (subtitleLine1.isNotEmpty() || subtitleLine2.isNotEmpty()) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(start = 16.dp, end = 16.dp, bottom = 8.dp),
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            // Filial
+                            if (savedBranch.isNotEmpty()) {
+                                HeaderChip(
+                                    icon = Icons.Default.Business,
+                                    text = savedBranch,
+                                    accent = accent
+                                )
+                            }
+                            // O'quv yili
+                            if (academicYear.isNotEmpty()) {
+                                HeaderChip(
+                                    icon = Icons.Default.CalendarToday,
+                                    text = academicYear,
+                                    accent = accent
+                                )
+                            }
+                            // Ism (qisqa)
+                            if (userName.isNotEmpty() && userName != "Foydalanuvchi") {
+                                HeaderChip(
+                                    icon = Icons.Default.Translate,
+                                    text = language.uppercase(),
+                                    accent = accent,
+                                    showIcon = false
+                                )
+                            }
+                        }
+                    }
+                    HorizontalDivider(color = Outline, thickness = 0.5.dp)
+                }
             },
             containerColor = MaterialTheme.colorScheme.background
         ) { padding ->
             Box(Modifier.fillMaxSize().padding(padding)) {
                 if (isTeacher) {
                     when (selectedId) {
-                        "jadval"   -> TeacherScheduleScreen()
-                        "jurnal"   -> JurnalScreen(language)
+                        "jadval"   -> TeacherScheduleScreen(vm = teacherVm!!)
+                        "jurnal"   -> JurnalScreen(language, vm = teacherVm!!)
                         "kontent"  -> DarsKontentiScreen(language)
-                        "davomat"  -> DavomatScreen()
+                        "davomat"  -> DavomatScreen(vm = teacherVm!!)
                         "baholash" -> BaholashScreen(language)
                         "sinflar"  -> SinflarimScreen(language)
-                        else       -> TeacherScheduleScreen()
+                        else       -> TeacherScheduleScreen(vm = teacherVm!!)
                     }
                 } else if (isStudent) {
                     when (selectedId) {
@@ -608,7 +650,7 @@ fun DrawerApp(
 }
 
 // ─────────────────────────────────────────────
-// CHEF APP — alohida (amber rang)
+// CHEF APP
 // ─────────────────────────────────────────────
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -626,10 +668,8 @@ fun ChefApp(
 
     val currentTitle = chefDrawerItems.find { it.id == selectedId }?.labelUz ?: "Bosh panel"
     val chefName = fullname.ifEmpty { "Oshpaz" }
-    val chefInitials = chefName.trim().split(" ")
-        .filter { it.isNotEmpty() }.take(2)
-        .joinToString("") { it.first().uppercaseChar().toString() }
-        .ifEmpty { "O" }
+    val chefInitials = chefName.trim().split(" ").filter { it.isNotEmpty() }.take(2)
+        .joinToString("") { it.first().uppercaseChar().toString() }.ifEmpty { "O" }
 
     BackHandler(enabled = drawerState.isOpen) { scope.launch { drawerState.close() } }
     BackHandler(enabled = showSettings) { showSettings = false }
@@ -642,18 +682,12 @@ fun ChefApp(
                 windowInsets = WindowInsets(0)
             ) {
                 Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(AmberContainer)
-                        .windowInsetsPadding(WindowInsets.statusBars)
-                        .padding(20.dp)
+                    modifier = Modifier.fillMaxWidth().background(AmberContainer)
+                        .windowInsetsPadding(WindowInsets.statusBars).padding(20.dp)
                 ) {
                     Column {
-                        Box(
-                            modifier = Modifier.size(52.dp).clip(CircleShape)
-                                .background(Amber10.copy(0.2f)),
-                            contentAlignment = Alignment.Center
-                        ) {
+                        Box(modifier = Modifier.size(52.dp).clip(CircleShape).background(Amber10.copy(0.2f)),
+                            contentAlignment = Alignment.Center) {
                             Text(chefInitials, fontSize = 18.sp, fontWeight = FontWeight.SemiBold, color = Amber10)
                         }
                         Spacer(Modifier.height(10.dp))
@@ -662,30 +696,20 @@ fun ChefApp(
                     }
                 }
 
-                // Guruh bo'yicha scrollable menyu
-                LazyColumn(
-                    modifier = Modifier.weight(1f),
-                    contentPadding = PaddingValues(top = 8.dp, bottom = 8.dp)
-                ) {
+                LazyColumn(modifier = Modifier.weight(1f), contentPadding = PaddingValues(top = 8.dp, bottom = 8.dp)) {
                     chefDrawerItems.map { it.group }.distinct().forEach { group ->
                         item {
-                            Text(
-                                text = group.uppercase(),
-                                fontSize = 10.sp, fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                letterSpacing = 0.8.sp,
-                                modifier = Modifier.padding(horizontal = 20.dp, vertical = 6.dp)
-                            )
+                            Text(group.uppercase(), fontSize = 10.sp, fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant, letterSpacing = 0.8.sp,
+                                modifier = Modifier.padding(horizontal = 20.dp, vertical = 6.dp))
                         }
                         items(chefDrawerItems.filter { it.group == group }) { item ->
                             val isSelected = selectedId == item.id
                             NavigationDrawerItem(
                                 icon = {
-                                    Box(
-                                        modifier = Modifier.size(34.dp).clip(RoundedCornerShape(9.dp))
-                                            .background(if (isSelected) Amber10.copy(0.15f) else MaterialTheme.colorScheme.surfaceVariant),
-                                        contentAlignment = Alignment.Center
-                                    ) {
+                                    Box(modifier = Modifier.size(34.dp).clip(RoundedCornerShape(9.dp))
+                                        .background(if (isSelected) Amber10.copy(0.15f) else MaterialTheme.colorScheme.surfaceVariant),
+                                        contentAlignment = Alignment.Center) {
                                         Icon(item.icon, null,
                                             tint = if (isSelected) Amber10 else MaterialTheme.colorScheme.onSurfaceVariant,
                                             modifier = Modifier.size(18.dp))
@@ -706,15 +730,12 @@ fun ChefApp(
                             )
                         }
                         item {
-                            HorizontalDivider(
-                                modifier = Modifier.padding(horizontal = 20.dp, vertical = 6.dp),
-                                color = Outline, thickness = 0.5.dp
-                            )
+                            HorizontalDivider(modifier = Modifier.padding(horizontal = 20.dp, vertical = 6.dp),
+                                color = Outline, thickness = 0.5.dp)
                         }
                     }
                 }
 
-                // Sozlamalar + Chiqish — pastda qotib turadi
                 HorizontalDivider(color = Outline, thickness = 0.5.dp)
                 Column(modifier = Modifier.navigationBarsPadding().padding(vertical = 6.dp)) {
                     NavigationDrawerItem(
@@ -748,30 +769,66 @@ fun ChefApp(
 
         Scaffold(
             topBar = {
-                TopAppBar(
-                    navigationIcon = {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(MaterialTheme.colorScheme.surface)
+                        .windowInsetsPadding(WindowInsets.statusBars)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth().height(56.dp).padding(horizontal = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
                         IconButton(onClick = { scope.launch { drawerState.open() } }) {
                             Icon(Icons.Default.Menu, "Menyu", tint = MaterialTheme.colorScheme.onSurface)
                         }
-                    },
-                    title = {
-                        Column {
-                            Text(currentTitle, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
-                            Text("$chefName · Kafeteriya",
-                                fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        }
-                    },
-                    actions = {
-                        Box(Modifier.padding(end = 12.dp)) {
-                            Surface(shape = RoundedCornerShape(6.dp), color = accent.copy(0.1f)) {
-                                Text(language.uppercase(),
-                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 4.dp),
-                                    fontSize = 11.sp, fontWeight = FontWeight.Bold, color = accent)
+                        Text(currentTitle, fontSize = 17.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
+                        var showLangMenu by remember { mutableStateOf(false) }
+                        Box {
+                            Surface(
+                                onClick = { showLangMenu = true },
+                                shape = RoundedCornerShape(6.dp),
+                                color = accent.copy(0.1f),
+                                modifier = Modifier.padding(end = 8.dp)
+                            ) {
+                                Row(
+                                    Modifier.padding(horizontal = 8.dp, vertical = 5.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(3.dp)
+                                ) {
+                                    Icon(Icons.Default.Translate, null, tint = accent, modifier = Modifier.size(13.dp))
+                                    Text(language.uppercase(), fontSize = 11.sp, fontWeight = FontWeight.Bold, color = accent)
+                                    Icon(Icons.Default.ArrowDropDown, null, tint = accent, modifier = Modifier.size(14.dp))
+                                }
+                            }
+                            DropdownMenu(expanded = showLangMenu, onDismissRequest = { showLangMenu = false }) {
+                                listOf(Triple("🇺🇿", "O'zbek", "uz"), Triple("🇷🇺", "Русский", "ru"), Triple("🇬🇧", "English", "en"))
+                                    .forEach { (flag, name, code) ->
+                                        DropdownMenuItem(
+                                            text = {
+                                                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                                                    Text(flag, fontSize = 16.sp)
+                                                    Text(name, fontSize = 13.sp)
+                                                    if (language == code) { Spacer(Modifier.weight(1f)); Icon(Icons.Default.Check, null, tint = accent, modifier = Modifier.size(14.dp)) }
+                                                }
+                                            },
+                                            onClick = { onLanguageChange(code); showLangMenu = false }
+                                        )
+                                    }
                             }
                         }
-                    },
-                    colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.surface)
-                )
+                    }
+                    // Chip lar qatori
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, bottom = 8.dp),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        HeaderChip(Icons.Default.Person, chefName, accent)
+                        HeaderChip(Icons.Default.Restaurant, "Kafeteriya", accent)
+                    }
+                    HorizontalDivider(color = Outline, thickness = 0.5.dp)
+                }
             },
             containerColor = MaterialTheme.colorScheme.background
         ) { padding ->
@@ -787,6 +844,35 @@ fun ChefApp(
                     else         -> ChefDashboardScreen()
                 }
             }
+        }
+    }
+}
+
+// ─────────────────────────────────────────────
+// HEADER CHIP — filial, o'quv yili, til uchun
+// ─────────────────────────────────────────────
+
+@Composable
+fun HeaderChip(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    text: String,
+    accent: androidx.compose.ui.graphics.Color,
+    showIcon: Boolean = true
+) {
+    Surface(
+        shape = RoundedCornerShape(20.dp),
+        color = accent.copy(0.08f),
+        border = androidx.compose.foundation.BorderStroke(0.5.dp, accent.copy(0.2f))
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            if (showIcon) {
+                Icon(icon, null, tint = accent, modifier = Modifier.size(11.dp))
+            }
+            Text(text, fontSize = 11.sp, color = accent, fontWeight = FontWeight.Medium)
         }
     }
 }

@@ -1,5 +1,7 @@
-package com.maktab.app.ui.screens
+package com.maktab.app.ui.screens.common
 
+import android.content.Context
+import android.content.SharedPreferences
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -21,6 +23,8 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.security.crypto.EncryptedSharedPreferences
+import androidx.security.crypto.MasterKey
 import com.maktab.app.ui.theme.*
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -34,7 +38,8 @@ fun SozlamalarScreen(
     onLanguageChange: (String) -> Unit,
     onLogout: () -> Unit,
     fullname: String = "",
-    username: String = ""
+    username: String = "",
+    academicYear: String = ""
 ) {
     val context = LocalContext.current
     val prefs = remember { getSecurePrefs(context) }
@@ -160,6 +165,13 @@ fun SozlamalarScreen(
                 SozInfoRow(Icons.Default.Business,
                     when (language) { "ru" -> "Филиал"; "en" -> "Branch"; else -> "Filial" },
                     branchName
+                )
+            }
+            if (academicYear.isNotEmpty()) {
+                HorizontalDivider(color = Outline, thickness = 0.5.dp)
+                SozInfoRow(Icons.Default.CalendarToday,
+                    when (language) { "ru" -> "Учебный год"; "en" -> "Academic year"; else -> "O'quv yili" },
+                    academicYear
                 )
             }
         }
@@ -442,17 +454,17 @@ private fun SozPasswordField(
     }
 }
 
-fun getSecurePrefs(context: android.content.Context): android.content.SharedPreferences {
+fun getSecurePrefs(context: Context): SharedPreferences {
     return try {
-        val masterKey = androidx.security.crypto.MasterKey.Builder(context)
-            .setKeyScheme(androidx.security.crypto.MasterKey.KeyScheme.AES256_GCM)
+        val masterKey = MasterKey.Builder(context)
+            .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
             .build()
-        androidx.security.crypto.EncryptedSharedPreferences.create(
+        EncryptedSharedPreferences.create(
             context, "maktab_secure_prefs", masterKey,
-            androidx.security.crypto.EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
-            androidx.security.crypto.EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+            EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+            EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
         )
     } catch (e: Exception) {
-        context.getSharedPreferences("maktab_secure_prefs", android.content.Context.MODE_PRIVATE)
+        context.getSharedPreferences("maktab_secure_prefs", Context.MODE_PRIVATE)
     }
 }
