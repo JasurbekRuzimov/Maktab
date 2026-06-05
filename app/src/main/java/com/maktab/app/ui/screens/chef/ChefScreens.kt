@@ -254,10 +254,18 @@ fun ChefOmborScreen(vm: ChefViewModel) {
     val ingredientsState by vm.ingredientsState.collectAsState()
     val movementsState by vm.movementsState.collectAsState()
     var searchQuery by remember { mutableStateOf("") }
+    var showAddSheet by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         vm.loadIngredients()
         vm.loadMovements()
+    }
+
+    if (showAddSheet) {
+        AddIngredientSheet(onDismiss = { showAddSheet = false }, onSave = { req ->
+            vm.createIngredient(req)
+            showAddSheet = false
+        })
     }
 
     val allIngredients = (ingredientsState as? ApiResult.Success)?.data ?: emptyList()
@@ -311,7 +319,7 @@ fun ChefOmborScreen(vm: ChefViewModel) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text("Ingredient katalogi", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
                     Button(
-                        onClick = {},
+                        onClick = { showAddSheet = true },
                         colors = ButtonDefaults.buttonColors(containerColor = Teal10),
                         contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
                         modifier = Modifier.height(34.dp)
@@ -612,6 +620,7 @@ fun ChefIngredientsScreen(vm: ChefViewModel) {
     var searchQuery by remember { mutableStateOf("") }
     var selectedFilter by remember { mutableStateOf("Barchasi") }
     val filters = listOf("Barchasi", "Sabzavot", "Don mahsulot", "Et mahsulot", "Sut mahsulot")
+    var showAddSheet by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) { vm.loadIngredients() }
 
@@ -621,12 +630,19 @@ fun ChefIngredientsScreen(vm: ChefViewModel) {
                 ing.name.contains(searchQuery, ignoreCase = true)
     }
 
+    if (showAddSheet) {
+        AddIngredientSheet(onDismiss = { showAddSheet = false }, onSave = { req ->
+            vm.createIngredient(req)
+            showAddSheet = false
+        })
+    }
+
     LazyColumn(modifier = Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = 24.dp)) {
         item {
             Column(Modifier.padding(16.dp)) {
                 SectionHeader("Ingredient boshqaruvi") {
                     Button(
-                        onClick = {},
+                        onClick = { showAddSheet = true },
                         colors = ButtonDefaults.buttonColors(containerColor = Teal10),
                         contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
                         modifier = Modifier.height(34.dp)
@@ -997,38 +1013,63 @@ private fun RecipeCard(recipe: Recipe, modifier: Modifier = Modifier) {
 
 @Composable
 fun ChefMenuCalendarScreen(vm: ChefViewModel) {
-    val menuState by vm.menuCalendarState.collectAsState()
-    var viewMode by remember { mutableStateOf("hafta") }
-    val viewModes = listOf("Hafta", "Kun", "Oy")
+    val menuState    by vm.menuCalendarState.collectAsState()
+    val recipesState by vm.recipesState.collectAsState()
+    val weekLabel    by vm.weekLabel.collectAsState()
 
-    LaunchedEffect(Unit) { vm.loadMenuCalendar() }
+    // dateKey + mealType → taom tayinlash uchun
+    var selectedSlot by remember { mutableStateOf<Pair<String, String>?>(null) }
 
-    val days = (menuState as? ApiResult.Success)?.data ?: emptyList()
+    LaunchedEffect(Unit) {
+        vm.loadMenuCalendar()
+        vm.loadRecipes()
+    }
+
+    val days       = (menuState as? ApiResult.Success)?.data ?: emptyList()
+    val allRecipes = (recipesState as? ApiResult.Success)?.data ?: emptyList()
+
+    // Retsept tanlash bottom sheet
+    val activeRecipes = allRecipes.filter { it.isActive }
+    if (selectedSlot != null) {
+        RecipePickerSheet(
+            recipes   = activeRecipes,
+            onDismiss = { selectedSlot = null },
+            onSelect  = { recipe ->
+                val (dateKey, mealType) = selectedSlot!!
+                vm.createMenuEntry(recipe.id, mealType, dateKey)
+                selectedSlot = null
+            }
+        )
+    }
 
     LazyColumn(modifier = Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = 24.dp)) {
         item {
             Column(Modifier.padding(16.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text("Menyu kalendari", fontSize = 20.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
-                    Row {
-                        IconButton(onClick = {}) { Icon(Icons.Default.ChevronLeft, null) }
-                        TextButton(onClick = { vm.loadMenuCalendar() }) { Text("Bugun", color = Teal10) }
-                        IconButton(onClick = {}) { Icon(Icons.Default.ChevronRight, null) }
+                }
+                Spacer(Modifier.height(8.dp))
+                // Hafta navigatsiyasi
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    IconButton(onClick = { vm.prevWeek() }) {
+                        Icon(Icons.Default.ChevronLeft, null, tint = Teal10)
+                    }
+                    Text(
+                        weekLabel.ifEmpty { "Joriy hafta" },
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Medium,
+                        modifier = Modifier.weight(1f),
+                        textAlign = TextAlign.Center
+                    )
+                    TextButton(onClick = { vm.goCurrentWeek() }) { Text("Bugun", color = Teal10, fontSize = 12.sp) }
+                    IconButton(onClick = { vm.nextWeek() }) {
+                        Icon(Icons.Default.ChevronRight, null, tint = Teal10)
                     }
                 }
-                Spacer(Modifier.height(10.dp))
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    viewModes.forEach { mode ->
-                        val selected = viewMode == mode.lowercase()
-                        FilterChip(
-                            selected = selected, onClick = { viewMode = mode.lowercase() },
-                            label = { Text(mode, fontSize = 13.sp) },
-                            colors = FilterChipDefaults.filterChipColors(selectedContainerColor = Teal10, selectedLabelColor = Color.White, containerColor = MaterialTheme.colorScheme.surfaceVariant),
-                            border = FilterChipDefaults.filterChipBorder(enabled = true, selected = selected, borderColor = Outline, selectedBorderColor = Color.Transparent)
-                        )
-                    }
-                }
-                Spacer(Modifier.height(14.dp))
+                Spacer(Modifier.height(6.dp))
             }
         }
 
@@ -1050,7 +1091,12 @@ fun ChefMenuCalendarScreen(vm: ChefViewModel) {
             }
             else -> {
                 items(days) { day ->
-                    WeekDayMenuCard(day, modifier = Modifier.padding(horizontal = 16.dp, vertical = 5.dp))
+                    WeekDayMenuCard(
+                        day      = day,
+                        onSlotClick = { mealType -> selectedSlot = Pair(day.dateKey, mealType) },
+                        onDeleteMeal = { mealId -> vm.deleteMenuEntry(mealId) },
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 5.dp)
+                    )
                 }
             }
         }
@@ -1058,7 +1104,18 @@ fun ChefMenuCalendarScreen(vm: ChefViewModel) {
 }
 
 @Composable
-private fun WeekDayMenuCard(day: MenuDayUi, modifier: Modifier = Modifier) {
+private fun WeekDayMenuCard(
+    day: MenuDayUi,
+    onSlotClick: (mealType: String) -> Unit,
+    onDeleteMeal: (mealId: String) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val mealSlots = listOf(
+        "breakfast" to "Nonushta",
+        "lunch"     to "Tushlik",
+        "dinner"    to "Kechki ovqat",
+        "snack"     to "Kechki tamaddi"
+    )
     Card(
         modifier = modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = if (day.isToday) TealContainer else Color.White),
@@ -1076,38 +1133,56 @@ private fun WeekDayMenuCard(day: MenuDayUi, modifier: Modifier = Modifier) {
                 if (day.isToday) StatusChip("Bugun", Teal10, TealContainer)
             }
             Spacer(Modifier.height(8.dp))
-            if (day.meals.isEmpty()) {
-                defaultMealTimes.forEach { mealName -> DayMealSlot(mealName, null) }
-            } else {
-                val mealTypeLabels = listOf("Nonushta" to "breakfast", "Tushlik" to "lunch",
-                    "Kechki ovqat" to "dinner", "Kechki tamaddi" to "snack")
-                mealTypeLabels.forEach { (label, type) ->
-                    val meal = day.meals.find { it.mealType == type }
-                    DayMealSlot(label, meal?.recipeName)
-                }
+            mealSlots.forEach { (mealType, label) ->
+                val meal = day.meals.find { it.mealType == mealType }
+                DayMealSlot(
+                    mealName   = label,
+                    recipeName = meal?.recipeName,
+                    mealId     = meal?.id,
+                    onClick    = { onSlotClick(mealType) },
+                    onDelete   = { mealId -> onDeleteMeal(mealId) }
+                )
             }
         }
     }
 }
 
 @Composable
-private fun DayMealSlot(mealName: String, recipeName: String?) {
+private fun DayMealSlot(
+    mealName: String,
+    recipeName: String?,
+    mealId: String?,
+    onClick: () -> Unit,
+    onDelete: (String) -> Unit
+) {
     Row(
         modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
             .clip(RoundedCornerShape(8.dp))
-            .border(0.5.dp, Outline, RoundedCornerShape(8.dp))
-            .clickable { }
+            .border(0.5.dp, if (recipeName != null) Teal10.copy(0.3f) else Outline, RoundedCornerShape(8.dp))
+            .background(if (recipeName != null) TealContainer.copy(0.4f) else Color.Transparent)
+            .clickable { if (recipeName == null) onClick() }
             .padding(horizontal = 10.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         if (recipeName != null) {
             Icon(Icons.Default.CheckCircle, null, tint = Teal10, modifier = Modifier.size(16.dp))
-            Text(recipeName, fontSize = 13.sp, modifier = Modifier.weight(1f))
-            Text(mealName, fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Column(Modifier.weight(1f)) {
+                Text(recipeName, fontSize = 13.sp, fontWeight = FontWeight.Medium, color = Teal10)
+                Text(mealName, fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            if (mealId != null) {
+                IconButton(
+                    onClick = { onDelete(mealId) },
+                    modifier = Modifier.size(28.dp)
+                ) {
+                    Icon(Icons.Default.Close, null, tint = Red10, modifier = Modifier.size(14.dp))
+                }
+            }
         } else {
-            Icon(Icons.Default.Add, null, tint = Teal10, modifier = Modifier.size(16.dp))
-            Text(mealName, fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Icon(Icons.Default.Add, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(16.dp))
+            Text(mealName, fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(1f))
+            Text("Belgilash", fontSize = 11.sp, color = Teal10)
         }
     }
 }
@@ -1445,5 +1520,198 @@ private fun LegendItem(label: String, value: String, color: Color) {
         Box(Modifier.size(12.dp).clip(RoundedCornerShape(3.dp)).background(color))
         Text(label, fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.width(60.dp))
         Text(value, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+    }
+}
+
+// ─────────────────────────────────────────────
+// YANGI INGREDIENT SHEET
+// ─────────────────────────────────────────────
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun AddIngredientSheet(
+    onDismiss: () -> Unit,
+    onSave: (com.maktab.app.network.models.IngredientRequest) -> Unit
+) {
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val scope = rememberCoroutineScope()
+
+    var name     by remember { mutableStateOf("") }
+    var category by remember { mutableStateOf("") }
+    var quantity by remember { mutableStateOf("") }
+    var minQty   by remember { mutableStateOf("") }
+    var unit     by remember { mutableStateOf("kg") }
+    var expiry   by remember { mutableStateOf("") }
+    var error    by remember { mutableStateOf("") }
+
+    val units      = listOf("kg", "g", "litr", "ml", "dona")
+    val categories = listOf("Sabzavot", "Don mahsulot", "Go'sht mahsulot", "Sut mahsulot", "Meva", "Boshqa")
+
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = sheetState,
+        shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp),
+        containerColor = MaterialTheme.colorScheme.surface,
+        windowInsets = WindowInsets.navigationBars
+    ) {
+        Column(
+            modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState())
+                .padding(horizontal = 20.dp).padding(bottom = 32.dp)
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                Box(Modifier.size(44.dp).clip(RoundedCornerShape(10.dp)).background(TealContainer), contentAlignment = Alignment.Center) {
+                    Icon(Icons.Default.Add, null, tint = Teal10, modifier = Modifier.size(22.dp))
+                }
+                Text("Yangi ingredient qo'shish", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
+                IconButton(onClick = onDismiss) { Icon(Icons.Default.Close, null) }
+            }
+            Spacer(Modifier.height(16.dp))
+            HorizontalDivider(color = Outline, thickness = 0.5.dp)
+            Spacer(Modifier.height(16.dp))
+
+            SheetField("Ingredient nomi *", name, { name = it }, Icons.Default.Label, "Masalan: Kartoshka")
+            Spacer(Modifier.height(12.dp))
+
+            Text("Kategoriya", fontSize = 13.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Spacer(Modifier.height(6.dp))
+            LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                items(categories) { cat ->
+                    FilterChip(selected = category == cat, onClick = { category = cat },
+                        label = { Text(cat, fontSize = 12.sp) },
+                        colors = FilterChipDefaults.filterChipColors(selectedContainerColor = Teal10, selectedLabelColor = Color.White),
+                        border = FilterChipDefaults.filterChipBorder(enabled = true, selected = category == cat, borderColor = Outline, selectedBorderColor = Color.Transparent))
+                }
+            }
+            Spacer(Modifier.height(12.dp))
+
+            Text("O'lchov birligi", fontSize = 13.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Spacer(Modifier.height(6.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                units.forEach { u ->
+                    FilterChip(selected = unit == u, onClick = { unit = u },
+                        label = { Text(u, fontSize = 12.sp) },
+                        colors = FilterChipDefaults.filterChipColors(selectedContainerColor = Teal10, selectedLabelColor = Color.White),
+                        border = FilterChipDefaults.filterChipBorder(enabled = true, selected = unit == u, borderColor = Outline, selectedBorderColor = Color.Transparent))
+                }
+            }
+            Spacer(Modifier.height(12.dp))
+
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                Column(Modifier.weight(1f)) {
+                    SheetField("Joriy miqdor *", quantity, { quantity = it.filter { c -> c.isDigit() || c == '.' } }, Icons.Default.Inventory, "0", KeyboardType.Number)
+                }
+                Column(Modifier.weight(1f)) {
+                    SheetField("Min. miqdor", minQty, { minQty = it.filter { c -> c.isDigit() || c == '.' } }, Icons.Default.Warning, "0", KeyboardType.Number)
+                }
+            }
+            Spacer(Modifier.height(12.dp))
+            SheetField("Yaroqlilik muddati", expiry, { expiry = it }, Icons.Default.CalendarToday, "YYYY-MM-DD")
+
+            if (error.isNotEmpty()) {
+                Spacer(Modifier.height(8.dp))
+                Text(error, color = Red10, fontSize = 13.sp)
+            }
+            Spacer(Modifier.height(24.dp))
+
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                OutlinedButton(
+                    onClick = onDismiss, modifier = Modifier.weight(1f).height(50.dp),
+                    shape = RoundedCornerShape(12.dp), border = BorderStroke(0.5.dp, Outline)
+                ) { Text("Bekor qilish") }
+                Button(
+                    onClick = {
+                        if (name.isBlank()) { error = "Ingredient nomi majburiy!"; return@Button }
+                        if (quantity.isBlank()) { error = "Miqdor majburiy!"; return@Button }
+                        error = ""
+                        onSave(com.maktab.app.network.models.IngredientRequest(
+                            name       = name.trim(),
+                            category   = category.ifEmpty { null },
+                            unit       = unit,
+                            quantity   = quantity.toDoubleOrNull() ?: 0.0,
+                            minQuantity = minQty.toDoubleOrNull(),
+                            expiryDate = expiry.ifEmpty { null }
+                        ))
+                        scope.launch { sheetState.hide() }.invokeOnCompletion { onDismiss() }
+                    },
+                    modifier = Modifier.weight(1f).height(50.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Teal10),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Icon(Icons.Default.Save, null, modifier = Modifier.size(18.dp))
+                    Spacer(Modifier.width(8.dp))
+                    Text("Saqlash")
+                }
+            }
+        }
+    }
+}
+
+// ─────────────────────────────────────────────
+// RETSEPT TANLASH SHEET (menyu kalendarida)
+// ─────────────────────────────────────────────
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun RecipePickerSheet(
+    recipes: List<com.maktab.app.viewmodel.Recipe>,
+    onDismiss: () -> Unit,
+    onSelect: (com.maktab.app.viewmodel.Recipe) -> Unit
+) {
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    var search by remember { mutableStateOf("") }
+    val filtered = recipes.filter { it.name.contains(search, ignoreCase = true) }
+
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = sheetState,
+        shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp),
+        containerColor = MaterialTheme.colorScheme.surface,
+        windowInsets = WindowInsets.navigationBars
+    ) {
+        Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp).padding(bottom = 32.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                Box(Modifier.size(40.dp).clip(RoundedCornerShape(10.dp)).background(TealContainer), contentAlignment = Alignment.Center) {
+                    Icon(Icons.Default.RestaurantMenu, null, tint = Teal10, modifier = Modifier.size(20.dp))
+                }
+                Text("Taom tanlang", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
+                IconButton(onClick = onDismiss) { Icon(Icons.Default.Close, null) }
+            }
+            Spacer(Modifier.height(12.dp))
+            OutlinedTextField(
+                value = search, onValueChange = { search = it },
+                placeholder = { Text("Retsept qidirish", fontSize = 13.sp) },
+                modifier = Modifier.fillMaxWidth(), singleLine = true,
+                shape = RoundedCornerShape(10.dp),
+                leadingIcon = { Icon(Icons.Default.Search, null, modifier = Modifier.size(18.dp)) },
+                colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = Teal10, unfocusedBorderColor = Outline)
+            )
+            Spacer(Modifier.height(8.dp))
+            if (filtered.isEmpty()) {
+                Box(Modifier.fillMaxWidth().height(120.dp), contentAlignment = Alignment.Center) {
+                    Text("Retseptlar topilmadi", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            } else {
+                LazyColumn(modifier = Modifier.fillMaxWidth(), contentPadding = PaddingValues(vertical = 4.dp)) {
+                    items(filtered) { recipe ->
+                        Row(
+                            modifier = Modifier.fillMaxWidth().clickable { onSelect(recipe) }
+                                .padding(vertical = 10.dp, horizontal = 4.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            Box(Modifier.size(40.dp).clip(RoundedCornerShape(8.dp)).background(TealContainer), contentAlignment = Alignment.Center) {
+                                Icon(Icons.Default.RestaurantMenu, null, tint = Teal10, modifier = Modifier.size(20.dp))
+                            }
+                            Column(Modifier.weight(1f)) {
+                                Text(recipe.name, fontSize = 14.sp, fontWeight = FontWeight.Medium)
+                                Text("${recipe.category} · ${recipe.portionCount} porsiya", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            }
+                            Icon(Icons.Default.ChevronRight, null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                        HorizontalDivider(color = Outline, thickness = 0.5.dp)
+                    }
+                }
+            }
+        }
     }
 }

@@ -14,6 +14,7 @@ object RetrofitClient {
     private const val BASE_URL = "http://147.45.213.148:3000/"
 
     private val moshi = Moshi.Builder()
+        .add(AnyJsonAdapterFactory())   // Any? tipidagi maydonlarni to'g'ri parse qilish uchun
         .add(KotlinJsonAdapterFactory())
         .build()
 
