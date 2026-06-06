@@ -57,13 +57,17 @@ private val defaultMealTimes = listOf("Nonushta", "Tushlik", "Kechki ovqat", "Ke
 
 @Composable
 fun ChefDashboardScreen(vm: ChefViewModel) {
-    val dashboardState by vm.dashboardState.collectAsState()
+    val dashboardState      by vm.dashboardState.collectAsState()
+    val menuCalendarState   by vm.menuCalendarState.collectAsState()
+
+    LaunchedEffect(Unit) {
+        vm.loadDashboard()
+        vm.loadMenuCalendar()
+    }
+
+    val mealLabels = listOf("Nonushta", "Tushlik", "Kechki ovqat", "Kechki tamaddi")
     val tabs = listOf("Bugun", "Ertaga", "Kecha")
     var selectedTab by remember { mutableStateOf(0) }
-
-    LaunchedEffect(Unit) { vm.loadDashboard() }
-
-    val dashboard = (dashboardState as? ApiResult.Success)?.data ?: ChefDashboardUi()
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -79,30 +83,89 @@ fun ChefDashboardScreen(vm: ChefViewModel) {
                     lineHeight = 18.sp
                 )
                 Spacer(Modifier.height(14.dp))
-                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    ChefStatCard(
-                        "Bugungi taomlar", "${dashboard.todayMeals}", "Bugun rejalashtirilgan",
-                        Blue10, BlueContainer, Modifier.weight(1f)
-                    )
-                    ChefStatCard(
-                        "Tasdiq navbati", "${dashboard.pendingConfirmations}", "Bugun tasdiq kutilmoqda",
-                        Amber10, AmberContainer, Modifier.weight(1f)
-                    )
-                }
-                Spacer(Modifier.height(10.dp))
-                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    ChefStatCard(
-                        "Ertangi taomlar", "${dashboard.tomorrowMeals}", "Ertaga rejalashtirilgan",
-                        Teal10, TealContainer, Modifier.weight(1f)
-                    )
-                    ChefStatCard(
-                        "Ombor eslatmalari", "${dashboard.warehouseAlerts}", "Kam qolgan mahsulotlar",
-                        Red10, RedContainer, Modifier.weight(1f)
-                    )
+
+                // Stat kartochkalar — Loading / Success holatlari
+                when (val state = dashboardState) {
+                    ApiResult.Loading -> {
+                        Box(
+                            Modifier.fillMaxWidth().height(110.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            CircularProgressIndicator(color = Amber10, strokeWidth = 2.dp)
+                        }
+                    }
+                    is ApiResult.Error -> {
+                        Row(
+                            Modifier.fillMaxWidth()
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(RedContainer)
+                                .padding(12.dp),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(Icons.Default.WifiOff, null, tint = Red10, modifier = Modifier.size(16.dp))
+                            Text(state.message, fontSize = 12.sp, color = Red10, modifier = Modifier.weight(1f))
+                            TextButton(onClick = { vm.loadDashboard() }) {
+                                Text("Qayta", fontSize = 12.sp, color = Red10)
+                            }
+                        }
+                    }
+                    is ApiResult.Success -> {
+                        val d = state.data
+                        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                            ChefStatCard(
+                                "Bugungi taomlar", "${d.todayMeals}", "Bugun rejalashtirilgan",
+                                Blue10, BlueContainer, Modifier.weight(1f)
+                            )
+                            ChefStatCard(
+                                "Tasdiq navbati", "${d.pendingConfirmations}", "Tasdiq kutilmoqda",
+                                Amber10, AmberContainer, Modifier.weight(1f)
+                            )
+                        }
+                        Spacer(Modifier.height(10.dp))
+                        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                            ChefStatCard(
+                                "Ingredientlar", "${d.totalIngredients}", "Omborda jami",
+                                Teal10, TealContainer, Modifier.weight(1f)
+                            )
+                            ChefStatCard(
+                                "Faol retseptlar", "${d.activeRecipes}", "Tayyor retseptlar",
+                                Teal10, TealContainer, Modifier.weight(1f)
+                            )
+                        }
+                        if (d.warehouseAlerts > 0) {
+                            Spacer(Modifier.height(10.dp))
+                            Card(
+                                modifier = Modifier.fillMaxWidth(),
+                                colors = CardDefaults.cardColors(containerColor = RedContainer),
+                                shape = RoundedCornerShape(12.dp),
+                                border = BorderStroke(0.5.dp, Red10.copy(0.3f)),
+                                elevation = CardDefaults.cardElevation(0.dp)
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(14.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                                ) {
+                                    Box(
+                                        Modifier.size(40.dp).clip(RoundedCornerShape(10.dp))
+                                            .background(Red10.copy(0.15f)),
+                                        contentAlignment = Alignment.Center
+                                    ) { Icon(Icons.Default.Warning, null, tint = Red10, modifier = Modifier.size(20.dp)) }
+                                    Column(Modifier.weight(1f)) {
+                                        Text("Ombor ogohlantirishlari", fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = Red10)
+                                        Text("${d.warehouseAlerts} ta mahsulot kam qolgan", fontSize = 12.sp, color = Red10.copy(0.7f))
+                                    }
+                                    Icon(Icons.Default.ArrowForward, null, tint = Red10, modifier = Modifier.size(18.dp))
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }
 
+        // Tab qatorlari
         item {
             ScrollableTabRow(
                 selectedTabIndex = selectedTab,
@@ -134,9 +197,10 @@ fun ChefDashboardScreen(vm: ChefViewModel) {
             Spacer(Modifier.height(12.dp))
         }
 
+        // Menyu kalendardan bugungi / ertangi / kechagi taomlar
         item {
             val dayLabel = when (selectedTab) {
-                0 -> "Bugungi tayyorlangan taomlar"
+                0 -> "Bugungi taomlar"
                 1 -> "Ertangi tayyorgarlik"
                 else -> "Kechagi taomlar"
             }
@@ -145,80 +209,94 @@ fun ChefDashboardScreen(vm: ChefViewModel) {
             Spacer(Modifier.height(10.dp))
         }
 
-        items(defaultTodaySlots) { slot ->
-            MealSlotCard(slot, modifier = Modifier.padding(horizontal = 16.dp, vertical = 5.dp))
-        }
+        when (val calState = menuCalendarState) {
+            ApiResult.Loading -> item {
+                Box(Modifier.fillMaxWidth().padding(vertical = 24.dp), Alignment.Center) {
+                    CircularProgressIndicator(color = Amber10, strokeWidth = 2.dp)
+                }
+            }
+            is ApiResult.Success -> {
+                val today = java.time.LocalDate.now()
+                val targetDate = when (selectedTab) {
+                    1    -> today.plusDays(1)
+                    2    -> today.minusDays(1)
+                    else -> today
+                }
+                val fmt = java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd")
+                val targetKey = targetDate.format(fmt)
+                val dayUi = calState.data.find { it.dateKey == targetKey }
+                val meals = dayUi?.meals ?: emptyList()
 
-        if (dashboard.warehouseAlerts > 0) {
-            item {
-                Spacer(Modifier.height(16.dp))
-                Card(
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
-                    colors = CardDefaults.cardColors(containerColor = RedContainer),
-                    shape = RoundedCornerShape(12.dp),
-                    border = BorderStroke(0.5.dp, Red10.copy(0.3f)),
-                    elevation = CardDefaults.cardElevation(0.dp)
-                ) {
-                    Row(
-                        modifier = Modifier.padding(14.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
+                if (meals.isEmpty()) {
+                    item {
                         Box(
-                            Modifier.size(40.dp).clip(RoundedCornerShape(10.dp)).background(Red10.copy(0.15f)),
-                            contentAlignment = Alignment.Center
-                        ) { Icon(Icons.Default.Warning, null, tint = Red10, modifier = Modifier.size(20.dp)) }
-                        Column(Modifier.weight(1f)) {
-                            Text("Ombor ogohlantirishlari", fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = Red10)
-                            Text("${dashboard.warehouseAlerts} ta mahsulot kam qolgan", fontSize = 12.sp, color = Red10.copy(0.7f))
+                            Modifier.fillMaxWidth().padding(vertical = 20.dp),
+                            Alignment.Center
+                        ) {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                                Icon(Icons.Default.RestaurantMenu, null,
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.size(32.dp))
+                                Text("Bu kun uchun taom belgilanmagan",
+                                    fontSize = 13.sp,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            }
                         }
-                        Icon(Icons.Default.ArrowForward, null, tint = Red10, modifier = Modifier.size(18.dp))
+                    }
+                } else {
+                    items(meals, key = { it.id }) { meal ->
+                        Card(
+                            modifier = Modifier.fillMaxWidth()
+                                .padding(horizontal = 16.dp, vertical = 5.dp),
+                            colors = CardDefaults.cardColors(containerColor = Color.White),
+                            shape = RoundedCornerShape(12.dp),
+                            border = BorderStroke(0.5.dp, Outline),
+                            elevation = CardDefaults.cardElevation(0.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(14.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                            ) {
+                                Box(
+                                    Modifier.size(44.dp).clip(RoundedCornerShape(10.dp))
+                                        .background(AmberContainer),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(Icons.Default.Restaurant, null,
+                                        tint = Amber10, modifier = Modifier.size(22.dp))
+                                }
+                                Column(Modifier.weight(1f)) {
+                                    Text(meal.mealTypeLabel, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+                                    Spacer(Modifier.height(4.dp))
+                                    if (meal.recipeName != null) {
+                                        StatusChip(meal.recipeName, Teal10, TealContainer)
+                                    } else {
+                                        Text(
+                                            "Taom belgilanmagan",
+                                            fontSize = 12.sp,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            modifier = Modifier.fillMaxWidth()
+                                                .clip(RoundedCornerShape(6.dp))
+                                                .border(0.5.dp, Outline, RoundedCornerShape(6.dp))
+                                                .padding(horizontal = 10.dp, vertical = 6.dp),
+                                            textAlign = TextAlign.Center
+                                        )
+                                    }
+                                }
+                                if (meal.status == MealStatus.CONFIRMED) {
+                                    Icon(Icons.Default.CheckCircle, null,
+                                        tint = Teal10, modifier = Modifier.size(18.dp))
+                                }
+                            }
+                        }
                     }
                 }
             }
-        }
-    }
-}
-
-@Composable
-private fun MealSlotCard(slot: MealSlot, modifier: Modifier = Modifier) {
-    Card(
-        modifier = modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        shape = RoundedCornerShape(12.dp),
-        border = BorderStroke(0.5.dp, Outline),
-        elevation = CardDefaults.cardElevation(0.dp)
-    ) {
-        Row(
-            modifier = Modifier.padding(14.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            Box(
-                Modifier.size(44.dp).clip(RoundedCornerShape(10.dp)).background(AmberContainer),
-                contentAlignment = Alignment.Center
-            ) { Icon(slot.icon, null, tint = Amber10, modifier = Modifier.size(22.dp)) }
-            Column(Modifier.weight(1f)) {
-                Text(slot.name, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
-                Text(slot.subtitle, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                Spacer(Modifier.height(6.dp))
-                if (slot.meal != null) {
-                    StatusChip(slot.meal, Teal10, TealContainer)
-                } else {
-                    Text(
-                        "Taom belgilanmagan",
-                        fontSize = 12.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(6.dp))
-                            .border(0.5.dp, Outline, RoundedCornerShape(6.dp))
-                            .padding(horizontal = 10.dp, vertical = 6.dp),
-                        textAlign = TextAlign.Center
-                    )
-                }
+            is ApiResult.Error -> item {
+                Text(calState.message, fontSize = 12.sp, color = Red10,
+                    modifier = Modifier.padding(horizontal = 16.dp))
             }
-            Icon(Icons.Default.ChevronRight, null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }
@@ -244,11 +322,6 @@ private fun ChefStatCard(
         }
     }
 }
-
-// ─────────────────────────────────────────────
-// 2. OZIQ-OVQAT OMBORI
-// ─────────────────────────────────────────────
-
 @Composable
 fun ChefOmborScreen(vm: ChefViewModel) {
     val ingredientsState by vm.ingredientsState.collectAsState()
@@ -262,8 +335,8 @@ fun ChefOmborScreen(vm: ChefViewModel) {
     }
 
     if (showAddSheet) {
-        AddIngredientSheet(onDismiss = { showAddSheet = false }, onSave = { req ->
-            vm.createIngredient(req)
+        AddIngredientSheet(onDismiss = { showAddSheet = false }, onSave = { req, initialStock ->
+            vm.createIngredient(req, initialStock)
             showAddSheet = false
         })
     }
@@ -631,8 +704,8 @@ fun ChefIngredientsScreen(vm: ChefViewModel) {
     }
 
     if (showAddSheet) {
-        AddIngredientSheet(onDismiss = { showAddSheet = false }, onSave = { req ->
-            vm.createIngredient(req)
+        AddIngredientSheet(onDismiss = { showAddSheet = false }, onSave = { req, initialStock ->
+            vm.createIngredient(req, initialStock)
             showAddSheet = false
         })
     }
@@ -1531,7 +1604,7 @@ private fun LegendItem(label: String, value: String, color: Color) {
 @Composable
 fun AddIngredientSheet(
     onDismiss: () -> Unit,
-    onSave: (com.maktab.app.network.models.IngredientRequest) -> Unit
+    onSave: (com.maktab.app.network.models.IngredientRequest, Double) -> Unit
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val scope = rememberCoroutineScope()
@@ -1598,7 +1671,7 @@ fun AddIngredientSheet(
 
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 Column(Modifier.weight(1f)) {
-                    SheetField("Joriy miqdor *", quantity, { quantity = it.filter { c -> c.isDigit() || c == '.' } }, Icons.Default.Inventory, "0", KeyboardType.Number)
+                    SheetField("Boshlang'ich miqdor", quantity, { quantity = it.filter { c -> c.isDigit() || c == '.' } }, Icons.Default.Inventory, "0 (ixtiyoriy)", KeyboardType.Number)
                 }
                 Column(Modifier.weight(1f)) {
                     SheetField("Min. miqdor", minQty, { minQty = it.filter { c -> c.isDigit() || c == '.' } }, Icons.Default.Warning, "0", KeyboardType.Number)
@@ -1621,16 +1694,16 @@ fun AddIngredientSheet(
                 Button(
                     onClick = {
                         if (name.isBlank()) { error = "Ingredient nomi majburiy!"; return@Button }
-                        if (quantity.isBlank()) { error = "Miqdor majburiy!"; return@Button }
                         error = ""
+                        val initialStock = quantity.toDoubleOrNull() ?: 0.0
                         onSave(com.maktab.app.network.models.IngredientRequest(
                             name       = name.trim(),
                             category   = category.ifEmpty { null },
                             unit       = unit,
-                            quantity   = quantity.toDoubleOrNull() ?: 0.0,
+                            quantity   = 0.0,      // backend har doim 0 dan boshlaydi
                             minQuantity = minQty.toDoubleOrNull(),
                             expiryDate = expiry.ifEmpty { null }
-                        ))
+                        ), initialStock)
                         scope.launch { sheetState.hide() }.invokeOnCompletion { onDismiss() }
                     },
                     modifier = Modifier.weight(1f).height(50.dp),

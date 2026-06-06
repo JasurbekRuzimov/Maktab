@@ -210,21 +210,28 @@ data class SurveyAnswer(
 // CHEF
 // ─────────────────────────────────────────────
 
+
 @JsonClass(generateAdapter = true)
+data class StockMovementRequest(
+    @Json(name = "movement_type") val movementType: String,  // "INCOMING" yoki "OUTGOING"
+    @Json(name = "quantity") val quantity: Double,
+    @Json(name = "reason") val reason: String
+)
+
 data class IngredientRequest(
     @Json(name = "name") val name: String,
     @Json(name = "category") val category: String? = null,
     @Json(name = "unit") val unit: String,
-    @Json(name = "quantity") val quantity: Double,
-    @Json(name = "min_quantity") val minQuantity: Double? = null,
-    @Json(name = "expiry_date") val expiryDate: String? = null
+    @Json(name = "current_stock") val quantity: Double,         // FIX: quantity → current_stock
+    @Json(name = "minimum_stock") val minQuantity: Double? = null, // FIX: min_quantity → minimum_stock
+    @Json(name = "expiration_date") val expiryDate: String? = null // FIX: expiry_date → expiration_date
 )
 
 @JsonClass(generateAdapter = true)
 data class RecipeRequest(
     @Json(name = "name") val name: String,
     @Json(name = "category") val category: String? = null,
-    @Json(name = "portion_count") val portionCount: Int? = null,
+    @Json(name = "serving_count") val portionCount: Int? = null, // FIX: portion_count → serving_count
     @Json(name = "is_active") val isActive: Boolean = true,
     @Json(name = "ingredients") val ingredients: List<RecipeIngredient>? = null
 )

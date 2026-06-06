@@ -33,6 +33,7 @@ import com.maktab.app.ui.screens.chef.*
 import com.maktab.app.ui.screens.hr.*
 import com.maktab.app.ui.screens.common.*
 import com.maktab.app.ui.theme.*
+import com.maktab.app.viewmodel.ParentViewModel
 import kotlinx.coroutines.launch
 
 // ─────────────────────────────────────────────
@@ -629,25 +630,28 @@ fun DrawerApp(
                         else         -> HRXodimlarScreen()
                     }
                 } else {
+                    val parentVm: com.maktab.app.viewmodel.ParentViewModel =
+                        androidx.lifecycle.viewmodel.compose.viewModel()
                     when (selectedId) {
-                        "dashboard"   -> ParentDashboardScreen()
-                        "profil"      -> ParentProfilScreen()
-                        "davomat"     -> ParentDavomatScreen()
-                        "baholar"     -> BaholarScreen()
-                        "vazifa"      -> ParentUygaVazifaScreen()
-                        "imtihonlar"  -> ParentImtihonlarScreen()
-                        "tolovlar"    -> ParentTolovlarScreen()
+                        "dashboard"   -> ParentDashboardScreen(vm = parentVm)
+                        "profil"      -> ParentProfilScreen(vm = parentVm)
+                        "davomat"     -> ParentDavomatScreen(vm = parentVm)
+                        "baholar"     -> BaholarScreen(vm = parentVm)
+                        "vazifa"      -> ParentUygaVazifaScreen(vm = parentVm)
+                        "imtihonlar"  -> ParentImtihonlarScreen(vm = parentVm)
+                        "tolovlar"    -> ParentTolovlarScreen(vm = parentVm)
                         "yangiliklar" -> ParentYangiliklar()
                         "bloglar"     -> ParentBloglar()
                         "surveylar"   -> ParentSurveylar()
                         "murojaatlar" -> ParentMurojaatlar()
-                        else          -> ParentDashboardScreen()
+                        else          -> ParentDashboardScreen(vm = parentVm)
                     }
                 }
             }
         }
     }
 }
+
 
 // ─────────────────────────────────────────────
 // CHEF APP

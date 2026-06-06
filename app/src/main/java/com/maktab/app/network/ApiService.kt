@@ -304,6 +304,12 @@ interface ChefApiService {
     @DELETE("api/cafeteria/ingredients/{id}")
     suspend fun deleteIngredient(@Path("id") id: String): Response<ResponseBody>
 
+    @POST("api/cafeteria/ingredients/{id}/stock")
+    suspend fun addStockMovement(
+        @Path("id") id: String,
+        @Body request: StockMovementRequest
+    ): Response<ResponseBody>
+
     @GET("api/cafeteria/recipes")
     suspend fun getRecipes(
         @Query("search") search: String? = null,

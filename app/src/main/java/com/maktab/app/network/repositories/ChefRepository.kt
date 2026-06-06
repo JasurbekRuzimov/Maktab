@@ -93,6 +93,9 @@ class ChefRepository {
 
     suspend fun deleteIngredient(id: String) = rawCall { api.deleteIngredient(id) }
 
+    suspend fun addStockMovement(id: String, request: StockMovementRequest) =
+        rawCall { api.addStockMovement(id, request) }
+
     suspend fun getRecipes(search: String? = null, isActive: Boolean? = null) =
         rawCall { api.getRecipes(search = search, isActive = isActive) }
 
