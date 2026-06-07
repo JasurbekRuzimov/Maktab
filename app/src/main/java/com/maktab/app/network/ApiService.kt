@@ -4,6 +4,7 @@ import com.maktab.app.network.models.*
 import okhttp3.ResponseBody
 import retrofit2.Response
 import retrofit2.http.*
+import okhttp3.MultipartBody
 
 // ─────────────────────────────────────────────
 // AUTH
@@ -310,6 +311,13 @@ interface ChefApiService {
         @Body request: StockMovementRequest
     ): Response<ResponseBody>
 
+    @Multipart
+    @POST("api/cafeteria/ingredients/{id}/image")
+    suspend fun uploadIngredientImage(
+        @Path("id") id: String,
+        @Part image: okhttp3.MultipartBody.Part
+    ): Response<ResponseBody>
+
     @GET("api/cafeteria/recipes")
     suspend fun getRecipes(
         @Query("search") search: String? = null,
@@ -422,9 +430,10 @@ interface HRApiService {
     ): Response<BaseResponse>
 
     // Lavozimlar ro'yxati
-    @GET("api/public/users/employees")
+    @GET("api/positions")
     suspend fun getPositions(
-        @Query("role_code") roleCode: String? = null
+        @Query("page") page: Int? = null,
+        @Query("per_page") perPage: Int? = null
     ): Response<BaseResponse>
 
     // HR statistika

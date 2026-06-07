@@ -19,6 +19,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import com.maktab.app.util.LocaleHelper
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -33,7 +35,8 @@ import com.maktab.app.ui.screens.chef.*
 import com.maktab.app.ui.screens.hr.*
 import com.maktab.app.ui.screens.common.*
 import com.maktab.app.ui.theme.*
-import com.maktab.app.viewmodel.ParentViewModel
+import com.maktab.app.ui.theme.str
+import com.maktab.app.R
 import kotlinx.coroutines.launch
 
 // ─────────────────────────────────────────────
@@ -54,8 +57,7 @@ private fun getSecurePrefs(context: Context) = EncryptedSharedPreferences.create
 
 sealed class Screen {
     object Splash : Screen()
-    object RoleSelect : Screen()
-    data class Login(val role: String) : Screen()
+    object Login : Screen()
     data class PinSetup(val role: String) : Screen()
     data class PinEntry(val role: String) : Screen()
     data class Dashboard(val role: String) : Screen()
@@ -144,24 +146,24 @@ fun ExitAppDialog(onConfirm: () -> Unit, onDismiss: () -> Unit) {
             }
         },
         title = {
-            Text("Ilovadan chiqasizmi?", fontSize = 17.sp,
+            Text(stringResource(R.string.exit_app_title), fontSize = 17.sp,
                 fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface)
         },
         text = {
-            Text("Ilovani yopmoqchimisiz? Keyingi kirishda PIN kod so'raladi.",
+            Text(stringResource(R.string.exit_app_msg),
                 fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, lineHeight = 20.sp)
         },
         confirmButton = {
             Button(onClick = onConfirm,
                 colors = ButtonDefaults.buttonColors(containerColor = Red10),
                 shape = RoundedCornerShape(10.dp)) {
-                Text("Ha, chiqish", fontSize = 14.sp)
+                Text(stringResource(R.string.exit_yes), fontSize = 14.sp)
             }
         },
         dismissButton = {
             OutlinedButton(onClick = onDismiss, shape = RoundedCornerShape(10.dp),
                 border = androidx.compose.foundation.BorderStroke(0.5.dp, Outline)) {
-                Text("Bekor qilish", fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurface)
+                Text(stringResource(R.string.cancel), fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurface)
             }
         },
         shape = RoundedCornerShape(16.dp),
@@ -185,7 +187,7 @@ fun MaktabApp() {
     var savedUsername by remember { mutableStateOf(prefs.getString("username", "") ?: "") }
     var savedBranch   by remember { mutableStateOf(prefs.getString("branch", "") ?: "") }
     var isDark        by remember { mutableStateOf(false) }
-    var language      by remember { mutableStateOf("uz") }
+    var language by remember { mutableStateOf(LocaleHelper.getSavedLanguage(context)) }
     var screen        by remember { mutableStateOf<Screen>(Screen.Splash) }
     var showExitDialog by remember { mutableStateOf(false) }
 
@@ -230,23 +232,16 @@ fun MaktabApp() {
         when (val s = screen) {
             Screen.Splash -> SplashScreen(onFinished = {
                 screen = if (savedPin.isNotEmpty() && savedRole.isNotEmpty())
-                    Screen.PinEntry(savedRole) else Screen.RoleSelect
+                    Screen.PinEntry(savedRole) else Screen.Login
             })
 
-            Screen.RoleSelect -> LandingScreen(onRoleSelected = { role ->
-                savedRole = role; screen = Screen.Login(role)
-            })
-
-            is Screen.Login -> {
-                BackHandler { screen = Screen.RoleSelect }
+            Screen.Login -> {
                 LoginScreen(
-                    role = s.role,
                     onSuccess = { session ->
                         saveUserInfo(session)
                         screen = if (savedPin.isEmpty()) Screen.PinSetup(session.role)
                         else Screen.Dashboard(session.role)
-                    },
-                    onBack = { screen = Screen.RoleSelect }
+                    }
                 )
             }
 
@@ -260,11 +255,11 @@ fun MaktabApp() {
                 userName = savedFullname.ifEmpty {
                     when (s.role) {
                         "teacher" -> "O'qituvchi"; "chef" -> "Oshpaz"
-                        "hr" -> "HR"; "student" -> "O'quvchi"; else -> "Foydalanuvchi"
+                        "hr", "hr_manager" -> "HR"; "student" -> "O'quvchi"; else -> "Foydalanuvchi"
                     }
                 },
                 onSuccess = { screen = Screen.Dashboard(s.role) },
-                onForgotPin = { clearSession(); screen = Screen.RoleSelect }
+                onForgotPin = { clearSession(); screen = Screen.Login }
             )
 
             is Screen.Dashboard -> {
@@ -273,8 +268,10 @@ fun MaktabApp() {
                     role = s.role, language = language, isDark = isDark,
                     fullname = savedFullname, username = savedUsername,
                     onToggleDark = { isDark = !isDark },
-                    onLanguageChange = { language = it },
-                    onLogout = { clearSession(); screen = Screen.RoleSelect }
+                    onLanguageChange = {
+                        LocaleHelper.applyLocale(context as Activity, it)
+                    },
+                    onLogout = { clearSession(); screen = Screen.Login }
                 )
             }
         }
@@ -292,10 +289,11 @@ fun RoleApp(
     onToggleDark: () -> Unit, onLanguageChange: (String) -> Unit, onLogout: () -> Unit
 ) {
     when (role) {
-        "chef"    -> ChefApp(language, isDark, onToggleDark, onLanguageChange, onLogout, fullname)
-        "student" -> DrawerApp(role, language, isDark, onToggleDark, onLanguageChange, onLogout, fullname, username)
-        "hr"      -> DrawerApp(role, language, isDark, onToggleDark, onLanguageChange, onLogout, fullname, username)
-        else      -> DrawerApp(role, language, isDark, onToggleDark, onLanguageChange, onLogout, fullname, username)
+        "chef"       -> ChefApp(language, isDark, onToggleDark, onLanguageChange, onLogout, fullname)
+        "student"    -> DrawerApp(role, language, isDark, onToggleDark, onLanguageChange, onLogout, fullname, username)
+        "hr",
+        "hr_manager" -> DrawerApp("hr", language, isDark, onToggleDark, onLanguageChange, onLogout, fullname, username)
+        else         -> DrawerApp(role, language, isDark, onToggleDark, onLanguageChange, onLogout, fullname, username)
     }
 }
 
@@ -312,7 +310,7 @@ fun DrawerApp(
 ) {
     val isTeacher = role == "teacher"
     val isStudent = role == "student"
-    val isHR      = role == "hr"
+    val isHR      = role == "hr" || role == "hr_manager"
     val accent = when (role) {
         "teacher" -> Teal10; "student" -> Blue10; "hr" -> Purple10; else -> Blue10
     }
@@ -438,7 +436,7 @@ fun DrawerApp(
                                         color = if (isSelected) accent else MaterialTheme.colorScheme.onSurface)
                                 },
                                 selected = isSelected,
-                                onClick = { selectedId = item.id; scope.launch { drawerState.close() } },
+                                onClick = { selectedId = item.id; showSettings = false; scope.launch { drawerState.close() } },
                                 modifier = Modifier.padding(horizontal = 12.dp, vertical = 1.dp),
                                 colors = NavigationDrawerItemDefaults.colors(
                                     selectedContainerColor = accentContainer,
@@ -458,7 +456,7 @@ fun DrawerApp(
                 Column(modifier = Modifier.navigationBarsPadding().padding(vertical = 6.dp)) {
                     NavigationDrawerItem(
                         icon = { Icon(Icons.Default.Settings, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(20.dp)) },
-                        label = { Text("Sozlamalar", fontSize = 13.sp) },
+                        label = { Text(stringResource(R.string.settings), fontSize = 13.sp) },
                         selected = false,
                         onClick = { showSettings = true; scope.launch { drawerState.close() } },
                         modifier = Modifier.padding(horizontal = 12.dp, vertical = 1.dp),
@@ -466,9 +464,9 @@ fun DrawerApp(
                     )
                     NavigationDrawerItem(
                         icon = { Icon(Icons.Default.Logout, null, tint = Red10, modifier = Modifier.size(20.dp)) },
-                        label = { Text("Chiqish", fontSize = 13.sp, color = Red10) },
+                        label = { Text(stringResource(R.string.logout), fontSize = 13.sp, color = Red10) },
                         selected = false,
-                        onClick = onLogout,
+                        onClick = { showSettings = false; onLogout() },
                         modifier = Modifier.padding(horizontal = 12.dp, vertical = 1.dp),
                         colors = NavigationDrawerItemDefaults.colors(unselectedContainerColor = Color.Transparent)
                     )
@@ -618,16 +616,18 @@ fun DrawerApp(
                         else           -> StudentScheduleScreen()
                     }
                 } else if (isHR) {
+                    val hrVm: com.maktab.app.viewmodel.HRViewModel =
+                        androidx.lifecycle.viewmodel.compose.viewModel()
                     when (selectedId) {
-                        "xodimlar"   -> HRXodimlarScreen()
+                        "xodimlar"   -> HRXodimlarScreen(vm = hrVm)
                         "yangi"      -> HRYangiXodimScreen()
-                        "lavozimlar" -> HRLavozimlarScreen()
+                        "lavozimlar" -> HRLavozimlarScreen(vm = hrVm)
                         "davomat"    -> HRDavomatScreen()
                         "tatil"      -> HRTatilScreen()
                         "maosh"      -> HRMaoshScreen()
                         "analitika"  -> HRAnalitika()
                         "hujjatlar"  -> HRHujjatlarScreen()
-                        else         -> HRXodimlarScreen()
+                        else         -> HRXodimlarScreen(vm = hrVm)
                     }
                 } else {
                     val parentVm: com.maktab.app.viewmodel.ParentViewModel =
@@ -652,7 +652,6 @@ fun DrawerApp(
     }
 }
 
-
 // ─────────────────────────────────────────────
 // CHEF APP
 // ─────────────────────────────────────────────
@@ -667,8 +666,9 @@ fun ChefApp(
     val accent = Amber10
     val drawerState = rememberDrawerState(DrawerValue.Closed)
     val scope = rememberCoroutineScope()
-    var selectedId by remember { mutableStateOf("dashboard") }
-    var showSettings by remember { mutableStateOf(false) }
+    var selectedId    by remember { mutableStateOf("dashboard") }
+    var showSettings   by remember { mutableStateOf(false) }
+    var showLowStock   by remember { mutableStateOf(false) }
 
     val currentTitle = chefDrawerItems.find { it.id == selectedId }?.labelUz ?: "Bosh panel"
     val chefName = fullname.ifEmpty { "Oshpaz" }
@@ -696,7 +696,7 @@ fun ChefApp(
                         }
                         Spacer(Modifier.height(10.dp))
                         Text(chefName, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = Amber10)
-                        Text("Oshpaz · Kafeteriya", fontSize = 12.sp, color = Amber10.copy(0.7f))
+                        Text(str.chefRole, fontSize = 12.sp, color = Amber10.copy(0.7f))
                     }
                 }
 
@@ -725,7 +725,7 @@ fun ChefApp(
                                         color = if (isSelected) Amber10 else MaterialTheme.colorScheme.onSurface)
                                 },
                                 selected = isSelected,
-                                onClick = { selectedId = item.id; scope.launch { drawerState.close() } },
+                                onClick = { selectedId = item.id; showSettings = false; scope.launch { drawerState.close() } },
                                 modifier = Modifier.padding(horizontal = 12.dp, vertical = 1.dp),
                                 colors = NavigationDrawerItemDefaults.colors(
                                     selectedContainerColor = AmberContainer,
@@ -744,7 +744,7 @@ fun ChefApp(
                 Column(modifier = Modifier.navigationBarsPadding().padding(vertical = 6.dp)) {
                     NavigationDrawerItem(
                         icon = { Icon(Icons.Default.Settings, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(20.dp)) },
-                        label = { Text("Sozlamalar", fontSize = 13.sp) },
+                        label = { Text(stringResource(R.string.settings), fontSize = 13.sp) },
                         selected = false,
                         onClick = { showSettings = true; scope.launch { drawerState.close() } },
                         modifier = Modifier.padding(horizontal = 12.dp, vertical = 1.dp),
@@ -752,9 +752,9 @@ fun ChefApp(
                     )
                     NavigationDrawerItem(
                         icon = { Icon(Icons.Default.Logout, null, tint = Red10, modifier = Modifier.size(20.dp)) },
-                        label = { Text("Chiqish", fontSize = 13.sp, color = Red10) },
+                        label = { Text(stringResource(R.string.logout), fontSize = 13.sp, color = Red10) },
                         selected = false,
-                        onClick = onLogout,
+                        onClick = { showSettings = false; onLogout() },
                         modifier = Modifier.padding(horizontal = 12.dp, vertical = 1.dp),
                         colors = NavigationDrawerItemDefaults.colors(unselectedContainerColor = Color.Transparent)
                     )
@@ -840,14 +840,14 @@ fun ChefApp(
         ) { padding ->
             Box(Modifier.fillMaxSize().padding(padding)) {
                 when (selectedId) {
-                    "dashboard"  -> ChefDashboardScreen(chefVm)
+                    "dashboard"  -> ChefDashboardScreen(chefVm, onNavigateToIngredients = { selectedId = "ingredient"; showLowStock = true })
                     "ombor"      -> ChefOmborScreen(chefVm)
-                    "ingredient" -> ChefIngredientsScreen(chefVm)
+                    "ingredient" -> { ChefIngredientsScreen(chefVm, showLowStock = showLowStock); LaunchedEffect(Unit) { showLowStock = false } }
                     "retsept"    -> ChefRecipesScreen(chefVm)
                     "menyu"      -> ChefMenuCalendarScreen(chefVm)
                     "harakat"    -> ChefStockMovementsScreen(chefVm)
                     "analitika"  -> ChefAnalyticsScreen()
-                    else         -> ChefDashboardScreen(chefVm)
+                    else         -> ChefDashboardScreen(chefVm, onNavigateToIngredients = { selectedId = "ingredient" })
                 }
             }
         }

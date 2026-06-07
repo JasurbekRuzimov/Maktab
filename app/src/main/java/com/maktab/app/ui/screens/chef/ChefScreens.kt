@@ -1,6 +1,7 @@
 package com.maktab.app.ui.screens.chef
 
 import androidx.compose.foundation.*
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.*
 import androidx.compose.foundation.shape.CircleShape
@@ -11,6 +12,10 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -24,6 +29,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.maktab.app.network.ApiResult
 import com.maktab.app.network.models.IngredientRequest
+import com.maktab.app.network.models.RecipeRequest
+import com.maktab.app.network.models.RecipeIngredient
 import com.maktab.app.ui.components.*
 import com.maktab.app.ui.theme.*
 import com.maktab.app.viewmodel.*
@@ -56,7 +63,7 @@ private val defaultMealTimes = listOf("Nonushta", "Tushlik", "Kechki ovqat", "Ke
 // ─────────────────────────────────────────────
 
 @Composable
-fun ChefDashboardScreen(vm: ChefViewModel) {
+fun ChefDashboardScreen(vm: ChefViewModel, onNavigateToIngredients: () -> Unit = {}) {
     val dashboardState      by vm.dashboardState.collectAsState()
     val menuCalendarState   by vm.menuCalendarState.collectAsState()
 
@@ -137,6 +144,7 @@ fun ChefDashboardScreen(vm: ChefViewModel) {
                             Spacer(Modifier.height(10.dp))
                             Card(
                                 modifier = Modifier.fillMaxWidth(),
+                                onClick = { onNavigateToIngredients() },
                                 colors = CardDefaults.cardColors(containerColor = RedContainer),
                                 shape = RoundedCornerShape(12.dp),
                                 border = BorderStroke(0.5.dp, Red10.copy(0.3f)),
@@ -322,6 +330,7 @@ private fun ChefStatCard(
         }
     }
 }
+
 @Composable
 fun ChefOmborScreen(vm: ChefViewModel) {
     val ingredientsState by vm.ingredientsState.collectAsState()
@@ -427,6 +436,7 @@ fun ChefOmborScreen(vm: ChefViewModel) {
             IngredientRow(
                 ing = ing,
                 onSave = { req -> vm.updateIngredient(ing.id, req) },
+                onUploadImage = { file -> vm.uploadIngredientImage(ing.id, file) },
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
             )
         }
@@ -461,6 +471,7 @@ fun ChefOmborScreen(vm: ChefViewModel) {
 private fun IngredientRow(
     ing: IngredientItem,
     onSave: (IngredientRequest) -> Unit,
+    onUploadImage: (java.io.File) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val (color, container) = when (ing.status) {
@@ -479,7 +490,27 @@ private fun IngredientRow(
     var editUnit     by remember(ing.id) { mutableStateOf(ing.unit) }
     var editExpiry   by remember(ing.id) { mutableStateOf(ing.expiryDate) }
     var saved        by remember { mutableStateOf(false) }
+    var imageUri     by remember { mutableStateOf<android.net.Uri?>(null) }
     val scope        = rememberCoroutineScope()
+    val context      = androidx.compose.ui.platform.LocalContext.current
+
+    val imagePickerLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
+        contract = androidx.activity.result.contract.ActivityResultContracts.GetContent()
+    ) { uri ->
+        if (uri != null) {
+            imageUri = uri
+            // Uri dan File yaratamiz va upload qilamiz
+            try {
+                val inputStream = context.contentResolver.openInputStream(uri)
+                val ext = context.contentResolver.getType(uri)?.substringAfterLast("/") ?: "jpg"
+                val tempFile = java.io.File(context.cacheDir, "img_${System.currentTimeMillis()}.$ext")
+                tempFile.outputStream().use { out -> inputStream?.copyTo(out) }
+                onUploadImage(tempFile)
+            } catch (e: Exception) {
+                android.util.Log.e("ImageUpload", e.message ?: "Xato")
+            }
+        }
+    }
 
     val units = listOf("kg", "g", "l", "ml", "dona", "litr")
     val categories = listOf("Sabzavot", "Don mahsulot", "Go'sht mahsulot", "Sut mahsulot", "Meva", "Boshqa")
@@ -497,10 +528,19 @@ private fun IngredientRow(
             horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             Box(
-                Modifier.size(42.dp).clip(RoundedCornerShape(8.dp)).background(AmberContainer),
+                Modifier.size(48.dp).clip(RoundedCornerShape(10.dp)).background(AmberContainer),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(Icons.Default.Inventory, null, tint = Amber10, modifier = Modifier.size(20.dp))
+                if (ing.imageUrl != null) {
+                    coil.compose.AsyncImage(
+                        model = ing.imageUrl,
+                        contentDescription = ing.name,
+                        modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(10.dp)),
+                        contentScale = androidx.compose.ui.layout.ContentScale.Crop
+                    )
+                } else {
+                    Icon(Icons.Default.Inventory, null, tint = Amber10, modifier = Modifier.size(20.dp))
+                }
             }
             Column(Modifier.weight(1f)) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -511,7 +551,13 @@ private fun IngredientRow(
                 Text("${ing.category} · min: ${ing.minQuantity.toLong()} ${ing.unit}",
                     fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 if (ing.expiryDate.isNotEmpty()) {
-                    Text("Tugash: ${ing.expiryDate}",
+                    Text("Tugash: ${
+                        ing.expiryDate.let { d ->
+                            if (d.matches(Regex("\\d{4}-\\d{2}-\\d{2}"))) {
+                                val p = d.split("-"); "${p[2]}.${p[1]}.${p[0]}"
+                            } else d
+                        }
+                    }",
                         fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
@@ -607,8 +653,53 @@ private fun IngredientRow(
                 }
                 Spacer(Modifier.height(14.dp))
 
-                SheetField("Yaroqlilik muddati", editExpiry, { editExpiry = it },
-                    Icons.Default.CalendarToday, "YYYY-MM-DD")
+                // ── Rasm bo'limi ──
+                Row(
+                    Modifier.fillMaxWidth().clip(RoundedCornerShape(10.dp))
+                        .background(MaterialTheme.colorScheme.surfaceVariant)
+                        .padding(12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Box(
+                        Modifier.size(56.dp).clip(RoundedCornerShape(10.dp)).background(AmberContainer),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        val displayUri = imageUri ?: ing.imageUrl?.let { android.net.Uri.parse(it) }
+                        if (displayUri != null) {
+                            coil.compose.AsyncImage(
+                                model = displayUri,
+                                contentDescription = null,
+                                modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(10.dp)),
+                                contentScale = androidx.compose.ui.layout.ContentScale.Crop
+                            )
+                        } else {
+                            Icon(Icons.Default.Image, null, tint = Amber10, modifier = Modifier.size(26.dp))
+                        }
+                    }
+                    Column(Modifier.weight(1f)) {
+                        Text("Ingredient rasmi", fontSize = 13.sp, fontWeight = FontWeight.Medium)
+                        Text(
+                            if (ing.imageUrl != null) "Rasm mavjud · yangilash mumkin"
+                            else "Rasm yuklanmagan",
+                            fontSize = 11.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    OutlinedButton(
+                        onClick = { imagePickerLauncher.launch("image/*") },
+                        shape = RoundedCornerShape(8.dp),
+                        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp),
+                        border = BorderStroke(0.5.dp, Amber10)
+                    ) {
+                        Icon(Icons.Default.Upload, null, modifier = Modifier.size(14.dp), tint = Amber10)
+                        Spacer(Modifier.width(4.dp))
+                        Text("Yuklash", fontSize = 12.sp, color = Amber10)
+                    }
+                }
+
+                DatePickerField("Yaroqlilik muddati", editExpiry, { editExpiry = it })
+
                 Spacer(Modifier.height(24.dp))
 
                 if (saved) {
@@ -683,15 +774,94 @@ private fun SheetField(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun DatePickerField(
+    label: String,
+    value: String,          // "YYYY-MM-DD" formatida saqlash
+    onValueChange: (String) -> Unit,
+) {
+    var showPicker by remember { mutableStateOf(false) }
+
+    // Ko'rsatish uchun DD.MM.YYYY formatga o'giramiz
+    val displayValue = if (value.matches(Regex("\\d{4}-\\d{2}-\\d{2}"))) {
+        val parts = value.split("-")
+        "${parts[2]}.${parts[1]}.${parts[0]}"
+    } else value
+
+    Column {
+        Text(label, fontSize = 13.sp, fontWeight = FontWeight.Medium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Spacer(Modifier.height(6.dp))
+        OutlinedTextField(
+            value = displayValue,
+            onValueChange = {},
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true,
+            readOnly = true,
+            shape = RoundedCornerShape(10.dp),
+            placeholder = { Text("KK.OO.YYYY", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant) },
+            leadingIcon = { Icon(Icons.Default.CalendarToday, null, tint = Amber10, modifier = Modifier.size(18.dp)) },
+            trailingIcon = {
+                if (value.isNotEmpty()) {
+                    IconButton(onClick = { onValueChange("") }) {
+                        Icon(Icons.Default.Close, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(16.dp))
+                    }
+                }
+            },
+            colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = Amber10, unfocusedBorderColor = Outline),
+            interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }.also { src ->
+                val pressed by src.collectIsPressedAsState()
+                if (pressed) showPicker = true
+            }
+        )
+    }
+
+    if (showPicker) {
+        val pickerState = rememberDatePickerState(
+            initialSelectedDateMillis = if (value.matches(Regex("\\d{4}-\\d{2}-\\d{2}"))) {
+                LocalDate.parse(value).atStartOfDay(ZoneId.of("UTC")).toInstant().toEpochMilli()
+            } else null
+        )
+        DatePickerDialog(
+            onDismissRequest = { showPicker = false },
+            confirmButton = {
+                TextButton(onClick = {
+                    pickerState.selectedDateMillis?.let { millis ->
+                        val date = Instant.ofEpochMilli(millis).atZone(ZoneId.of("UTC")).toLocalDate()
+                        onValueChange(date.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")))
+                    }
+                    showPicker = false
+                }) { Text("OK", color = Amber10) }
+            },
+            dismissButton = {
+                TextButton(onClick = { showPicker = false }) { Text("Bekor", color = MaterialTheme.colorScheme.onSurfaceVariant) }
+            }
+        ) {
+            DatePicker(
+                state = pickerState,
+                colors = DatePickerDefaults.colors(
+                    selectedDayContainerColor = Amber10,
+                    todayDateBorderColor = Amber10,
+                    selectedYearContainerColor = Amber10
+                )
+            )
+        }
+    }
+}
+
 // ─────────────────────────────────────────────
 // 3. INGREDIENTLAR BOSHQARUVI
 // ─────────────────────────────────────────────
 
 @Composable
-fun ChefIngredientsScreen(vm: ChefViewModel) {
+fun ChefIngredientsScreen(vm: ChefViewModel, showLowStock: Boolean = false) {
     val ingredientsState by vm.ingredientsState.collectAsState()
     var searchQuery by remember { mutableStateOf("") }
     var selectedFilter by remember { mutableStateOf("Barchasi") }
+    var showOnlyLowStock by remember { mutableStateOf(showLowStock) }
+
+    LaunchedEffect(showLowStock) { if (showLowStock) showOnlyLowStock = true }
     val filters = listOf("Barchasi", "Sabzavot", "Don mahsulot", "Et mahsulot", "Sut mahsulot")
     var showAddSheet by remember { mutableStateOf(false) }
 
@@ -699,8 +869,9 @@ fun ChefIngredientsScreen(vm: ChefViewModel) {
 
     val allIngredients = (ingredientsState as? ApiResult.Success)?.data ?: emptyList()
     val filtered = allIngredients.filter { ing ->
-        (selectedFilter == "Barchasi" || ing.category == selectedFilter) &&
-                ing.name.contains(searchQuery, ignoreCase = true)
+        (selectedFilter == "Barchasi" || ing.category.equals(selectedFilter, ignoreCase = true)) &&
+                ing.name.contains(searchQuery, ignoreCase = true) &&
+                (!showOnlyLowStock || ing.status in listOf(StockStatus.KAM, StockStatus.TUGAGAN))
     }
 
     if (showAddSheet) {
@@ -762,9 +933,27 @@ fun ChefIngredientsScreen(vm: ChefViewModel) {
                 }
                 Spacer(Modifier.height(10.dp))
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    item {
+                        FilterChip(
+                            selected = showOnlyLowStock,
+                            onClick = { showOnlyLowStock = !showOnlyLowStock },
+                            label = {
+                                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                                    Icon(Icons.Default.Warning, null, modifier = Modifier.size(12.dp))
+                                    Text("Kam qolgan", fontSize = 12.sp)
+                                }
+                            },
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = Red10, selectedLabelColor = Color.White,
+                                selectedLeadingIconColor = Color.White,
+                                containerColor = MaterialTheme.colorScheme.surfaceVariant
+                            ),
+                            border = FilterChipDefaults.filterChipBorder(enabled = true, selected = showOnlyLowStock, borderColor = Outline, selectedBorderColor = Color.Transparent)
+                        )
+                    }
                     items(filters) { f ->
                         FilterChip(
-                            selected = selectedFilter == f, onClick = { selectedFilter = f },
+                            selected = selectedFilter == f, onClick = { selectedFilter = f; if (f != "Barchasi") showOnlyLowStock = false },
                             label = { Text(f, fontSize = 12.sp) },
                             colors = FilterChipDefaults.filterChipColors(
                                 selectedContainerColor = Teal10, selectedLabelColor = Color.White,
@@ -841,11 +1030,26 @@ fun ChefIngredientsScreen(vm: ChefViewModel) {
 
 @Composable
 fun ChefRecipesScreen(vm: ChefViewModel) {
-    val recipesState by vm.recipesState.collectAsState()
-    var searchQuery by remember { mutableStateOf("") }
+    val recipesState     by vm.recipesState.collectAsState()
+    val ingredientsState by vm.ingredientsState.collectAsState()
+    var searchQuery  by remember { mutableStateOf("") }
     var filterActive by remember { mutableStateOf<Boolean?>(null) }
+    var showAddSheet by remember { mutableStateOf(false) }
 
-    LaunchedEffect(Unit) { vm.loadRecipes() }
+    LaunchedEffect(Unit) { vm.loadRecipes(); vm.loadIngredients() }
+
+    val allIngredients = (ingredientsState as? ApiResult.Success)?.data ?: emptyList()
+
+    if (showAddSheet) {
+        AddRecipeSheet(
+            allIngredients = allIngredients,
+            onDismiss = { showAddSheet = false },
+            onSave = { req ->
+                vm.createRecipe(req)
+                showAddSheet = false
+            }
+        )
+    }
 
     val allRecipes = (recipesState as? ApiResult.Success)?.data ?: emptyList()
     val filtered = allRecipes.filter { r ->
@@ -858,7 +1062,7 @@ fun ChefRecipesScreen(vm: ChefViewModel) {
             Column(Modifier.padding(16.dp)) {
                 SectionHeader("Taom retseptlari") {
                     Button(
-                        onClick = {},
+                        onClick = { showAddSheet = true },
                         colors = ButtonDefaults.buttonColors(containerColor = Teal10),
                         contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
                         modifier = Modifier.height(34.dp)
@@ -934,6 +1138,208 @@ fun ChefRecipesScreen(vm: ChefViewModel) {
                 RecipeCard(recipe, modifier = Modifier.padding(horizontal = 16.dp, vertical = 5.dp))
             }
         }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun AddRecipeSheet(
+    allIngredients: List<IngredientItem>,
+    onDismiss: () -> Unit,
+    onSave: (RecipeRequest) -> Unit
+) {
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val scope = rememberCoroutineScope()
+
+    var name        by remember { mutableStateOf("") }
+    var servingCount by remember { mutableStateOf("") }
+    var description by remember { mutableStateOf("") }
+    var isActive    by remember { mutableStateOf(true) }
+    var error       by remember { mutableStateOf("") }
+
+    // Tanlangan ingredientlar: ingredient -> quantity
+    val selectedIngredients = remember { mutableStateMapOf<IngredientItem, String>() }
+    var showIngPicker by remember { mutableStateOf(false) }
+    var searchIng    by remember { mutableStateOf("") }
+
+    val filteredIngs = allIngredients.filter { ing ->
+        ing.name.contains(searchIng, ignoreCase = true) && ing !in selectedIngredients.keys
+    }
+
+    fun doSave() {
+        error = ""
+        if (name.isBlank()) { error = "Retsept nomini kiriting"; return }
+        if (selectedIngredients.isEmpty()) { error = "Kamida 1 ta ingredient tanlang"; return }
+        val invalidQty = selectedIngredients.any { (_, q) -> q.toDoubleOrNull() == null || q.toDoubleOrNull()!! <= 0 }
+        if (invalidQty) { error = "Barcha ingredientlar miqdorini kiriting"; return }
+
+        val req = RecipeRequest(
+            name = name.trim(),
+            portionCount = servingCount.toIntOrNull(),
+            isActive = isActive,
+            ingredients = selectedIngredients.entries.map { (ing, qty) ->
+                RecipeIngredient(
+                    ingredientId = ing.id,
+                    quantity = qty.toDouble(),
+                    unit = ing.unit
+                )
+            }
+        )
+        onSave(req)
+    }
+
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = sheetState,
+        containerColor = MaterialTheme.colorScheme.surface
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp)
+                .padding(bottom = 32.dp)
+                .navigationBarsPadding(),
+            verticalArrangement = Arrangement.spacedBy(14.dp)
+        ) {
+            // Header
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                Text("Yangi retsept", fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
+                IconButton(onClick = { scope.launch { sheetState.hide() }.invokeOnCompletion { onDismiss() } }) {
+                    Icon(Icons.Default.Close, null)
+                }
+            }
+            HorizontalDivider(color = Outline)
+
+            // Retsept nomi
+            SheetField("Retsept nomi *", name, { name = it }, Icons.Default.RestaurantMenu, "Palov, sho'rva...")
+
+            // Porsiya soni
+            SheetField("Porsiya soni", servingCount, { servingCount = it.filter { c -> c.isDigit() } }, Icons.Default.People, "10", KeyboardType.Number)
+
+            // Holat
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Icon(Icons.Default.CheckCircle, null, tint = if (isActive) Teal10 else Outline, modifier = Modifier.size(18.dp))
+                    Text("Faol retsept", fontSize = 14.sp, fontWeight = FontWeight.Medium)
+                }
+                Switch(checked = isActive, onCheckedChange = { isActive = it },
+                    colors = SwitchDefaults.colors(checkedThumbColor = Color.White, checkedTrackColor = Teal10))
+            }
+
+            HorizontalDivider(color = Outline)
+
+            // Ingredientlar bo'limi
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                Text("Ingredientlar *", fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+                TextButton(onClick = { showIngPicker = true; searchIng = "" }) {
+                    Icon(Icons.Default.Add, null, modifier = Modifier.size(16.dp), tint = Teal10)
+                    Spacer(Modifier.width(4.dp))
+                    Text("Qo'shish", fontSize = 13.sp, color = Teal10)
+                }
+            }
+
+            if (selectedIngredients.isEmpty()) {
+                Box(Modifier.fillMaxWidth().clip(RoundedCornerShape(10.dp))
+                    .background(MaterialTheme.colorScheme.surfaceVariant).padding(16.dp),
+                    contentAlignment = Alignment.Center) {
+                    Text("Ingredient tanlanmagan", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            } else {
+                val ingList = selectedIngredients.entries.toList()
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    ingList.forEach { entry ->
+                        val ing = entry.key
+                        val qty = entry.value
+                        Row(
+                            Modifier.fillMaxWidth().clip(RoundedCornerShape(10.dp))
+                                .background(MaterialTheme.colorScheme.surfaceVariant).padding(10.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            Column(Modifier.weight(1f)) {
+                                Text(ing.name, fontSize = 14.sp, fontWeight = FontWeight.Medium)
+                                Text(ing.unit, fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            }
+                            OutlinedTextField(
+                                value = qty,
+                                onValueChange = { v -> selectedIngredients[ing] = v.filter { c -> c.isDigit() || c == '.' } },
+                                modifier = Modifier.width(90.dp),
+                                singleLine = true,
+                                placeholder = { Text("0.0", fontSize = 12.sp) },
+                                suffix = { Text(ing.unit, fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant) },
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                                shape = RoundedCornerShape(8.dp),
+                                colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = Teal10, unfocusedBorderColor = Outline)
+                            )
+                            IconButton(onClick = { selectedIngredients.remove(ing) }, modifier = Modifier.size(32.dp)) {
+                                Icon(Icons.Default.Close, null, tint = Red10, modifier = Modifier.size(16.dp))
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Xato xabar
+            if (error.isNotEmpty()) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Icon(Icons.Default.ErrorOutline, null, tint = Red10, modifier = Modifier.size(14.dp))
+                    Text(error, fontSize = 12.sp, color = Red10)
+                }
+            }
+
+            // Saqlash tugmasi
+            Button(onClick = { doSave() }, modifier = Modifier.fillMaxWidth().height(50.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = Teal10),
+                shape = RoundedCornerShape(12.dp)) {
+                Icon(Icons.Default.Save, null, modifier = Modifier.size(18.dp))
+                Spacer(Modifier.width(8.dp))
+                Text("Saqlash", fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
+            }
+        }
+    }
+
+    // Ingredient tanlash dialog
+    if (showIngPicker) {
+        AlertDialog(
+            onDismissRequest = { showIngPicker = false },
+            title = { Text("Ingredient tanlash", fontSize = 16.sp, fontWeight = FontWeight.SemiBold) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedTextField(
+                        value = searchIng, onValueChange = { searchIng = it },
+                        placeholder = { Text("Qidirish...", fontSize = 13.sp) },
+                        modifier = Modifier.fillMaxWidth(), singleLine = true,
+                        shape = RoundedCornerShape(10.dp),
+                        leadingIcon = { Icon(Icons.Default.Search, null, modifier = Modifier.size(16.dp)) },
+                        colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = Teal10)
+                    )
+                    if (filteredIngs.isEmpty()) {
+                        Text("Ingredientlar topilmadi", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    } else {
+                        LazyColumn(modifier = Modifier.heightIn(max = 300.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            items(filteredIngs) { ing ->
+                                Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(8.dp))
+                                    .clickable { selectedIngredients[ing] = ""; showIngPicker = false; searchIng = "" }
+                                    .padding(10.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically) {
+                                    Column {
+                                        Text(ing.name, fontSize = 14.sp, fontWeight = FontWeight.Medium)
+                                        Text("${ing.quantity.toLong()} ${ing.unit}", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                    }
+                                    Icon(Icons.Default.Add, null, tint = Teal10, modifier = Modifier.size(18.dp))
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            confirmButton = {},
+            dismissButton = {
+                TextButton(onClick = { showIngPicker = false }) { Text("Yopish") }
+            },
+            shape = RoundedCornerShape(16.dp)
+        )
     }
 }
 
@@ -1184,10 +1590,10 @@ private fun WeekDayMenuCard(
     modifier: Modifier = Modifier
 ) {
     val mealSlots = listOf(
-        "breakfast" to "Nonushta",
-        "lunch"     to "Tushlik",
-        "dinner"    to "Kechki ovqat",
-        "snack"     to "Kechki tamaddi"
+        "BREAKFAST" to "Nonushta",
+        "LUNCH"     to "Tushlik",
+        "DINNER"    to "Kechki ovqat",
+        "SNACK"     to "Kechki tamaddi"
     )
     Card(
         modifier = modifier.fillMaxWidth(),
@@ -1678,7 +2084,7 @@ fun AddIngredientSheet(
                 }
             }
             Spacer(Modifier.height(12.dp))
-            SheetField("Yaroqlilik muddati", expiry, { expiry = it }, Icons.Default.CalendarToday, "YYYY-MM-DD")
+            DatePickerField("Yaroqlilik muddati", expiry, { expiry = it })
 
             if (error.isNotEmpty()) {
                 Spacer(Modifier.height(8.dp))

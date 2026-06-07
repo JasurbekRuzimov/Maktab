@@ -210,7 +210,6 @@ data class SurveyAnswer(
 // CHEF
 // ─────────────────────────────────────────────
 
-
 @JsonClass(generateAdapter = true)
 data class StockMovementRequest(
     @Json(name = "movement_type") val movementType: String,  // "INCOMING" yoki "OUTGOING"
@@ -247,7 +246,7 @@ data class RecipeIngredient(
 data class MenuEntryRequest(
     @Json(name = "recipe_id") val recipeId: String,
     @Json(name = "meal_type") val mealType: String,
-    @Json(name = "date_key") val dateKey: String
+    @Json(name = "date") val dateKey: String
 )
 
 // ─────────────────────────────────────────────

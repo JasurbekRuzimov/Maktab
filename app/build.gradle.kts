@@ -34,4 +34,7 @@ dependencies {
 
     // Xavfsiz saqlash — PIN va token
     implementation("androidx.security:security-crypto:1.1.0-alpha06")
+
+    // Rasm yuklash
+    implementation("io.coil-kt:coil-compose:2.5.0")
 }

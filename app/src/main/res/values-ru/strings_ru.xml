@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Мактаб</string>
+
+    <!-- Auth -->
+    <string name="login_title">Система Мактаб</string>
+    <string name="login_subtitle">Войдите в свой аккаунт</string>
+    <string name="login_username">Имя пользователя</string>
+    <string name="login_username_hint">username</string>
+    <string name="login_password">Пароль</string>
+    <string name="login_password_hint">••••••••</string>
+    <string name="login_button">Войти</string>
+    <string name="login_loading">Вход…</string>
+    <string name="login_forgot_pin">Забыл PIN-код</string>
+
+    <!-- Common -->
+    <string name="save">Сохранить</string>
+    <string name="cancel">Отмена</string>
+    <string name="retry">Повторить</string>
+    <string name="search">Поиск</string>
+    <string name="add_new">Новый</string>
+    <string name="loading">Загрузка…</string>
+    <string name="data_not_loaded">Данные не загружены</string>
+    <string name="today">Сегодня</string>
+    <string name="total">Всего</string>
+    <string name="status">Статус</string>
+    <string name="active">Активный</string>
+    <string name="inactive">Неактивный</string>
+    <string name="pending">В ожидании</string>
+    <string name="send">Отправить</string>
+    <string name="submit">Сдать</string>
+    <string name="confirm">Подтвердить</string>
+    <string name="reject">Отклонить</string>
+    <string name="correct">Верно</string>
+    <string name="mark">Отметить</string>
+    <string name="days">Дни</string>
+    <string name="ball">Балл</string>
+    <string name="max">Максимум</string>
+    <string name="avg_score">Средний балл</string>
+    <string name="date">Дата</string>
+    <string name="type">Тип</string>
+    <string name="category">Категория</string>
+    <string name="amount">Количество</string>
+    <string name="unit">Единица измерения</string>
+    <string name="section">Раздел</string>
+    <string name="id_label">ID</string>
+    <string name="start">Начало</string>
+    <string name="end">Конец</string>
+    <string name="read_more">Читать далее</string>
+    <string name="file">Файл</string>
+    <string name="upload_file">Загрузить файл</string>
+    <string name="saved_ok">Успешно сохранено!</string>
+    <string name="again">Снова</string>
+    <string name="dot_separator">·</string>
+    <string name="dash_separator">–</string>
+    <string name="bonus">Бонус</string>
+    <string name="position_label">ДОЛЖНОСТЬ</string>
+    <string name="personal_info">ЛИЧНЫЕ ДАННЫЕ</string>
+    <string name="security">БЕЗОПАСНОСТЬ</string>
+    <string name="settings">Настройки</string>
+    <string name="last_7_days">Последние 7 дней</string>
+
+    <!-- Auth / Exit -->
+    <string name="exit_app_title">Выйти из приложения?</string>
+    <string name="exit_app_msg">Вы хотите закрыть приложение? При следующем входе потребуется PIN-код.</string>
+    <string name="exit_yes">Да, выйти</string>
+    <string name="logout">Выйти</string>
+
+    <!-- Password -->
+    <string name="change_password">Изменить пароль</string>
+    <string name="save_password">Сохранить пароль</string>
+    <string name="password_changed">Пароль успешно изменён!</string>
+    <string name="password_hint_text">Периодически обновляйте пароль кабинета.</string>
+    <string name="password_strong_hint">Используйте буквы, цифры и специальные символы для надёжного пароля.</string>
+
+    <!-- Attendance -->
+    <string name="attendance_rate">Процент посещаемости</string>
+    <string name="attendance_loading">Загрузка посещаемости…</string>
+    <string name="view_attendance">Посещаемость</string>
+    <string name="no_attendance_week">На этой неделе нет записей</string>
+    <string name="weekly_attendance_stats">Еженедельная статистика</string>
+
+    <!-- Grades -->
+    <string name="no_grades">Оценки ещё не выставлены</string>
+    <string name="view_grades">Оценки</string>
+    <string name="grades_by_subject">Оценки по предметам</string>
+    <string name="class_ranking">Рейтинг класса</string>
+
+    <!-- Homework -->
+    <string name="no_homework">Домашние задания ещё не заданы</string>
+    <string name="recent_homework">Последние задания</string>
+    <string name="submit_answer">Отправить ответ</string>
+    <string name="answer_accepted">Ваш ответ принят</string>
+
+    <!-- Exams -->
+    <string name="no_exams">Результаты экзаменов отсутствуют</string>
+    <string name="recent_exams">Последние экзамены</string>
+
+    <!-- Payments -->
+    <string name="view_payments">Платежи</string>
+    <string name="all_payments">Все платежи</string>
+    <string name="active_contract">Активный договор</string>
+    <string name="next_payment_date">Следующая дата оплаты</string>
+    <string name="no_payments">Договоры и платежи отсутствуют</string>
+    <string name="paid">Оплачено</string>
+
+    <!-- Parent -->
+    <string name="linked_children">ПРИВЯЗАННЫЕ ДЕТИ</string>
+    <string name="parent_role">Родитель</string>
+    <string name="school_parent">Родитель школы</string>
+    <string name="student_role">Ученик</string>
+
+    <!-- Profile -->
+    <string name="profile_title">Профиль</string>
+
+    <!-- Complaints -->
+    <string name="my_complaints">Мои обращения</string>
+    <string name="new_complaint">Новое обращение</string>
+    <string name="complaint_type">Тип обращения</string>
+    <string name="complaint_detail_hint">Опишите проблему подробнее…</string>
+    <string name="complaint_accepted">Ваше обращение принято</string>
+    <string name="complaint_reply_time">Администрация рассмотрит в течение 2 рабочих дней</string>
+
+    <!-- Surveys -->
+    <string name="surveys_title">Опросы</string>
+
+    <!-- News -->
+    <string name="news_coming_soon">Новости скоро появятся</string>
+
+    <!-- Teacher -->
+    <string name="no_class_today">Сегодня нет занятий</string>
+    <string name="no_class_assigned">Учителю не назначен класс</string>
+    <string name="classes_loading">Загрузка классов…</string>
+    <string name="new_subject">Новый предмет</string>
+
+    <!-- Chef -->
+    <string name="chef_role">Повар · Кафетерий</string>
+    <string name="low_stock_alerts">Уведомления склада</string>
+    <string name="warehouse_usage">Использование склада</string>
+    <string name="most_used_ingredients">Часто используемые ингредиенты</string>
+    <string name="spend_trend">Тренд расходов</string>
+    <string name="recent_movements">Последние движения склада</string>
+    <string name="ingredient">Ингредиент</string>
+    <string name="ingredient_catalog">Каталог ингредиентов</string>
+    <string name="ingredient_search_hint">Поиск по ингредиенту или категории</string>
+    <string name="no_ingredients">Ингредиенты не найдены</string>
+    <string name="add_ingredient">Добавить ингредиент</string>
+    <string name="new_ingredient">Новый ингредиент</string>
+    <string name="edit_ingredient">Редактировать ингредиент</string>
+    <string name="min_stock">Мин.остаток</string>
+    <string name="remaining">Остаток</string>
+    <string name="movements_search_hint">Поиск по движению, причине или ингредиенту</string>
+    <string name="movements_title">Движения</string>
+    <string name="no_movements">Движения не найдены</string>
+    <string name="menu_calendar">Меню-календарь</string>
+    <string name="no_menu_today">Меню на сегодня не назначено</string>
+    <string name="select_meal">Выбрать блюдо</string>
+    <string name="recipes_title">Рецепты</string>
+    <string name="recipe_search_hint">Поиск рецептов</string>
+    <string name="no_recipes">Рецепты не найдены</string>
+    <string name="new_recipe">Новый рецепт</string>
+    <string name="portion">Порция</string>
+
+    <!-- HR -->
+    <string name="employee">Сотрудник</string>
+    <string name="employee_search_hint">Поиск сотрудника…</string>
+    <string name="no_employee">Сотрудник не найден</string>
+    <string name="add_employee">Добавить сотрудника</string>
+    <string name="employee_added">Сотрудник успешно добавлен!</string>
+    <string name="departments_by_employees">Сотрудники по отделам</string>
+    <string name="salary_distribution">Распределение зарплат</string>
+    <string name="documents_title">Документы</string>
+    <string name="document_search_hint">Поиск документов…</string>
+
+    <!-- Behavior -->
+    <string name="no_behavior_records">Записей о поведении нет</string>
+</resources>

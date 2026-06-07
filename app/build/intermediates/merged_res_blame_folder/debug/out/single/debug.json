@@ -1,22 +1,22 @@
 [
     {
-        "merged": "com.maktab.app-merged_res-46:/mipmap-anydpi-v26_ic_launcher_round.xml.flat",
-        "source": "com.maktab.app-main-48:/mipmap-anydpi-v26/ic_launcher_round.xml"
+        "merged": "com.maktab.app-merged_res-48:/mipmap-anydpi-v26_ic_launcher.xml.flat",
+        "source": "com.maktab.app-main-50:/mipmap-anydpi-v26/ic_launcher.xml"
     },
     {
-        "merged": "com.maktab.app-merged_res-46:/mipmap-anydpi-v26_ic_launcher.xml.flat",
-        "source": "com.maktab.app-main-48:/mipmap-anydpi-v26/ic_launcher.xml"
+        "merged": "com.maktab.app-merged_res-48:/drawable_ic_launcher_background.xml.flat",
+        "source": "com.maktab.app-main-50:/drawable/ic_launcher_background.xml"
     },
     {
-        "merged": "com.maktab.app-merged_res-46:/drawable_ic_launcher.xml.flat",
-        "source": "com.maktab.app-main-48:/drawable/ic_launcher.xml"
+        "merged": "com.maktab.app-merged_res-48:/mipmap-anydpi-v26_ic_launcher_round.xml.flat",
+        "source": "com.maktab.app-main-50:/mipmap-anydpi-v26/ic_launcher_round.xml"
     },
     {
-        "merged": "com.maktab.app-merged_res-46:/drawable_ic_launcher_foreground.xml.flat",
-        "source": "com.maktab.app-main-48:/drawable/ic_launcher_foreground.xml"
+        "merged": "com.maktab.app-merged_res-48:/drawable_ic_launcher.xml.flat",
+        "source": "com.maktab.app-main-50:/drawable/ic_launcher.xml"
     },
     {
-        "merged": "com.maktab.app-merged_res-46:/drawable_ic_launcher_background.xml.flat",
-        "source": "com.maktab.app-main-48:/drawable/ic_launcher_background.xml"
+        "merged": "com.maktab.app-merged_res-48:/drawable_ic_launcher_foreground.xml.flat",
+        "source": "com.maktab.app-main-50:/drawable/ic_launcher_foreground.xml"
     }
 ]

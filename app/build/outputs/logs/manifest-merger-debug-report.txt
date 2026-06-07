@@ -7,6 +7,8 @@ INJECTED from C:\Users\ruzim\Downloads\MaktabApp\MaktabApp\app\src\main\AndroidM
 MERGED from [androidx.activity:activity:1.8.2] C:\Users\ruzim\.gradle\caches\transforms-3\a5c094d37fec8c307b213ff21ab1b701\transformed\activity-1.8.2\AndroidManifest.xml:17:1-22:12
 MERGED from [androidx.activity:activity-ktx:1.8.2] C:\Users\ruzim\.gradle\caches\transforms-3\3dc6929b3b47b580943347fe842735f3\transformed\activity-ktx-1.8.2\AndroidManifest.xml:2:1-7:12
 MERGED from [androidx.compose.material3:material3-android:1.2.0] C:\Users\ruzim\.gradle\caches\transforms-3\8cfdf5cbc71dff4d1bc740f4b153dc35\transformed\material3-release\AndroidManifest.xml:17:1-22:12
+MERGED from [io.coil-kt:coil-compose:2.5.0] C:\Users\ruzim\.gradle\caches\transforms-3\198422b7f9ed898bffcd8d011248a10f\transformed\coil-compose-2.5.0\AndroidManifest.xml:2:1-7:12
+MERGED from [io.coil-kt:coil-compose-base:2.5.0] C:\Users\ruzim\.gradle\caches\transforms-3\15a5e056521819f5392e7d7d2df1e9a2\transformed\coil-compose-base-2.5.0\AndroidManifest.xml:2:1-7:12
 MERGED from [androidx.compose.material:material-android:1.6.1] C:\Users\ruzim\.gradle\caches\transforms-3\b439674ee8d3e47d2f37ced873556cc6\transformed\material-release\AndroidManifest.xml:2:1-7:12
 MERGED from [androidx.compose.material:material-icons-core-android:1.6.1] C:\Users\ruzim\.gradle\caches\transforms-3\620196120fd5b1daccd4a8c53feedde9\transformed\material-icons-core-release\AndroidManifest.xml:2:1-7:12
 MERGED from [androidx.compose.material:material-icons-extended-android:1.6.1] C:\Users\ruzim\.gradle\caches\transforms-3\eb1e8b578decd6e1cf17f53c4d3b25ed\transformed\material-icons-extended-release\AndroidManifest.xml:2:1-7:12
@@ -32,11 +34,17 @@ MERGED from [androidx.savedstate:savedstate:1.2.1] C:\Users\ruzim\.gradle\caches
 MERGED from [androidx.lifecycle:lifecycle-viewmodel-savedstate:2.7.0] C:\Users\ruzim\.gradle\caches\transforms-3\c17406ad82f850371e197ab6751d2559\transformed\lifecycle-viewmodel-savedstate-2.7.0\AndroidManifest.xml:17:1-22:12
 MERGED from [androidx.lifecycle:lifecycle-viewmodel-ktx:2.7.0] C:\Users\ruzim\.gradle\caches\transforms-3\bd5b5522b8cfa68fff07c34cbfe747cc\transformed\lifecycle-viewmodel-ktx-2.7.0\AndroidManifest.xml:2:1-7:12
 MERGED from [androidx.lifecycle:lifecycle-viewmodel:2.7.0] C:\Users\ruzim\.gradle\caches\transforms-3\391416446132c3f6a640c721da6d8fd5\transformed\lifecycle-viewmodel-2.7.0\AndroidManifest.xml:17:1-22:12
+MERGED from [io.coil-kt:coil:2.5.0] C:\Users\ruzim\.gradle\caches\transforms-3\00b1e25a1fb5b8c3c2f6cdd8056e2f7b\transformed\coil-2.5.0\AndroidManifest.xml:2:1-7:12
+MERGED from [io.coil-kt:coil-base:2.5.0] C:\Users\ruzim\.gradle\caches\transforms-3\49d6aaee894c229b0e697b15b0ef6740\transformed\coil-base-2.5.0\AndroidManifest.xml:2:1-7:12
 MERGED from [androidx.lifecycle:lifecycle-runtime:2.7.0] C:\Users\ruzim\.gradle\caches\transforms-3\cc269b482257343e7677caefd82573f4\transformed\lifecycle-runtime-2.7.0\AndroidManifest.xml:2:1-7:12
 MERGED from [androidx.lifecycle:lifecycle-runtime-ktx:2.7.0] C:\Users\ruzim\.gradle\caches\transforms-3\69621d2d0f94a188e6dddb7a7fff95d4\transformed\lifecycle-runtime-ktx-2.7.0\AndroidManifest.xml:17:1-22:12
 MERGED from [androidx.lifecycle:lifecycle-viewmodel-compose:2.7.0] C:\Users\ruzim\.gradle\caches\transforms-3\4dd91fcbc7835e3ee4e43e6755230b8c\transformed\lifecycle-viewmodel-compose-2.7.0\AndroidManifest.xml:2:1-7:12
+MERGED from [com.google.accompanist:accompanist-drawablepainter:0.32.0] C:\Users\ruzim\.gradle\caches\transforms-3\a09547de097b716b971d45447bf4e29d\transformed\accompanist-drawablepainter-0.32.0\AndroidManifest.xml:17:1-23:12
 MERGED from [androidx.compose.ui:ui-android:1.6.1] C:\Users\ruzim\.gradle\caches\transforms-3\a357bbe47ec847b933e6735fc08e1f33\transformed\ui-release\AndroidManifest.xml:2:1-7:12
 MERGED from [androidx.autofill:autofill:1.0.0] C:\Users\ruzim\.gradle\caches\transforms-3\c1cc097327932c08a06c67b3008b5dbc\transformed\autofill-1.0.0\AndroidManifest.xml:17:1-24:12
+MERGED from [androidx.appcompat:appcompat-resources:1.6.1] C:\Users\ruzim\.gradle\caches\transforms-3\fdf7cb61aa48a697a9df8fc1913e04bc\transformed\appcompat-resources-1.6.1\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.vectordrawable:vectordrawable-animated:1.1.0] C:\Users\ruzim\.gradle\caches\transforms-3\52f9636c0d11d3bfcb5e943511737b87\transformed\vectordrawable-animated-1.1.0\AndroidManifest.xml:17:1-24:12
+MERGED from [androidx.vectordrawable:vectordrawable:1.1.0] C:\Users\ruzim\.gradle\caches\transforms-3\0bdb15d748ec384b3451d55e0239b6bf\transformed\vectordrawable-1.1.0\AndroidManifest.xml:17:1-24:12
 MERGED from [androidx.core:core:1.12.0] C:\Users\ruzim\.gradle\caches\transforms-3\01be542a8a7642ecba403b94caa2bdf6\transformed\core-1.12.0\AndroidManifest.xml:17:1-30:12
 MERGED from [androidx.customview:customview-poolingcontainer:1.0.0] C:\Users\ruzim\.gradle\caches\transforms-3\95a60d7fd29a45ee5b16a596ab57b607\transformed\customview-poolingcontainer-1.0.0\AndroidManifest.xml:17:1-23:12
 MERGED from [androidx.core:core-ktx:1.12.0] C:\Users\ruzim\.gradle\caches\transforms-3\6bcb5a180b7c5ae245cf3db8b69f9a84\transformed\core-ktx-1.12.0\AndroidManifest.xml:2:1-7:12
@@ -47,9 +55,10 @@ MERGED from [androidx.security:security-crypto:1.1.0-alpha06] C:\Users\ruzim\.gr
 MERGED from [androidx.versionedparcelable:versionedparcelable:1.1.1] C:\Users\ruzim\.gradle\caches\transforms-3\4431dc15771925f9c73f462bf37582cd\transformed\versionedparcelable-1.1.1\AndroidManifest.xml:17:1-27:12
 MERGED from [androidx.interpolator:interpolator:1.0.0] C:\Users\ruzim\.gradle\caches\transforms-3\c8bc8441aa1940645ac7905c00fe16c8\transformed\interpolator-1.0.0\AndroidManifest.xml:17:1-22:12
 MERGED from [androidx.arch.core:core-runtime:2.2.0] C:\Users\ruzim\.gradle\caches\transforms-3\a596724fd6d30d8f96db7f6fc822a20f\transformed\core-runtime-2.2.0\AndroidManifest.xml:17:1-22:12
-MERGED from [androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\ruzim\.gradle\caches\transforms-3\5f7ce29a25973535d221a2c1da52466d\transformed\profileinstaller-1.3.0\AndroidManifest.xml:17:1-55:12
+MERGED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\ruzim\.gradle\caches\transforms-3\06969f8046f43eda714780ada6fe13cf\transformed\profileinstaller-1.3.1\AndroidManifest.xml:17:1-55:12
 MERGED from [androidx.startup:startup-runtime:1.1.1] C:\Users\ruzim\.gradle\caches\transforms-3\a8bb623963dccfbaf142c4cc7cd79c07\transformed\startup-runtime-1.1.1\AndroidManifest.xml:17:1-33:12
 MERGED from [androidx.tracing:tracing:1.0.0] C:\Users\ruzim\.gradle\caches\transforms-3\1988c03705ce7a9214835d6b0e7d2014\transformed\tracing-1.0.0\AndroidManifest.xml:17:1-24:12
+MERGED from [androidx.exifinterface:exifinterface:1.3.6] C:\Users\ruzim\.gradle\caches\transforms-3\4a68241d5114f85e63d5ae7e37edd6b9\transformed\exifinterface-1.3.6\AndroidManifest.xml:17:1-24:12
 	package
 		INJECTED from C:\Users\ruzim\Downloads\MaktabApp\MaktabApp\app\src\main\AndroidManifest.xml
 	android:versionName
@@ -79,8 +88,8 @@ MERGED from [androidx.core:core:1.12.0] C:\Users\ruzim\.gradle\caches\transforms
 MERGED from [androidx.core:core:1.12.0] C:\Users\ruzim\.gradle\caches\transforms-3\01be542a8a7642ecba403b94caa2bdf6\transformed\core-1.12.0\AndroidManifest.xml:28:5-89
 MERGED from [androidx.versionedparcelable:versionedparcelable:1.1.1] C:\Users\ruzim\.gradle\caches\transforms-3\4431dc15771925f9c73f462bf37582cd\transformed\versionedparcelable-1.1.1\AndroidManifest.xml:24:5-25:19
 MERGED from [androidx.versionedparcelable:versionedparcelable:1.1.1] C:\Users\ruzim\.gradle\caches\transforms-3\4431dc15771925f9c73f462bf37582cd\transformed\versionedparcelable-1.1.1\AndroidManifest.xml:24:5-25:19
-MERGED from [androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\ruzim\.gradle\caches\transforms-3\5f7ce29a25973535d221a2c1da52466d\transformed\profileinstaller-1.3.0\AndroidManifest.xml:23:5-53:19
-MERGED from [androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\ruzim\.gradle\caches\transforms-3\5f7ce29a25973535d221a2c1da52466d\transformed\profileinstaller-1.3.0\AndroidManifest.xml:23:5-53:19
+MERGED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\ruzim\.gradle\caches\transforms-3\06969f8046f43eda714780ada6fe13cf\transformed\profileinstaller-1.3.1\AndroidManifest.xml:23:5-53:19
+MERGED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\ruzim\.gradle\caches\transforms-3\06969f8046f43eda714780ada6fe13cf\transformed\profileinstaller-1.3.1\AndroidManifest.xml:23:5-53:19
 MERGED from [androidx.startup:startup-runtime:1.1.1] C:\Users\ruzim\.gradle\caches\transforms-3\a8bb623963dccfbaf142c4cc7cd79c07\transformed\startup-runtime-1.1.1\AndroidManifest.xml:25:5-31:19
 MERGED from [androidx.startup:startup-runtime:1.1.1] C:\Users\ruzim\.gradle\caches\transforms-3\a8bb623963dccfbaf142c4cc7cd79c07\transformed\startup-runtime-1.1.1\AndroidManifest.xml:25:5-31:19
 	android:extractNativeLibs
@@ -133,6 +142,10 @@ MERGED from [androidx.activity:activity-ktx:1.8.2] C:\Users\ruzim\.gradle\caches
 MERGED from [androidx.activity:activity-ktx:1.8.2] C:\Users\ruzim\.gradle\caches\transforms-3\3dc6929b3b47b580943347fe842735f3\transformed\activity-ktx-1.8.2\AndroidManifest.xml:5:5-44
 MERGED from [androidx.compose.material3:material3-android:1.2.0] C:\Users\ruzim\.gradle\caches\transforms-3\8cfdf5cbc71dff4d1bc740f4b153dc35\transformed\material3-release\AndroidManifest.xml:20:5-44
 MERGED from [androidx.compose.material3:material3-android:1.2.0] C:\Users\ruzim\.gradle\caches\transforms-3\8cfdf5cbc71dff4d1bc740f4b153dc35\transformed\material3-release\AndroidManifest.xml:20:5-44
+MERGED from [io.coil-kt:coil-compose:2.5.0] C:\Users\ruzim\.gradle\caches\transforms-3\198422b7f9ed898bffcd8d011248a10f\transformed\coil-compose-2.5.0\AndroidManifest.xml:5:5-44
+MERGED from [io.coil-kt:coil-compose:2.5.0] C:\Users\ruzim\.gradle\caches\transforms-3\198422b7f9ed898bffcd8d011248a10f\transformed\coil-compose-2.5.0\AndroidManifest.xml:5:5-44
+MERGED from [io.coil-kt:coil-compose-base:2.5.0] C:\Users\ruzim\.gradle\caches\transforms-3\15a5e056521819f5392e7d7d2df1e9a2\transformed\coil-compose-base-2.5.0\AndroidManifest.xml:5:5-44
+MERGED from [io.coil-kt:coil-compose-base:2.5.0] C:\Users\ruzim\.gradle\caches\transforms-3\15a5e056521819f5392e7d7d2df1e9a2\transformed\coil-compose-base-2.5.0\AndroidManifest.xml:5:5-44
 MERGED from [androidx.compose.material:material-android:1.6.1] C:\Users\ruzim\.gradle\caches\transforms-3\b439674ee8d3e47d2f37ced873556cc6\transformed\material-release\AndroidManifest.xml:5:5-44
 MERGED from [androidx.compose.material:material-android:1.6.1] C:\Users\ruzim\.gradle\caches\transforms-3\b439674ee8d3e47d2f37ced873556cc6\transformed\material-release\AndroidManifest.xml:5:5-44
 MERGED from [androidx.compose.material:material-icons-core-android:1.6.1] C:\Users\ruzim\.gradle\caches\transforms-3\620196120fd5b1daccd4a8c53feedde9\transformed\material-icons-core-release\AndroidManifest.xml:5:5-44
@@ -183,16 +196,28 @@ MERGED from [androidx.lifecycle:lifecycle-viewmodel-ktx:2.7.0] C:\Users\ruzim\.g
 MERGED from [androidx.lifecycle:lifecycle-viewmodel-ktx:2.7.0] C:\Users\ruzim\.gradle\caches\transforms-3\bd5b5522b8cfa68fff07c34cbfe747cc\transformed\lifecycle-viewmodel-ktx-2.7.0\AndroidManifest.xml:5:5-44
 MERGED from [androidx.lifecycle:lifecycle-viewmodel:2.7.0] C:\Users\ruzim\.gradle\caches\transforms-3\391416446132c3f6a640c721da6d8fd5\transformed\lifecycle-viewmodel-2.7.0\AndroidManifest.xml:20:5-44
 MERGED from [androidx.lifecycle:lifecycle-viewmodel:2.7.0] C:\Users\ruzim\.gradle\caches\transforms-3\391416446132c3f6a640c721da6d8fd5\transformed\lifecycle-viewmodel-2.7.0\AndroidManifest.xml:20:5-44
+MERGED from [io.coil-kt:coil:2.5.0] C:\Users\ruzim\.gradle\caches\transforms-3\00b1e25a1fb5b8c3c2f6cdd8056e2f7b\transformed\coil-2.5.0\AndroidManifest.xml:5:5-44
+MERGED from [io.coil-kt:coil:2.5.0] C:\Users\ruzim\.gradle\caches\transforms-3\00b1e25a1fb5b8c3c2f6cdd8056e2f7b\transformed\coil-2.5.0\AndroidManifest.xml:5:5-44
+MERGED from [io.coil-kt:coil-base:2.5.0] C:\Users\ruzim\.gradle\caches\transforms-3\49d6aaee894c229b0e697b15b0ef6740\transformed\coil-base-2.5.0\AndroidManifest.xml:5:5-44
+MERGED from [io.coil-kt:coil-base:2.5.0] C:\Users\ruzim\.gradle\caches\transforms-3\49d6aaee894c229b0e697b15b0ef6740\transformed\coil-base-2.5.0\AndroidManifest.xml:5:5-44
 MERGED from [androidx.lifecycle:lifecycle-runtime:2.7.0] C:\Users\ruzim\.gradle\caches\transforms-3\cc269b482257343e7677caefd82573f4\transformed\lifecycle-runtime-2.7.0\AndroidManifest.xml:5:5-44
 MERGED from [androidx.lifecycle:lifecycle-runtime:2.7.0] C:\Users\ruzim\.gradle\caches\transforms-3\cc269b482257343e7677caefd82573f4\transformed\lifecycle-runtime-2.7.0\AndroidManifest.xml:5:5-44
 MERGED from [androidx.lifecycle:lifecycle-runtime-ktx:2.7.0] C:\Users\ruzim\.gradle\caches\transforms-3\69621d2d0f94a188e6dddb7a7fff95d4\transformed\lifecycle-runtime-ktx-2.7.0\AndroidManifest.xml:20:5-44
 MERGED from [androidx.lifecycle:lifecycle-runtime-ktx:2.7.0] C:\Users\ruzim\.gradle\caches\transforms-3\69621d2d0f94a188e6dddb7a7fff95d4\transformed\lifecycle-runtime-ktx-2.7.0\AndroidManifest.xml:20:5-44
 MERGED from [androidx.lifecycle:lifecycle-viewmodel-compose:2.7.0] C:\Users\ruzim\.gradle\caches\transforms-3\4dd91fcbc7835e3ee4e43e6755230b8c\transformed\lifecycle-viewmodel-compose-2.7.0\AndroidManifest.xml:5:5-44
 MERGED from [androidx.lifecycle:lifecycle-viewmodel-compose:2.7.0] C:\Users\ruzim\.gradle\caches\transforms-3\4dd91fcbc7835e3ee4e43e6755230b8c\transformed\lifecycle-viewmodel-compose-2.7.0\AndroidManifest.xml:5:5-44
+MERGED from [com.google.accompanist:accompanist-drawablepainter:0.32.0] C:\Users\ruzim\.gradle\caches\transforms-3\a09547de097b716b971d45447bf4e29d\transformed\accompanist-drawablepainter-0.32.0\AndroidManifest.xml:21:5-44
+MERGED from [com.google.accompanist:accompanist-drawablepainter:0.32.0] C:\Users\ruzim\.gradle\caches\transforms-3\a09547de097b716b971d45447bf4e29d\transformed\accompanist-drawablepainter-0.32.0\AndroidManifest.xml:21:5-44
 MERGED from [androidx.compose.ui:ui-android:1.6.1] C:\Users\ruzim\.gradle\caches\transforms-3\a357bbe47ec847b933e6735fc08e1f33\transformed\ui-release\AndroidManifest.xml:5:5-44
 MERGED from [androidx.compose.ui:ui-android:1.6.1] C:\Users\ruzim\.gradle\caches\transforms-3\a357bbe47ec847b933e6735fc08e1f33\transformed\ui-release\AndroidManifest.xml:5:5-44
 MERGED from [androidx.autofill:autofill:1.0.0] C:\Users\ruzim\.gradle\caches\transforms-3\c1cc097327932c08a06c67b3008b5dbc\transformed\autofill-1.0.0\AndroidManifest.xml:20:5-22:41
 MERGED from [androidx.autofill:autofill:1.0.0] C:\Users\ruzim\.gradle\caches\transforms-3\c1cc097327932c08a06c67b3008b5dbc\transformed\autofill-1.0.0\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.appcompat:appcompat-resources:1.6.1] C:\Users\ruzim\.gradle\caches\transforms-3\fdf7cb61aa48a697a9df8fc1913e04bc\transformed\appcompat-resources-1.6.1\AndroidManifest.xml:20:5-44
+MERGED from [androidx.appcompat:appcompat-resources:1.6.1] C:\Users\ruzim\.gradle\caches\transforms-3\fdf7cb61aa48a697a9df8fc1913e04bc\transformed\appcompat-resources-1.6.1\AndroidManifest.xml:20:5-44
+MERGED from [androidx.vectordrawable:vectordrawable-animated:1.1.0] C:\Users\ruzim\.gradle\caches\transforms-3\52f9636c0d11d3bfcb5e943511737b87\transformed\vectordrawable-animated-1.1.0\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.vectordrawable:vectordrawable-animated:1.1.0] C:\Users\ruzim\.gradle\caches\transforms-3\52f9636c0d11d3bfcb5e943511737b87\transformed\vectordrawable-animated-1.1.0\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.vectordrawable:vectordrawable:1.1.0] C:\Users\ruzim\.gradle\caches\transforms-3\0bdb15d748ec384b3451d55e0239b6bf\transformed\vectordrawable-1.1.0\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.vectordrawable:vectordrawable:1.1.0] C:\Users\ruzim\.gradle\caches\transforms-3\0bdb15d748ec384b3451d55e0239b6bf\transformed\vectordrawable-1.1.0\AndroidManifest.xml:20:5-22:41
 MERGED from [androidx.core:core:1.12.0] C:\Users\ruzim\.gradle\caches\transforms-3\01be542a8a7642ecba403b94caa2bdf6\transformed\core-1.12.0\AndroidManifest.xml:20:5-44
 MERGED from [androidx.core:core:1.12.0] C:\Users\ruzim\.gradle\caches\transforms-3\01be542a8a7642ecba403b94caa2bdf6\transformed\core-1.12.0\AndroidManifest.xml:20:5-44
 MERGED from [androidx.customview:customview-poolingcontainer:1.0.0] C:\Users\ruzim\.gradle\caches\transforms-3\95a60d7fd29a45ee5b16a596ab57b607\transformed\customview-poolingcontainer-1.0.0\AndroidManifest.xml:20:5-21:38
@@ -213,12 +238,14 @@ MERGED from [androidx.interpolator:interpolator:1.0.0] C:\Users\ruzim\.gradle\ca
 MERGED from [androidx.interpolator:interpolator:1.0.0] C:\Users\ruzim\.gradle\caches\transforms-3\c8bc8441aa1940645ac7905c00fe16c8\transformed\interpolator-1.0.0\AndroidManifest.xml:20:5-44
 MERGED from [androidx.arch.core:core-runtime:2.2.0] C:\Users\ruzim\.gradle\caches\transforms-3\a596724fd6d30d8f96db7f6fc822a20f\transformed\core-runtime-2.2.0\AndroidManifest.xml:20:5-44
 MERGED from [androidx.arch.core:core-runtime:2.2.0] C:\Users\ruzim\.gradle\caches\transforms-3\a596724fd6d30d8f96db7f6fc822a20f\transformed\core-runtime-2.2.0\AndroidManifest.xml:20:5-44
-MERGED from [androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\ruzim\.gradle\caches\transforms-3\5f7ce29a25973535d221a2c1da52466d\transformed\profileinstaller-1.3.0\AndroidManifest.xml:21:5-44
-MERGED from [androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\ruzim\.gradle\caches\transforms-3\5f7ce29a25973535d221a2c1da52466d\transformed\profileinstaller-1.3.0\AndroidManifest.xml:21:5-44
+MERGED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\ruzim\.gradle\caches\transforms-3\06969f8046f43eda714780ada6fe13cf\transformed\profileinstaller-1.3.1\AndroidManifest.xml:21:5-44
+MERGED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\ruzim\.gradle\caches\transforms-3\06969f8046f43eda714780ada6fe13cf\transformed\profileinstaller-1.3.1\AndroidManifest.xml:21:5-44
 MERGED from [androidx.startup:startup-runtime:1.1.1] C:\Users\ruzim\.gradle\caches\transforms-3\a8bb623963dccfbaf142c4cc7cd79c07\transformed\startup-runtime-1.1.1\AndroidManifest.xml:21:5-23:41
 MERGED from [androidx.startup:startup-runtime:1.1.1] C:\Users\ruzim\.gradle\caches\transforms-3\a8bb623963dccfbaf142c4cc7cd79c07\transformed\startup-runtime-1.1.1\AndroidManifest.xml:21:5-23:41
 MERGED from [androidx.tracing:tracing:1.0.0] C:\Users\ruzim\.gradle\caches\transforms-3\1988c03705ce7a9214835d6b0e7d2014\transformed\tracing-1.0.0\AndroidManifest.xml:20:5-22:41
 MERGED from [androidx.tracing:tracing:1.0.0] C:\Users\ruzim\.gradle\caches\transforms-3\1988c03705ce7a9214835d6b0e7d2014\transformed\tracing-1.0.0\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.exifinterface:exifinterface:1.3.6] C:\Users\ruzim\.gradle\caches\transforms-3\4a68241d5114f85e63d5ae7e37edd6b9\transformed\exifinterface-1.3.6\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.exifinterface:exifinterface:1.3.6] C:\Users\ruzim\.gradle\caches\transforms-3\4a68241d5114f85e63d5ae7e37edd6b9\transformed\exifinterface-1.3.6\AndroidManifest.xml:20:5-22:41
 	android:targetSdkVersion
 		INJECTED from C:\Users\ruzim\Downloads\MaktabApp\MaktabApp\app\src\main\AndroidManifest.xml
 	android:minSdkVersion
@@ -233,8 +260,8 @@ provider#androidx.startup.InitializationProvider
 ADDED from [androidx.emoji2:emoji2:1.3.0] C:\Users\ruzim\.gradle\caches\transforms-3\5f56bf3def91dedb6a80130f2ae309db\transformed\emoji2-1.3.0\AndroidManifest.xml:24:9-32:20
 MERGED from [androidx.lifecycle:lifecycle-process:2.7.0] C:\Users\ruzim\.gradle\caches\transforms-3\6cd941b5728d35bc713ca3d34665a608\transformed\lifecycle-process-2.7.0\AndroidManifest.xml:24:9-32:20
 MERGED from [androidx.lifecycle:lifecycle-process:2.7.0] C:\Users\ruzim\.gradle\caches\transforms-3\6cd941b5728d35bc713ca3d34665a608\transformed\lifecycle-process-2.7.0\AndroidManifest.xml:24:9-32:20
-MERGED from [androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\ruzim\.gradle\caches\transforms-3\5f7ce29a25973535d221a2c1da52466d\transformed\profileinstaller-1.3.0\AndroidManifest.xml:24:9-32:20
-MERGED from [androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\ruzim\.gradle\caches\transforms-3\5f7ce29a25973535d221a2c1da52466d\transformed\profileinstaller-1.3.0\AndroidManifest.xml:24:9-32:20
+MERGED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\ruzim\.gradle\caches\transforms-3\06969f8046f43eda714780ada6fe13cf\transformed\profileinstaller-1.3.1\AndroidManifest.xml:24:9-32:20
+MERGED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\ruzim\.gradle\caches\transforms-3\06969f8046f43eda714780ada6fe13cf\transformed\profileinstaller-1.3.1\AndroidManifest.xml:24:9-32:20
 MERGED from [androidx.startup:startup-runtime:1.1.1] C:\Users\ruzim\.gradle\caches\transforms-3\a8bb623963dccfbaf142c4cc7cd79c07\transformed\startup-runtime-1.1.1\AndroidManifest.xml:26:9-30:34
 MERGED from [androidx.startup:startup-runtime:1.1.1] C:\Users\ruzim\.gradle\caches\transforms-3\a8bb623963dccfbaf142c4cc7cd79c07\transformed\startup-runtime-1.1.1\AndroidManifest.xml:26:9-30:34
 	tools:node
@@ -278,44 +305,44 @@ ADDED from [androidx.core:core:1.12.0] C:\Users\ruzim\.gradle\caches\transforms-
 	android:name
 		ADDED from [androidx.core:core:1.12.0] C:\Users\ruzim\.gradle\caches\transforms-3\01be542a8a7642ecba403b94caa2bdf6\transformed\core-1.12.0\AndroidManifest.xml:26:22-94
 meta-data#androidx.profileinstaller.ProfileInstallerInitializer
-ADDED from [androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\ruzim\.gradle\caches\transforms-3\5f7ce29a25973535d221a2c1da52466d\transformed\profileinstaller-1.3.0\AndroidManifest.xml:29:13-31:52
+ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\ruzim\.gradle\caches\transforms-3\06969f8046f43eda714780ada6fe13cf\transformed\profileinstaller-1.3.1\AndroidManifest.xml:29:13-31:52
 	android:value
-		ADDED from [androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\ruzim\.gradle\caches\transforms-3\5f7ce29a25973535d221a2c1da52466d\transformed\profileinstaller-1.3.0\AndroidManifest.xml:31:17-49
+		ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\ruzim\.gradle\caches\transforms-3\06969f8046f43eda714780ada6fe13cf\transformed\profileinstaller-1.3.1\AndroidManifest.xml:31:17-49
 	android:name
-		ADDED from [androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\ruzim\.gradle\caches\transforms-3\5f7ce29a25973535d221a2c1da52466d\transformed\profileinstaller-1.3.0\AndroidManifest.xml:30:17-85
+		ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\ruzim\.gradle\caches\transforms-3\06969f8046f43eda714780ada6fe13cf\transformed\profileinstaller-1.3.1\AndroidManifest.xml:30:17-85
 receiver#androidx.profileinstaller.ProfileInstallReceiver
-ADDED from [androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\ruzim\.gradle\caches\transforms-3\5f7ce29a25973535d221a2c1da52466d\transformed\profileinstaller-1.3.0\AndroidManifest.xml:34:9-52:20
+ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\ruzim\.gradle\caches\transforms-3\06969f8046f43eda714780ada6fe13cf\transformed\profileinstaller-1.3.1\AndroidManifest.xml:34:9-52:20
 	android:enabled
-		ADDED from [androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\ruzim\.gradle\caches\transforms-3\5f7ce29a25973535d221a2c1da52466d\transformed\profileinstaller-1.3.0\AndroidManifest.xml:37:13-35
+		ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\ruzim\.gradle\caches\transforms-3\06969f8046f43eda714780ada6fe13cf\transformed\profileinstaller-1.3.1\AndroidManifest.xml:37:13-35
 	android:exported
-		ADDED from [androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\ruzim\.gradle\caches\transforms-3\5f7ce29a25973535d221a2c1da52466d\transformed\profileinstaller-1.3.0\AndroidManifest.xml:38:13-36
+		ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\ruzim\.gradle\caches\transforms-3\06969f8046f43eda714780ada6fe13cf\transformed\profileinstaller-1.3.1\AndroidManifest.xml:38:13-36
 	android:permission
-		ADDED from [androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\ruzim\.gradle\caches\transforms-3\5f7ce29a25973535d221a2c1da52466d\transformed\profileinstaller-1.3.0\AndroidManifest.xml:39:13-57
+		ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\ruzim\.gradle\caches\transforms-3\06969f8046f43eda714780ada6fe13cf\transformed\profileinstaller-1.3.1\AndroidManifest.xml:39:13-57
 	android:directBootAware
-		ADDED from [androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\ruzim\.gradle\caches\transforms-3\5f7ce29a25973535d221a2c1da52466d\transformed\profileinstaller-1.3.0\AndroidManifest.xml:36:13-44
+		ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\ruzim\.gradle\caches\transforms-3\06969f8046f43eda714780ada6fe13cf\transformed\profileinstaller-1.3.1\AndroidManifest.xml:36:13-44
 	android:name
-		ADDED from [androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\ruzim\.gradle\caches\transforms-3\5f7ce29a25973535d221a2c1da52466d\transformed\profileinstaller-1.3.0\AndroidManifest.xml:35:13-76
+		ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\ruzim\.gradle\caches\transforms-3\06969f8046f43eda714780ada6fe13cf\transformed\profileinstaller-1.3.1\AndroidManifest.xml:35:13-76
 intent-filter#action:name:androidx.profileinstaller.action.INSTALL_PROFILE
-ADDED from [androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\ruzim\.gradle\caches\transforms-3\5f7ce29a25973535d221a2c1da52466d\transformed\profileinstaller-1.3.0\AndroidManifest.xml:40:13-42:29
+ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\ruzim\.gradle\caches\transforms-3\06969f8046f43eda714780ada6fe13cf\transformed\profileinstaller-1.3.1\AndroidManifest.xml:40:13-42:29
 action#androidx.profileinstaller.action.INSTALL_PROFILE
-ADDED from [androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\ruzim\.gradle\caches\transforms-3\5f7ce29a25973535d221a2c1da52466d\transformed\profileinstaller-1.3.0\AndroidManifest.xml:41:17-91
+ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\ruzim\.gradle\caches\transforms-3\06969f8046f43eda714780ada6fe13cf\transformed\profileinstaller-1.3.1\AndroidManifest.xml:41:17-91
 	android:name
-		ADDED from [androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\ruzim\.gradle\caches\transforms-3\5f7ce29a25973535d221a2c1da52466d\transformed\profileinstaller-1.3.0\AndroidManifest.xml:41:25-88
+		ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\ruzim\.gradle\caches\transforms-3\06969f8046f43eda714780ada6fe13cf\transformed\profileinstaller-1.3.1\AndroidManifest.xml:41:25-88
 intent-filter#action:name:androidx.profileinstaller.action.SKIP_FILE
-ADDED from [androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\ruzim\.gradle\caches\transforms-3\5f7ce29a25973535d221a2c1da52466d\transformed\profileinstaller-1.3.0\AndroidManifest.xml:43:13-45:29
+ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\ruzim\.gradle\caches\transforms-3\06969f8046f43eda714780ada6fe13cf\transformed\profileinstaller-1.3.1\AndroidManifest.xml:43:13-45:29
 action#androidx.profileinstaller.action.SKIP_FILE
-ADDED from [androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\ruzim\.gradle\caches\transforms-3\5f7ce29a25973535d221a2c1da52466d\transformed\profileinstaller-1.3.0\AndroidManifest.xml:44:17-85
+ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\ruzim\.gradle\caches\transforms-3\06969f8046f43eda714780ada6fe13cf\transformed\profileinstaller-1.3.1\AndroidManifest.xml:44:17-85
 	android:name
-		ADDED from [androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\ruzim\.gradle\caches\transforms-3\5f7ce29a25973535d221a2c1da52466d\transformed\profileinstaller-1.3.0\AndroidManifest.xml:44:25-82
+		ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\ruzim\.gradle\caches\transforms-3\06969f8046f43eda714780ada6fe13cf\transformed\profileinstaller-1.3.1\AndroidManifest.xml:44:25-82
 intent-filter#action:name:androidx.profileinstaller.action.SAVE_PROFILE
-ADDED from [androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\ruzim\.gradle\caches\transforms-3\5f7ce29a25973535d221a2c1da52466d\transformed\profileinstaller-1.3.0\AndroidManifest.xml:46:13-48:29
+ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\ruzim\.gradle\caches\transforms-3\06969f8046f43eda714780ada6fe13cf\transformed\profileinstaller-1.3.1\AndroidManifest.xml:46:13-48:29
 action#androidx.profileinstaller.action.SAVE_PROFILE
-ADDED from [androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\ruzim\.gradle\caches\transforms-3\5f7ce29a25973535d221a2c1da52466d\transformed\profileinstaller-1.3.0\AndroidManifest.xml:47:17-88
+ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\ruzim\.gradle\caches\transforms-3\06969f8046f43eda714780ada6fe13cf\transformed\profileinstaller-1.3.1\AndroidManifest.xml:47:17-88
 	android:name
-		ADDED from [androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\ruzim\.gradle\caches\transforms-3\5f7ce29a25973535d221a2c1da52466d\transformed\profileinstaller-1.3.0\AndroidManifest.xml:47:25-85
+		ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\ruzim\.gradle\caches\transforms-3\06969f8046f43eda714780ada6fe13cf\transformed\profileinstaller-1.3.1\AndroidManifest.xml:47:25-85
 intent-filter#action:name:androidx.profileinstaller.action.BENCHMARK_OPERATION
-ADDED from [androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\ruzim\.gradle\caches\transforms-3\5f7ce29a25973535d221a2c1da52466d\transformed\profileinstaller-1.3.0\AndroidManifest.xml:49:13-51:29
+ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\ruzim\.gradle\caches\transforms-3\06969f8046f43eda714780ada6fe13cf\transformed\profileinstaller-1.3.1\AndroidManifest.xml:49:13-51:29
 action#androidx.profileinstaller.action.BENCHMARK_OPERATION
-ADDED from [androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\ruzim\.gradle\caches\transforms-3\5f7ce29a25973535d221a2c1da52466d\transformed\profileinstaller-1.3.0\AndroidManifest.xml:50:17-95
+ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\ruzim\.gradle\caches\transforms-3\06969f8046f43eda714780ada6fe13cf\transformed\profileinstaller-1.3.1\AndroidManifest.xml:50:17-95
 	android:name
-		ADDED from [androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\ruzim\.gradle\caches\transforms-3\5f7ce29a25973535d221a2c1da52466d\transformed\profileinstaller-1.3.0\AndroidManifest.xml:50:25-92
+		ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\ruzim\.gradle\caches\transforms-3\06969f8046f43eda714780ada6fe13cf\transformed\profileinstaller-1.3.1\AndroidManifest.xml:50:25-92

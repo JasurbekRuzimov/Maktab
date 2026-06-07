@@ -7,6 +7,8 @@ import com.maktab.app.network.models.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.ResponseBody
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.RequestBody.Companion.asRequestBody
 import org.json.JSONArray
 import org.json.JSONObject
 import retrofit2.Response
@@ -95,6 +97,16 @@ class ChefRepository {
 
     suspend fun addStockMovement(id: String, request: StockMovementRequest) =
         rawCall { api.addStockMovement(id, request) }
+
+    suspend fun uploadIngredientImage(id: String, file: java.io.File): ApiResult<Any> {
+        return try {
+            val requestBody = file.asRequestBody("image/*".toMediaTypeOrNull())
+            val part = okhttp3.MultipartBody.Part.createFormData("image", file.name, requestBody)
+            rawCall { api.uploadIngredientImage(id, part) }
+        } catch (e: Exception) {
+            ApiResult.Error(e.message ?: "Yuklash xatosi")
+        }
+    }
 
     suspend fun getRecipes(search: String? = null, isActive: Boolean? = null) =
         rawCall { api.getRecipes(search = search, isActive = isActive) }

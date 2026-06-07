@@ -18,8 +18,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.maktab.app.network.ApiResult
 import com.maktab.app.ui.components.*
 import com.maktab.app.ui.theme.*
+import com.maktab.app.viewmodel.EmployeeUi
+import com.maktab.app.viewmodel.HRViewModel
+import com.maktab.app.viewmodel.PositionUi
 
 // ─────────────────────────────────────────────
 // MOCK DATA — HR
@@ -100,26 +105,32 @@ private object HRMock {
 // ─────────────────────────────────────────────
 
 @Composable
-fun HRXodimlarScreen() {
-    var search      by remember { mutableStateOf("") }
-    var selDept     by remember { mutableStateOf("Barchasi") }
-    val depts       = listOf("Barchasi") + HRMock.departments
-    val filtered    = HRMock.employees.filter { emp ->
-        (selDept == "Barchasi" || emp.department == selDept) &&
-                emp.name.contains(search, ignoreCase = true)
+fun HRXodimlarScreen(vm: HRViewModel = viewModel()) {
+    val employeesState by vm.employeesState.collectAsState()
+    val statsState     by vm.statsState.collectAsState()
+    var search         by remember { mutableStateOf("") }
+    var selRole        by remember { mutableStateOf("Barchasi") }
+
+    LaunchedEffect(Unit) { vm.loadEmployees(); vm.loadStats() }
+
+    val allEmployees = (employeesState as? ApiResult.Success)?.data ?: emptyList()
+    val roles = listOf("Barchasi") + allEmployees.map { it.role }.filter { it.isNotEmpty() }.distinct().sorted()
+    val filtered = allEmployees.filter { emp ->
+        (selRole == "Barchasi" || emp.role == selRole) &&
+                emp.fullName.contains(search, ignoreCase = true)
     }
 
-    LazyColumn(contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+    LazyColumn(modifier = Modifier.fillMaxSize(), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
         item {
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                StatCard("Jami", "${HRMock.employees.size}", Purple10, Modifier.weight(1f))
-                StatCard("Faol", "${HRMock.employees.count { it.status == "Faol" }}", Teal10, Modifier.weight(1f))
-                StatCard("Ta'tilda", "${HRMock.employees.count { it.status == "Ta'tilda" }}", Amber10, Modifier.weight(1f))
+                StatCard("Jami",        "${statsState?.totalCount ?: allEmployees.size}", Purple10, Modifier.weight(1f))
+                StatCard("Akkauntli",   "${statsState?.linkedCount ?: 0}",                Teal10,   Modifier.weight(1f))
+                StatCard("Akkauntsiz",  "${statsState?.unlinkedCount ?: 0}",              Amber10,  Modifier.weight(1f))
             }
         }
         item {
             OutlinedTextField(
-                value = search, onValueChange = { search = it },
+                value = search, onValueChange = { search = it; vm.loadEmployees(search = it) },
                 placeholder = { Text("Xodim qidirish...", fontSize = 13.sp) },
                 modifier = Modifier.fillMaxWidth(), singleLine = true,
                 shape = RoundedCornerShape(10.dp),
@@ -129,36 +140,50 @@ fun HRXodimlarScreen() {
         }
         item {
             LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                items(depts) { dept ->
-                    val sel = selDept == dept
+                items(roles) { role ->
+                    val sel = selRole == role
                     FilterChip(
-                        selected = sel, onClick = { selDept = dept },
-                        label = { Text(dept, fontSize = 12.sp) },
-                        colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = Purple10, selectedLabelColor = Color.White
-                        ),
-                        border = FilterChipDefaults.filterChipBorder(
-                            enabled = true, selected = sel,
-                            borderColor = Outline, selectedBorderColor = Color.Transparent
-                        )
+                        selected = sel, onClick = { selRole = role },
+                        label = { Text(role, fontSize = 12.sp) },
+                        colors = FilterChipDefaults.filterChipColors(selectedContainerColor = Purple10, selectedLabelColor = Color.White),
+                        border = FilterChipDefaults.filterChipBorder(enabled = true, selected = sel, borderColor = Outline, selectedBorderColor = Color.Transparent)
                     )
                 }
             }
         }
-        items(filtered) { emp -> EmployeeCard(emp) }
+        when (employeesState) {
+            is ApiResult.Loading -> item {
+                Box(Modifier.fillMaxWidth().padding(vertical = 48.dp), Alignment.Center) {
+                    CircularProgressIndicator(color = Purple10, strokeWidth = 2.dp)
+                }
+            }
+            is ApiResult.Error -> item {
+                Column(Modifier.fillMaxWidth().padding(vertical = 24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text((employeesState as ApiResult.Error).message, color = Red10, fontSize = 13.sp)
+                    Spacer(Modifier.height(8.dp))
+                    TextButton(onClick = { vm.refresh() }) { Text("Qayta urinish", color = Purple10) }
+                }
+            }
+            else -> {
+                if (filtered.isEmpty()) {
+                    item {
+                        Box(Modifier.fillMaxWidth().padding(vertical = 32.dp), Alignment.Center) {
+                            Text("Xodim topilmadi", fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                    }
+                } else {
+                    items(filtered) { emp -> RealEmployeeCard(emp) }
+                }
+            }
+        }
     }
 }
 
 @Composable
 private fun EmployeeCard(emp: Employee) {
     val isActive = emp.status == "Faol"
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        shape = RoundedCornerShape(12.dp),
-        border = BorderStroke(0.5.dp, Outline),
-        elevation = CardDefaults.cardElevation(0.dp)
-    ) {
+    Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = Color.White),
+        shape = RoundedCornerShape(12.dp), border = BorderStroke(0.5.dp, Outline), elevation = CardDefaults.cardElevation(0.dp)) {
         Row(Modifier.padding(14.dp), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
             AvatarCircle(emp.initials, Purple10, 48.dp)
             Column(Modifier.weight(1f)) {
@@ -168,16 +193,39 @@ private fun EmployeeCard(emp: Employee) {
                 }
                 Text(emp.position, fontSize = 12.sp, color = Purple10, fontWeight = FontWeight.Medium)
                 Text(emp.department, fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+        }
+    }
+}
+
+@Composable
+private fun RealEmployeeCard(emp: EmployeeUi) {
+    val isActive  = emp.status == "active"
+    val hasAcc    = emp.hasAccount
+    Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = Color.White),
+        shape = RoundedCornerShape(12.dp), border = BorderStroke(0.5.dp, Outline), elevation = CardDefaults.cardElevation(0.dp)) {
+        Row(Modifier.padding(14.dp), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
+            AvatarCircle(emp.initials, Purple10, 48.dp)
+            Column(Modifier.weight(1f)) {
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                    Text(emp.fullName, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
+                    StatusChip(if (isActive) "Faol" else "Nofaol", if (isActive) Teal10 else Red10, if (isActive) TealContainer else RedContainer)
+                }
+                Text(emp.position, fontSize = 12.sp, color = Purple10, fontWeight = FontWeight.Medium)
+                if (emp.role.isNotEmpty()) Text(emp.role, fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Spacer(Modifier.height(6.dp))
-                Row(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                        Icon(Icons.Default.Phone, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(12.dp))
-                        Text(emp.phone, fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    if (emp.phone.isNotEmpty()) {
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Icon(Icons.Default.Phone, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(12.dp))
+                            Text(emp.phone, fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
                     }
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                        Icon(Icons.Default.CalendarToday, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(12.dp))
-                        Text(emp.joinDate, fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
+                    StatusChip(
+                        if (hasAcc) "Akkaunt bor" else "Akkaunt yo'q",
+                        if (hasAcc) Teal10 else Amber10,
+                        if (hasAcc) TealContainer else AmberContainer
+                    )
                 }
             }
         }
@@ -287,47 +335,79 @@ private fun HRField(label: String, value: String, onValueChange: (String) -> Uni
 // ─────────────────────────────────────────────
 
 @Composable
-fun HRLavozimlarScreen() {
-    val deptColors = listOf(
-        Pair(Purple10, PurpleContainer), Pair(Blue10, BlueContainer),
-        Pair(Teal10, TealContainer), Pair(Amber10, AmberContainer)
+fun HRLavozimlarScreen(vm: HRViewModel = viewModel()) {
+    val positionsState by vm.positionsState.collectAsState()
+    LaunchedEffect(Unit) { vm.loadPositions() }
+
+    val positions = (positionsState as? ApiResult.Success)?.data ?: emptyList()
+    val grouped   = positions.groupBy { it.type }
+    val typeOrder = listOf("oqituvchi", "mamuriyat", "texnik")
+    val typeColors = mapOf(
+        "oqituvchi" to Pair(Teal10,   TealContainer),
+        "mamuriyat" to Pair(Purple10, PurpleContainer),
+        "texnik"    to Pair(Amber10,  AmberContainer)
     )
-    LazyColumn(contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        item { SectionHeader("Lavozimlar va bo'limlar") {} }
-        itemsIndexed(HRMock.departments) { idx, dept ->
-            val (color, container) = deptColors[idx % deptColors.size]
-            val deptEmps = HRMock.employees.filter { it.department == dept }
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = Color.White),
-                shape = RoundedCornerShape(12.dp),
-                border = BorderStroke(0.5.dp, Outline),
-                elevation = CardDefaults.cardElevation(0.dp)
-            ) {
-                Column(Modifier.padding(14.dp)) {
-                    Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Box(Modifier.size(42.dp).clip(RoundedCornerShape(10.dp)).background(container), contentAlignment = Alignment.Center) {
-                            Icon(Icons.Default.Business, null, tint = color, modifier = Modifier.size(20.dp))
-                        }
-                        Column(Modifier.weight(1f)) {
-                            Text(dept, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
-                            Text("${deptEmps.size} xodim", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        }
-                        StatusChip("${deptEmps.size}", color, container)
+
+    LazyColumn(modifier = Modifier.fillMaxSize(), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        item { SectionHeader("Lavozimlar") {} }
+
+        when (positionsState) {
+            is ApiResult.Loading -> item {
+                Box(Modifier.fillMaxWidth().padding(vertical = 48.dp), Alignment.Center) {
+                    CircularProgressIndicator(color = Purple10, strokeWidth = 2.dp)
+                }
+            }
+            is ApiResult.Error -> item {
+                Column(Modifier.fillMaxWidth().padding(vertical = 24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text((positionsState as ApiResult.Error).message, color = Red10, fontSize = 13.sp)
+                    Spacer(Modifier.height(8.dp))
+                    TextButton(onClick = { vm.loadPositions() }) { Text("Qayta urinish", color = Purple10) }
+                }
+            }
+            else -> {
+                // Statistika
+                item {
+                    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        StatCard("Jami",         "${positions.size}",                                                         Purple10, Modifier.weight(1f))
+                        StatCard("O'qituvchi",   "${grouped["oqituvchi"]?.size ?: 0}",                                       Teal10,   Modifier.weight(1f))
+                        StatCard("Ma'muriyat",   "${grouped["mamuriyat"]?.size ?: 0}",                                       Blue10,   Modifier.weight(1f))
                     }
-                    Spacer(Modifier.height(10.dp))
-                    HorizontalDivider(color = Outline, thickness = 0.5.dp)
-                    Spacer(Modifier.height(10.dp))
-                    deptEmps.forEach { emp ->
-                        Row(Modifier.fillMaxWidth().padding(vertical = 4.dp),
-                            horizontalArrangement = Arrangement.spacedBy(10.dp),
-                            verticalAlignment = Alignment.CenterVertically) {
-                            AvatarCircle(emp.initials, color, 30.dp)
-                            Column(Modifier.weight(1f)) {
-                                Text(emp.name, fontSize = 13.sp, fontWeight = FontWeight.Medium)
-                                Text(emp.position, fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                // Har bir tur bo'yicha guruh
+                typeOrder.forEach { type ->
+                    val group = grouped[type] ?: return@forEach
+                    val (color, container) = typeColors[type] ?: Pair(Purple10, PurpleContainer)
+                    item {
+                        Card(modifier = Modifier.fillMaxWidth(),
+                            colors = CardDefaults.cardColors(containerColor = Color.White),
+                            shape = RoundedCornerShape(12.dp),
+                            border = BorderStroke(0.5.dp, Outline),
+                            elevation = CardDefaults.cardElevation(0.dp)) {
+                            Column(Modifier.padding(14.dp)) {
+                                Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                                    Box(Modifier.size(42.dp).clip(RoundedCornerShape(10.dp)).background(container), contentAlignment = Alignment.Center) {
+                                        Icon(Icons.Default.Business, null, tint = color, modifier = Modifier.size(20.dp))
+                                    }
+                                    Column(Modifier.weight(1f)) {
+                                        Text(group.first().typeLabel, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
+                                        Text("${group.size} ta lavozim", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                    }
+                                    StatusChip("${group.size}", color, container)
+                                }
+                                Spacer(Modifier.height(10.dp))
+                                HorizontalDivider(color = Outline, thickness = 0.5.dp)
+                                Spacer(Modifier.height(10.dp))
+                                group.forEach { pos ->
+                                    Row(Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                        verticalAlignment = Alignment.CenterVertically) {
+                                        Box(Modifier.size(28.dp).clip(CircleShape).background(container), contentAlignment = Alignment.Center) {
+                                            Icon(Icons.Default.Work, null, tint = color, modifier = Modifier.size(14.dp))
+                                        }
+                                        Text(pos.name, fontSize = 13.sp, fontWeight = FontWeight.Medium, modifier = Modifier.weight(1f))
+                                    }
+                                }
                             }
-                            StatusChip(emp.status, if (emp.status == "Faol") Teal10 else Amber10, if (emp.status == "Faol") TealContainer else AmberContainer)
                         }
                     }
                 }

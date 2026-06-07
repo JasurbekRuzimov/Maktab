@@ -20,9 +20,9 @@ data class ChefDashboardUi(
     val todayMeals: Int = 0,
     val pendingConfirmations: Int = 0,
     val tomorrowMeals: Int = 0,
-    val warehouseAlerts: Int = 0,
+    val totalIngredients: Int = 0,
     val activeRecipes: Int = 0,
-    val totalIngredients: Int = 0
+    val warehouseAlerts: Int = 0
 )
 
 enum class StockStatus { YETARLI, KAM, TUGAGAN }
@@ -35,7 +35,8 @@ data class IngredientItem(
     val unit: String,
     val minQuantity: Double,
     val expiryDate: String,
-    val status: StockStatus
+    val status: StockStatus,
+    val imageUrl: String? = null
 )
 
 enum class MovementType { KIRIM, CHIQIM, TUZATISH }
@@ -85,36 +86,36 @@ data class MenuDayUi(
 class ChefViewModel : ViewModel() {
 
     private val repo = ChefRepository()
-    private val fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd")
+    private val fmt  = DateTimeFormatter.ofPattern("yyyy-MM-dd")
 
-    private val _dashboardState = MutableStateFlow<ApiResult<ChefDashboardUi>>(ApiResult.Loading)
+    private val _dashboardState    = MutableStateFlow<ApiResult<ChefDashboardUi>>(ApiResult.Loading)
     val dashboardState: StateFlow<ApiResult<ChefDashboardUi>> = _dashboardState
 
-    private val _ingredientsState = MutableStateFlow<ApiResult<List<IngredientItem>>>(ApiResult.Loading)
+    private val _ingredientsState  = MutableStateFlow<ApiResult<List<IngredientItem>>>(ApiResult.Loading)
     val ingredientsState: StateFlow<ApiResult<List<IngredientItem>>> = _ingredientsState
 
-    private val _recipesState = MutableStateFlow<ApiResult<List<Recipe>>>(ApiResult.Loading)
+    private val _recipesState      = MutableStateFlow<ApiResult<List<Recipe>>>(ApiResult.Loading)
     val recipesState: StateFlow<ApiResult<List<Recipe>>> = _recipesState
 
-    private val _movementsState = MutableStateFlow<ApiResult<List<StockMovement>>>(ApiResult.Loading)
+    private val _movementsState    = MutableStateFlow<ApiResult<List<StockMovement>>>(ApiResult.Loading)
     val movementsState: StateFlow<ApiResult<List<StockMovement>>> = _movementsState
 
     private val _menuCalendarState = MutableStateFlow<ApiResult<List<MenuDayUi>>>(ApiResult.Loading)
     val menuCalendarState: StateFlow<ApiResult<List<MenuDayUi>>> = _menuCalendarState
 
-    private val _actionResult = MutableStateFlow<ApiResult<Unit>?>(null)
+    private val _actionResult      = MutableStateFlow<ApiResult<Unit>?>(null)
     val actionResult: StateFlow<ApiResult<Unit>?> = _actionResult
 
-    private val _errorMsg = MutableStateFlow<String?>(null)
+    private val _errorMsg          = MutableStateFlow<String?>(null)
     val errorMsg: StateFlow<String?> = _errorMsg
 
-    private val _weekLabel = MutableStateFlow("")
+    private val _weekLabel         = MutableStateFlow("")
     val weekLabel: StateFlow<String> = _weekLabel
 
     private var weekOffset = 0
 
     // ─────────────────────────────────────────
-    // Load funksiyalari
+    // Dashboard
     // ─────────────────────────────────────────
 
     fun loadDashboard() {
@@ -125,14 +126,15 @@ class ChefViewModel : ViewModel() {
                     val data = repo.jsonToAny(repo.extractData(r.data))
                     _dashboardState.value = ApiResult.Success(parseDashboard(data))
                 }
-                is ApiResult.Error -> {
-                    _dashboardState.value = ApiResult.Error(r.message)
-                    _errorMsg.value = r.message
-                }
+                is ApiResult.Error -> { _dashboardState.value = ApiResult.Error(r.message); _errorMsg.value = r.message }
                 else -> {}
             }
         }
     }
+
+    // ─────────────────────────────────────────
+    // Ingredientlar
+    // ─────────────────────────────────────────
 
     fun loadIngredients(search: String? = null, category: String? = null) {
         viewModelScope.launch {
@@ -142,10 +144,7 @@ class ChefViewModel : ViewModel() {
                     val data = repo.jsonToAny(repo.extractData(r.data))
                     _ingredientsState.value = ApiResult.Success(parseIngredients(data))
                 }
-                is ApiResult.Error -> {
-                    _ingredientsState.value = ApiResult.Error(r.message)
-                    _errorMsg.value = r.message
-                }
+                is ApiResult.Error -> { _ingredientsState.value = ApiResult.Error(r.message); _errorMsg.value = r.message }
                 else -> {}
             }
         }
@@ -157,12 +156,11 @@ class ChefViewModel : ViewModel() {
             when (val r = repo.createIngredient(request)) {
                 is ApiResult.Success -> {
                     _actionResult.value = ApiResult.Success(Unit)
-                    // Boshlang'ich miqdor kiritilgan bo'lsa stock movement yuboramiz
+                    // Boshlang'ich zaxira bo'lsa stock movement yuboramiz
                     if (initialStock > 0) {
                         val raw = repo.jsonToAny(repo.extractData(r.data))
                         val newId = (raw as? Map<*, *>)?.let {
-                            it["id"]?.toString()?.takeIf { s -> s.isNotEmpty() }
-                                ?: it["_id"]?.toString()
+                            (it["_id"] ?: it["id"])?.toString()?.takeIf { s -> s.isNotEmpty() }
                         }
                         if (newId != null) {
                             repo.addStockMovement(newId, StockMovementRequest(
@@ -185,7 +183,17 @@ class ChefViewModel : ViewModel() {
             _actionResult.value = ApiResult.Loading
             when (val r = repo.updateIngredient(id, request)) {
                 is ApiResult.Success -> { _actionResult.value = ApiResult.Success(Unit); loadIngredients() }
-                is ApiResult.Error -> { _actionResult.value = ApiResult.Error(r.message); _errorMsg.value = r.message }
+                is ApiResult.Error   -> { _actionResult.value = ApiResult.Error(r.message); _errorMsg.value = r.message }
+                else -> {}
+            }
+        }
+    }
+
+    fun deleteIngredient(id: String) {
+        viewModelScope.launch {
+            when (val r = repo.deleteIngredient(id)) {
+                is ApiResult.Success -> loadIngredients()
+                is ApiResult.Error   -> _errorMsg.value = r.message
                 else -> {}
             }
         }
@@ -199,21 +207,25 @@ class ChefViewModel : ViewModel() {
                 reason = reason
             ))) {
                 is ApiResult.Success -> loadIngredients()
-                is ApiResult.Error -> _errorMsg.value = r.message
+                is ApiResult.Error   -> _errorMsg.value = r.message
                 else -> {}
             }
         }
     }
 
-    fun deleteIngredient(id: String) {
+    fun uploadIngredientImage(id: String, file: java.io.File) {
         viewModelScope.launch {
-            when (val r = repo.deleteIngredient(id)) {
+            when (val r = repo.uploadIngredientImage(id, file)) {
                 is ApiResult.Success -> loadIngredients()
-                is ApiResult.Error -> _errorMsg.value = r.message
+                is ApiResult.Error   -> _errorMsg.value = r.message
                 else -> {}
             }
         }
     }
+
+    // ─────────────────────────────────────────
+    // Retseptlar
+    // ─────────────────────────────────────────
 
     fun loadRecipes(search: String? = null, isActive: Boolean? = null) {
         viewModelScope.launch {
@@ -223,56 +235,76 @@ class ChefViewModel : ViewModel() {
                     val data = repo.jsonToAny(repo.extractData(r.data))
                     _recipesState.value = ApiResult.Success(parseRecipes(data))
                 }
-                is ApiResult.Error -> {
-                    _recipesState.value = ApiResult.Error(r.message)
-                    _errorMsg.value = r.message
-                }
+                is ApiResult.Error -> { _recipesState.value = ApiResult.Error(r.message); _errorMsg.value = r.message }
                 else -> {}
             }
         }
     }
 
+    fun createRecipe(request: RecipeRequest) {
+        viewModelScope.launch {
+            _actionResult.value = ApiResult.Loading
+            when (val r = repo.createRecipe(request)) {
+                is ApiResult.Success -> { _actionResult.value = ApiResult.Success(Unit); loadRecipes() }
+                is ApiResult.Error   -> { _actionResult.value = ApiResult.Error(r.message); _errorMsg.value = r.message }
+                else -> {}
+            }
+        }
+    }
+
+    fun deleteRecipe(id: String) {
+        viewModelScope.launch {
+            when (val r = repo.deleteRecipe(id)) {
+                is ApiResult.Success -> loadRecipes()
+                is ApiResult.Error   -> _errorMsg.value = r.message
+                else -> {}
+            }
+        }
+    }
+
+    // ─────────────────────────────────────────
+    // Harakatlar
+    // ─────────────────────────────────────────
+
     fun loadMovements(movementType: String? = null) {
         viewModelScope.launch {
             _movementsState.value = ApiResult.Loading
-            val today = LocalDate.now()
+            val today    = LocalDate.now()
             val monthAgo = today.minusMonths(1)
             when (val r = repo.getMovements(
                 from = monthAgo.format(fmt),
-                to = today.format(fmt),
+                to   = today.format(fmt),
                 movementType = movementType
             )) {
                 is ApiResult.Success -> {
                     val data = repo.jsonToAny(repo.extractData(r.data))
                     _movementsState.value = ApiResult.Success(parseMovements(data))
                 }
-                is ApiResult.Error -> {
-                    _movementsState.value = ApiResult.Error(r.message)
-                    _errorMsg.value = r.message
-                }
+                is ApiResult.Error -> { _movementsState.value = ApiResult.Error(r.message); _errorMsg.value = r.message }
                 else -> {}
             }
         }
     }
 
+    // ─────────────────────────────────────────
+    // Menyu kalendari
+    // ─────────────────────────────────────────
+
     fun loadMenuCalendar() {
         viewModelScope.launch {
             _menuCalendarState.value = ApiResult.Loading
-            val today = LocalDate.now()
+            val today     = LocalDate.now()
             val thisMonday = today.with(DayOfWeek.MONDAY)
-            val monday = thisMonday.plusWeeks(weekOffset.toLong())
-            val sunday = monday.plusDays(6)
-            val labelFmt = DateTimeFormatter.ofPattern("d-MMM")
+            val monday    = thisMonday.plusWeeks(weekOffset.toLong())
+            val sunday    = monday.plusDays(6)
+            val labelFmt  = DateTimeFormatter.ofPattern("d-MMM")
             _weekLabel.value = "${monday.format(labelFmt)} – ${sunday.format(labelFmt)}"
             when (val r = repo.getMenuCalendar(from = monday.format(fmt), to = sunday.format(fmt))) {
                 is ApiResult.Success -> {
                     val data = repo.jsonToAny(repo.extractData(r.data))
                     _menuCalendarState.value = ApiResult.Success(parseMenuCalendar(data, monday))
                 }
-                is ApiResult.Error -> {
-                    _menuCalendarState.value = ApiResult.Error(r.message)
-                    _errorMsg.value = r.message
-                }
+                is ApiResult.Error -> { _menuCalendarState.value = ApiResult.Error(r.message); _errorMsg.value = r.message }
                 else -> {}
             }
         }
@@ -288,7 +320,7 @@ class ChefViewModel : ViewModel() {
                 MenuEntryRequest(recipeId = recipeId, mealType = mealType, dateKey = dateKey)
             )) {
                 is ApiResult.Success -> loadMenuCalendar()
-                is ApiResult.Error -> _errorMsg.value = r.message
+                is ApiResult.Error   -> _errorMsg.value = r.message
                 else -> {}
             }
         }
@@ -298,17 +330,17 @@ class ChefViewModel : ViewModel() {
         viewModelScope.launch {
             when (val r = repo.deleteMenuEntry(id)) {
                 is ApiResult.Success -> loadMenuCalendar()
-                is ApiResult.Error -> _errorMsg.value = r.message
+                is ApiResult.Error   -> _errorMsg.value = r.message
                 else -> {}
             }
         }
     }
 
-    fun clearError() { _errorMsg.value = null }
+    fun clearError()        { _errorMsg.value = null }
     fun clearActionResult() { _actionResult.value = null }
 
     // ─────────────────────────────────────────
-    // Parse funksiyalari
+    // Parse yordamchilari
     // ─────────────────────────────────────────
 
     private fun parseNumber(v: Any?): Double = when (v) {
@@ -320,12 +352,12 @@ class ChefViewModel : ViewModel() {
     private fun parseBool(v: Any?): Boolean = when (v) {
         is Boolean -> v
         is Number  -> v.toInt() != 0
-        is String  -> v.lowercase() == "true" || v == "1" || v == "active"
+        is String  -> v == "true" || v == "1" || v == "ACTIVE"
         else       -> false
     }
 
     private fun normalizeUnit(unit: String): String = when (unit.lowercase().trim()) {
-        "liter", "litre", "litres", "liters" -> "litr"
+        "liter", "litre", "liters", "litres" -> "litr"
         "kilogram", "kilograms", "kilo"       -> "kg"
         "gram", "grams"                       -> "g"
         "milliliter", "milliliters",
@@ -335,161 +367,98 @@ class ChefViewModel : ViewModel() {
         else -> unit
     }
 
-    // id yoki _id — backend ikki xil qaytaradi
-    private fun Map<*, *>.resolveId(): String =
-        this["id"]?.toString()?.takeIf { it.isNotEmpty() }
-            ?: this["_id"]?.toString() ?: ""
-
-    // ─────────────────────────────────────────
-    // parseDashboard
-    // FIX: today_meals / tomorrow_meals — list, count emas
-    //      pending_confirmations_count — to'g'ri kalit
-    //      low_stock_count — to'g'ri kalit
-    //      active_recipes, total_ingredients qo'shildi
-    // ─────────────────────────────────────────
-    @Suppress("UNCHECKED_CAST")
-    private fun parseDashboard(data: Any?): ChefDashboardUi {
-        val m = data as? Map<*, *> ?: return ChefDashboardUi()
-
-        // today_meals — list yoki son bo'lishi mumkin
-        val todayMeals = when (val v = m["today_meals"]) {
-            is List<*> -> v.size
-            is Number  -> v.toInt()
-            else       -> parseNumber(m["today_meals_count"]).toInt()
+    private fun parseStatus(apiStatus: String?): StockStatus {
+        return when (apiStatus?.uppercase()) {
+            "OUT_OF_STOCK", "TUGAGAN" -> StockStatus.TUGAGAN
+            "CRITICAL", "LOW", "KAM" -> StockStatus.KAM
+            "HEALTHY", "OK", "YETARLI", "IN_STOCK" -> StockStatus.YETARLI
+            else -> StockStatus.YETARLI
         }
-
-        // tomorrow_meals — list yoki son
-        val tomorrowMeals = when (val v = m["tomorrow_meals"]) {
-            is List<*> -> v.size
-            is Number  -> v.toInt()
-            else       -> parseNumber(m["tomorrow_meals_count"]).toInt()
-        }
-
-        // pending_confirmations — list yoki son
-        val pendingCount = when (val v = m["pending_confirmations"]) {
-            is List<*> -> v.size
-            is Number  -> v.toInt()
-            else       -> parseNumber(m["pending_confirmations_count"] ?: m["pending_count"]).toInt()
-        }
-
-        return ChefDashboardUi(
-            todayMeals           = todayMeals,
-            pendingConfirmations = pendingCount,
-            tomorrowMeals        = tomorrowMeals,
-            // FIX: low_stock_count — to'g'ri kalit
-            warehouseAlerts      = parseNumber(
-                m["low_stock_count"] ?: m["warehouse_alerts"] ?: m["alerts_count"]
-            ).toInt(),
-            activeRecipes        = parseNumber(m["active_recipes"] ?: m["recipes_count"]).toInt(),
-            totalIngredients     = parseNumber(m["total_ingredients"] ?: m["ingredients_count"]).toInt()
-        )
     }
 
     // ─────────────────────────────────────────
-    // parseIngredients
-    // FIX: current_stock (quantity), minimum_stock (minQuantity),
-    //      stock_status: "HEALTHY"/"LOW"/"OUT_OF_STOCK",
-    //      expiration_date (expiryDate), _id (id)
+    // Parse funksiyalari
     // ─────────────────────────────────────────
+
+    @Suppress("UNCHECKED_CAST")
+    private fun parseDashboard(data: Any?): ChefDashboardUi {
+        val m = data as? Map<*, *> ?: return ChefDashboardUi()
+        val todayMeals = (m["today_meals"] as? List<*>)?.size
+            ?: parseNumber(m["today_meals_count"]).toInt()
+        val tomorrowMeals = (m["tomorrow_meals"] as? List<*>)?.size
+            ?: parseNumber(m["tomorrow_meals_count"]).toInt()
+        val pendingConf = (m["pending_confirmations"] as? List<*>)?.size
+            ?: parseNumber(m["pending_confirmations_count"] ?: m["pending_count"]).toInt()
+        return ChefDashboardUi(
+            todayMeals           = todayMeals,
+            pendingConfirmations = pendingConf,
+            tomorrowMeals        = tomorrowMeals,
+            totalIngredients     = parseNumber(m["total_ingredients"]).toInt(),
+            activeRecipes        = parseNumber(m["active_recipes"]).toInt(),
+            warehouseAlerts      = parseNumber(m["low_stock_count"] ?: m["warehouse_alerts"]).toInt()
+        )
+    }
+
     @Suppress("UNCHECKED_CAST")
     private fun parseIngredients(data: Any?): List<IngredientItem> {
         if (data == null) return emptyList()
         return try {
             val list: List<*> = when (data) {
                 is List<*>   -> data
-                is Map<*, *> -> (data["items"] as? List<*>)
-                    ?: (data["data"] as? List<*>)
+                is Map<*, *> -> (data["data"] as? List<*>)
+                    ?: (data["items"] as? List<*>)
                     ?: (data["ingredients"] as? List<*>)
-                    ?: (data["results"] as? List<*>)
                     ?: return emptyList()
                 else -> return emptyList()
             }
             list.mapNotNull { item ->
-                val m = item as? Map<*, *> ?: return@mapNotNull null
-
-                // FIX: current_stock asosiy, qolganlar fallback
-                val qty = parseNumber(
-                    m["current_stock"] ?: m["quantity"] ?: m["current_quantity"] ?: m["stock"]
-                )
-                // FIX: minimum_stock asosiy
-                val minQty = parseNumber(
-                    m["minimum_stock"] ?: m["min_quantity"] ?: m["minimum_quantity"] ?: m["min_stock"]
-                )
-
-                // Miqdor tekshiruvi — backend statusidan ustun turadi
-                val stockStatus = m["stock_status"]?.toString()?.uppercase()
-                val apiStatus   = m["status"]?.toString()?.lowercase()
-                val status = when {
-                    // 1. Avval miqdorni tekshiramiz — eng ishonchli
-                    qty <= 0                           -> StockStatus.TUGAGAN
-                    minQty > 0 && qty < minQty         -> StockStatus.KAM
-                    // 2. Keyin backend statusini hisobga olamiz
-                    stockStatus == "OUT_OF_STOCK"
-                            || apiStatus == "out_of_stock"
-                            || apiStatus == "tugagan"  -> StockStatus.TUGAGAN
-                    stockStatus == "CRITICAL"           -> StockStatus.KAM
-                    stockStatus == "LOW"
-                            || apiStatus == "low"
-                            || apiStatus == "low_stock"
-                            || apiStatus == "kam"      -> StockStatus.KAM
-                    else                               -> StockStatus.YETARLI
-                }
-
+                val m   = item as? Map<*, *> ?: return@mapNotNull null
+                val id  = (m["_id"] ?: m["id"])?.toString() ?: return@mapNotNull null
+                // current_stock — asosiy field, quantity — fallback
+                val qty    = parseNumber(m["current_stock"] ?: m["quantity"] ?: m["amount"])
+                // minimum_stock — asosiy field
+                val minQty = parseNumber(m["minimum_stock"] ?: m["min_quantity"] ?: m["minimum"])
+                // stock_status — to'g'ridan-to'g'ri o'qiymiz
+                val status = parseStatus(m["stock_status"]?.toString())
+                // image url
+                val imageUrl = (m["image"] as? Map<*, *>)?.get("url")?.toString()
                 IngredientItem(
-                    // FIX: _id asosiy
-                    id          = m.resolveId(),
+                    id          = id,
                     name        = m["name"]?.toString() ?: "",
                     category    = m["category"]?.toString() ?: "",
                     quantity    = qty,
                     unit        = normalizeUnit(m["unit"]?.toString() ?: "kg"),
                     minQuantity = minQty,
-                    // FIX: expiration_date (backend), expiry_date (eski)
-                    expiryDate  = (m["expiration_date"] ?: m["expiry_date"])
-                        ?.toString()?.substringBefore("T") ?: "",
-                    status      = status
+                    expiryDate  = m["expiration_date"]?.toString()?.substringBefore("T")
+                        ?: m["expiry_date"]?.toString()?.substringBefore("T") ?: "",
+                    status      = status,
+                    imageUrl    = imageUrl
                 )
             }
         } catch (_: Exception) { emptyList() }
     }
 
-    // ─────────────────────────────────────────
-    // parseRecipes
-    // FIX: serving_count (portionCount), _id (id),
-    //      isActive: is_active=true AND status="ACTIVE"
-    // ─────────────────────────────────────────
     @Suppress("UNCHECKED_CAST")
     private fun parseRecipes(data: Any?): List<Recipe> {
         if (data == null) return emptyList()
         return try {
             val list: List<*> = when (data) {
                 is List<*>   -> data
-                is Map<*, *> -> (data["items"] as? List<*>)
-                    ?: (data["data"] as? List<*>)
+                is Map<*, *> -> (data["data"] as? List<*>)
+                    ?: (data["items"] as? List<*>)
                     ?: (data["recipes"] as? List<*>)
-                    ?: (data["results"] as? List<*>)
                     ?: return emptyList()
                 else -> return emptyList()
             }
             list.mapNotNull { item ->
                 val m = item as? Map<*, *> ?: return@mapNotNull null
                 val ingredients = m["ingredients"] as? List<*>
-
-                // FIX: serving_count asosiy kalit
-                val portionCount = parseNumber(
-                    m["serving_count"] ?: m["portion_count"] ?: m["portions"] ?: m["serving_size"]
-                ).toInt()
-
-                // FIX: is_active bool + status="ACTIVE" ikkalasini tekshirish
-                val isActiveBool   = parseBool(m["is_active"] ?: m["active"])
-                val statusStr      = m["status"]?.toString()?.uppercase()
-                val isActive       = isActiveBool || statusStr == "ACTIVE"
-
                 Recipe(
-                    id             = m.resolveId(),
-                    name           = m["name"]?.toString() ?: "",
-                    category       = m["category"]?.toString() ?: "",
-                    portionCount   = portionCount,
-                    isActive       = isActive,
+                    id           = (m["_id"] ?: m["id"])?.toString() ?: "",
+                    name         = m["name"]?.toString() ?: "",
+                    category     = m["category"]?.toString() ?: "",
+                    portionCount = parseNumber(m["serving_count"] ?: m["portion_count"] ?: m["serving_size"]).toInt(),
+                    isActive     = parseBool(m["is_active"]),
                     ingredientCount = ingredients?.size
                         ?: parseNumber(m["ingredient_count"] ?: m["ingredients_count"]).toInt()
                 )
@@ -497,104 +466,64 @@ class ChefViewModel : ViewModel() {
         } catch (_: Exception) { emptyList() }
     }
 
-    // ─────────────────────────────────────────
-    // parseMovements
-    // FIX: movement_type: "INCOMING"/"OUTGOING"
-    // ─────────────────────────────────────────
     @Suppress("UNCHECKED_CAST")
     private fun parseMovements(data: Any?): List<StockMovement> {
         if (data == null) return emptyList()
         return try {
             val list: List<*> = when (data) {
                 is List<*>   -> data
-                is Map<*, *> -> (data["items"] as? List<*>)
-                    ?: (data["data"] as? List<*>)
+                is Map<*, *> -> (data["data"] as? List<*>)
+                    ?: (data["items"] as? List<*>)
                     ?: (data["movements"] as? List<*>)
-                    ?: (data["stock_movements"] as? List<*>)
-                    ?: (data["records"] as? List<*>)
-                    ?: (data["results"] as? List<*>)
                     ?: return emptyList()
                 else -> return emptyList()
             }
             list.mapNotNull { item ->
-                val m = item as? Map<*, *> ?: return@mapNotNull null
-                val createdAt = m["created_at"]?.toString()
-                    ?: m["date"]?.toString()
-                    ?: m["timestamp"]?.toString() ?: ""
-                val datePart = createdAt.substringBefore("T").ifEmpty { createdAt.take(10) }
-                val timePart = if (createdAt.contains("T")) createdAt.substringAfter("T").take(5) else ""
-
-                val ingMap  = m["ingredient"] as? Map<*, *>
-                val ingName = ingMap?.get("name")?.toString()
-                    ?: m["ingredient_name"]?.toString()
-                    ?: m["product_name"]?.toString()
-                    ?: m["name"]?.toString() ?: ""
-                val rawUnit = ingMap?.get("unit")?.toString() ?: m["unit"]?.toString() ?: ""
-
-                val typeStr = m["movement_type"]?.toString()
-                    ?: m["type"]?.toString()
-                    ?: m["action"]?.toString() ?: ""
-
-                // FIX: "INCOMING"/"OUTGOING" backend dan kelgan qiymatlar
-                val type = when (typeStr.uppercase()) {
-                    "INCOMING", "IN", "KIRIM",
-                    "INCOME", "RECEIPT", "ARRIVAL",
-                    "PURCHASE", "INBOUND"            -> MovementType.KIRIM
-                    "OUTGOING", "OUT", "CHIQIM",
-                    "OUTCOME", "CONSUMPTION",
-                    "USAGE", "EXPENSE", "OUTBOUND",
-                    "DEDUCTION"                      -> MovementType.CHIQIM
-                    else                             -> MovementType.TUZATISH
+                val m         = item as? Map<*, *> ?: return@mapNotNull null
+                val createdAt = m["created_at"]?.toString() ?: m["date"]?.toString() ?: ""
+                val datePart  = createdAt.substringBefore("T").ifEmpty { createdAt.take(10) }
+                val timePart  = if (createdAt.contains("T")) createdAt.substringAfter("T").take(5) else ""
+                val ingMap    = m["ingredient"] as? Map<*, *>
+                val ingName   = ingMap?.get("name")?.toString() ?: m["ingredient_name"]?.toString() ?: ""
+                val rawUnit   = ingMap?.get("unit")?.toString() ?: m["unit"]?.toString() ?: ""
+                val typeStr   = m["movement_type"]?.toString() ?: m["type"]?.toString() ?: ""
+                val type      = when (typeStr.uppercase()) {
+                    "INCOMING", "IN", "KIRIM" -> MovementType.KIRIM
+                    "OUTGOING", "OUT", "CHIQIM" -> MovementType.CHIQIM
+                    else -> MovementType.TUZATISH
                 }
-
                 StockMovement(
                     date       = datePart,
                     time       = timePart,
                     ingredient = ingName,
                     unit       = normalizeUnit(rawUnit),
                     type       = type,
-                    amount     = parseNumber(
-                        m["quantity"] ?: m["amount"] ?: m["changed_quantity"] ?: m["quantity_changed"]
-                    ),
-                    prevQty    = parseNumber(
-                        m["before_quantity"] ?: m["previous_quantity"] ?: m["old_quantity"] ?: m["quantity_before"]
-                    ),
-                    newQty     = parseNumber(
-                        m["after_quantity"] ?: m["new_quantity"] ?: m["current_quantity"] ?: m["quantity_after"]
-                    ),
-                    reason     = m["reason"]?.toString()
-                        ?: m["note"]?.toString()
-                        ?: m["description"]?.toString()
-                        ?: m["comment"]?.toString() ?: ""
+                    amount     = parseNumber(m["quantity"]),
+                    prevQty    = parseNumber(m["previous_stock"] ?: m["prev_quantity"]),
+                    newQty     = parseNumber(m["new_stock"] ?: m["new_quantity"]),
+                    reason     = m["reason"]?.toString() ?: m["note"]?.toString() ?: ""
                 )
             }
         } catch (_: Exception) { emptyList() }
     }
 
-    // ─────────────────────────────────────────
-    // parseMenuCalendar — o'zgarishsiz (strukturasi to'g'ri edi)
-    // ─────────────────────────────────────────
     @Suppress("UNCHECKED_CAST")
     private fun parseMenuCalendar(data: Any?, weekMonday: LocalDate): List<MenuDayUi> {
         val dayNames = listOf("Dushanba", "Seshanba", "Chorshanba", "Payshanba", "Juma", "Shanba", "Yakshanba")
         val mealLabels = mapOf(
-            "breakfast" to "Nonushta",
-            "BREAKFAST" to "Nonushta",
-            "lunch"     to "Tushlik",
-            "LUNCH"     to "Tushlik",
-            "dinner"    to "Kechki ovqat",
-            "DINNER"    to "Kechki ovqat",
-            "snack"     to "Kechki tamaddi",
-            "SNACK"     to "Kechki tamaddi"
+            "BREAKFAST" to "Nonushta", "breakfast" to "Nonushta",
+            "LUNCH"     to "Tushlik",  "lunch"     to "Tushlik",
+            "DINNER"    to "Kechki ovqat", "dinner" to "Kechki ovqat",
+            "SNACK"     to "Kechki tamaddi", "snack" to "Kechki tamaddi"
         )
         val todayStr = LocalDate.now().format(fmt)
         return try {
             val map: Map<String, List<*>> = when (data) {
-                is Map<*, *> -> @Suppress("UNCHECKED_CAST") (data as Map<String, List<*>>)
+                is Map<*, *> -> data as Map<String, List<*>>
                 is List<*>   -> {
                     val grouped = mutableMapOf<String, MutableList<Any?>>()
                     data.forEach { entry ->
-                        val mm = entry as? Map<*, *> ?: return@forEach
+                        val mm  = entry as? Map<*, *> ?: return@forEach
                         val key = mm["date_key"]?.toString()
                             ?: mm["date"]?.toString()?.substringBefore("T")
                             ?: return@forEach
@@ -609,19 +538,21 @@ class ChefViewModel : ViewModel() {
                 val dateStr = date.format(fmt)
                 val meals   = mutableListOf<MenuMealUi>()
                 map[dateStr]?.forEach { mealItem ->
-                    val mm = mealItem as? Map<*, *> ?: return@forEach
-                    val recipe    = mm["recipe"] as? Map<*, *>
-                    val mealType  = mm["meal_type"]?.toString() ?: ""
-                    val statusStr = mm["status"]?.toString() ?: "assigned"
-                    val mealStatus = when (statusStr.lowercase()) {
-                        "confirmed" -> MealStatus.CONFIRMED
+                    val mm         = mealItem as? Map<*, *> ?: return@forEach
+                    val mealType   = mm["meal_type"]?.toString() ?: ""
+                    val statusStr  = mm["status"]?.toString()?.uppercase() ?: ""
+                    val mealStatus = when (statusStr) {
+                        "CONFIRMED" -> MealStatus.CONFIRMED
                         else        -> MealStatus.ASSIGNED
                     }
+                    val recipeSnap = mm["assigned_recipe_snapshot"] as? Map<*, *>
+                    val recipe     = mm["recipe"] as? Map<*, *>
                     meals.add(MenuMealUi(
-                        id            = mm.resolveId(),
+                        id            = (mm["_id"] ?: mm["id"])?.toString() ?: "",
                         mealType      = mealType,
                         mealTypeLabel = mealLabels[mealType] ?: mealType,
-                        recipeName    = recipe?.get("name")?.toString()
+                        recipeName    = recipeSnap?.get("name")?.toString()
+                            ?: recipe?.get("name")?.toString()
                             ?: mm["recipe_name"]?.toString(),
                         status        = mealStatus
                     ))

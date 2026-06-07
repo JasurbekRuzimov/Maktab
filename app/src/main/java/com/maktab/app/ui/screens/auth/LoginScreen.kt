@@ -20,32 +20,29 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.*
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.maktab.app.ui.theme.*
+import com.maktab.app.ui.theme.str
 import kotlinx.coroutines.delay
+import com.maktab.app.R
 import kotlinx.coroutines.launch
 
 @Composable
 fun LoginScreen(
-    role: String,
-    onSuccess: (session: com.maktab.app.network.SessionInfo) -> Unit,
-    onBack: () -> Unit
+    onSuccess: (session: com.maktab.app.network.SessionInfo) -> Unit
 ) {
-    val isTeacher = role == "teacher"
-    val isChef = role == "chef"
-    val accent = when (role) { "teacher" -> Teal10; "chef" -> Amber10; else -> Blue10 }
-    val accentContainer = when (role) { "teacher" -> TealContainer; "chef" -> AmberContainer; else -> BlueContainer }
+    var username       by remember { mutableStateOf("") }
+    var password       by remember { mutableStateOf("") }
 
-    var username by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
-    var isLoading by remember { mutableStateOf(false) }
-    var errorMsg by remember { mutableStateOf("") }
+    var isLoading      by remember { mutableStateOf(false) }
+    var errorMsg       by remember { mutableStateOf("") }
 
-    val scope = rememberCoroutineScope()
+    val scope        = rememberCoroutineScope()
     val focusManager = LocalFocusManager.current
     var contentVisible by remember { mutableStateOf(false) }
 
@@ -84,113 +81,93 @@ fun LoginScreen(
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
                 .padding(24.dp)
-                .statusBarsPadding()
+                .statusBarsPadding(),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-
-            // Orqaga tugma
-            IconButton(onClick = onBack, modifier = Modifier.offset(x = (-12).dp)) {
-                Icon(Icons.Default.ArrowBack, contentDescription = "Orqaga", tint = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
-
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(48.dp))
 
             AnimatedVisibility(visible = contentVisible, enter = fadeIn() + slideInVertically { it / 3 }) {
-                Column {
-                    // Rol badge
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+
+                    // Logo
                     Box(
                         modifier = Modifier
-                            .clip(RoundedCornerShape(10.dp))
-                            .background(accentContainer)
-                            .padding(horizontal = 14.dp, vertical = 8.dp)
+                            .size(72.dp)
+                            .clip(RoundedCornerShape(20.dp))
+                            .background(TealContainer),
+                        contentAlignment = Alignment.Center
                     ) {
-                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                            Icon(
-                                when (role) {
-                                    "teacher" -> Icons.Default.School
-                                    "chef"    -> Icons.Default.Restaurant
-                                    else      -> Icons.Default.FamilyRestroom
-                                },
-                                contentDescription = null,
-                                tint = accent,
-                                modifier = Modifier.size(16.dp)
-                            )
-                            Text(
-                                text = when (role) {
-                                    "teacher" -> "O'qituvchi"
-                                    "chef"    -> "Oshpaz"
-                                    else      -> "Ota-ona"
-                                },
-                                fontSize = 13.sp,
-                                fontWeight = FontWeight.Medium,
-                                color = accent
-                            )
-                        }
+                        Icon(Icons.Default.School, contentDescription = null, tint = Teal10, modifier = Modifier.size(36.dp))
                     }
 
                     Spacer(Modifier.height(20.dp))
 
-                    Text("Kirish", fontSize = 28.sp, fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.login_title), fontSize = 26.sp, fontWeight = FontWeight.Bold)
                     Spacer(Modifier.height(6.dp))
-                    Text("Hisobingizga kiring", fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(stringResource(R.string.login_subtitle), fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
 
-                    Spacer(Modifier.height(36.dp))
+                    Spacer(Modifier.height(40.dp))
 
                     // Username
-                    Text("Foydalanuvchi nomi", fontSize = 13.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Spacer(Modifier.height(6.dp))
-                    OutlinedTextField(
-                        value = username,
-                        onValueChange = { username = it; errorMsg = "" },
-                        modifier = Modifier.fillMaxWidth(),
-                        placeholder = { Text("Masalan: karimova_n", color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)) },
-                        leadingIcon = { Icon(Icons.Default.Person, contentDescription = null, tint = if (username.isNotEmpty()) accent else MaterialTheme.colorScheme.onSurfaceVariant) },
-                        shape = RoundedCornerShape(12.dp),
-                        singleLine = true,
-                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
-                        keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Down) }),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = accent,
-                            focusedLeadingIconColor = accent,
-                            cursorColor = accent
+                    Column(modifier = Modifier.fillMaxWidth()) {
+                        Text(stringResource(R.string.login_username), fontSize = 13.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Spacer(Modifier.height(6.dp))
+                        OutlinedTextField(
+                            value = username,
+                            onValueChange = { username = it; errorMsg = "" },
+                            modifier = Modifier.fillMaxWidth(),
+                            placeholder = { Text(stringResource(R.string.login_username_hint), color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)) },
+                            leadingIcon = { Icon(Icons.Default.Person, contentDescription = null, tint = if (username.isNotEmpty()) Teal10 else MaterialTheme.colorScheme.onSurfaceVariant) },
+                            shape = RoundedCornerShape(12.dp),
+                            singleLine = true,
+                            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+                            keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Down) }),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = Teal10,
+                                focusedLeadingIconColor = Teal10,
+                                cursorColor = Teal10
+                            )
                         )
-                    )
+                    }
 
                     Spacer(Modifier.height(16.dp))
 
                     // Parol
-                    Text("Parol", fontSize = 13.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Spacer(Modifier.height(6.dp))
-                    OutlinedTextField(
-                        value = password,
-                        onValueChange = { password = it; errorMsg = "" },
-                        modifier = Modifier.fillMaxWidth(),
-                        placeholder = { Text("••••••••", color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)) },
-                        leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null, tint = if (password.isNotEmpty()) accent else MaterialTheme.colorScheme.onSurfaceVariant) },
-                        trailingIcon = {
-                            IconButton(onClick = { passwordVisible = !passwordVisible }) {
-                                Icon(
-                                    if (passwordVisible) Icons.Default.VisibilityOff else Icons.Default.Visibility,
-                                    contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
-                        },
-                        visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-                        shape = RoundedCornerShape(12.dp),
-                        singleLine = true,
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Done),
-                        keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus(); doLogin() }),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = accent,
-                            focusedLeadingIconColor = accent,
-                            cursorColor = accent
+                    Column(modifier = Modifier.fillMaxWidth()) {
+                        Text(stringResource(R.string.login_password), fontSize = 13.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Spacer(Modifier.height(6.dp))
+                        OutlinedTextField(
+                            value = password,
+                            onValueChange = { password = it; errorMsg = "" },
+                            modifier = Modifier.fillMaxWidth(),
+                            placeholder = { Text(stringResource(R.string.login_password_hint), color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)) },
+                            leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null, tint = if (password.isNotEmpty()) Teal10 else MaterialTheme.colorScheme.onSurfaceVariant) },
+                            trailingIcon = {
+                                IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                                    Icon(
+                                        if (passwordVisible) Icons.Default.VisibilityOff else Icons.Default.Visibility,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            },
+                            visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                            shape = RoundedCornerShape(12.dp),
+                            singleLine = true,
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Done),
+                            keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus(); doLogin() }),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = Teal10,
+                                focusedLeadingIconColor = Teal10,
+                                cursorColor = Teal10
+                            )
                         )
-                    )
+                    }
 
                     // Xato xabar
                     AnimatedVisibility(visible = errorMsg.isNotEmpty()) {
                         Row(
-                            modifier = Modifier.padding(top = 8.dp),
+                            modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
                             horizontalArrangement = Arrangement.spacedBy(6.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
@@ -199,31 +176,22 @@ fun LoginScreen(
                         }
                     }
 
-                    Spacer(Modifier.height(8.dp))
-
-                    // Parolni unutdim
-                    Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.CenterEnd) {
-                        TextButton(onClick = {}) {
-                            Text("Parolni unutdim?", fontSize = 13.sp, color = accent)
-                        }
-                    }
-
-                    Spacer(Modifier.height(24.dp))
+                    Spacer(Modifier.height(28.dp))
 
                     // Kirish tugmasi
                     Button(
                         onClick = { doLogin() },
                         modifier = Modifier.fillMaxWidth().height(52.dp),
                         enabled = !isLoading,
-                        colors = ButtonDefaults.buttonColors(containerColor = accent),
+                        colors = ButtonDefaults.buttonColors(containerColor = Teal10),
                         shape = RoundedCornerShape(14.dp)
                     ) {
                         if (isLoading) {
                             CircularProgressIndicator(color = Color.White, strokeWidth = 2.dp, modifier = Modifier.size(20.dp))
                             Spacer(Modifier.width(10.dp))
-                            Text("Kirilmoqda...", fontSize = 15.sp)
+                            Text(stringResource(R.string.login_loading), fontSize = 15.sp)
                         } else {
-                            Text("Kirish", fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
+                            Text(stringResource(R.string.login_button), fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
                         }
                     }
                 }

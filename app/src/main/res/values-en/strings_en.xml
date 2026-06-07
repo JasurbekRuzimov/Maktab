@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Maktab</string>
+
+    <!-- Auth -->
+    <string name="login_title">Maktab System</string>
+    <string name="login_subtitle">Sign in to your account</string>
+    <string name="login_username">Username</string>
+    <string name="login_username_hint">username</string>
+    <string name="login_password">Password</string>
+    <string name="login_password_hint">••••••••</string>
+    <string name="login_button">Sign In</string>
+    <string name="login_loading">Signing in…</string>
+    <string name="login_forgot_pin">Forgot PIN</string>
+
+    <!-- Common -->
+    <string name="save">Save</string>
+    <string name="cancel">Cancel</string>
+    <string name="retry">Retry</string>
+    <string name="search">Search</string>
+    <string name="add_new">New</string>
+    <string name="loading">Loading…</string>
+    <string name="data_not_loaded">Data not loaded</string>
+    <string name="today">Today</string>
+    <string name="total">Total</string>
+    <string name="status">Status</string>
+    <string name="active">Active</string>
+    <string name="inactive">Inactive</string>
+    <string name="pending">Pending</string>
+    <string name="send">Send</string>
+    <string name="submit">Submit</string>
+    <string name="confirm">Confirm</string>
+    <string name="reject">Reject</string>
+    <string name="correct">Correct</string>
+    <string name="mark">Mark</string>
+    <string name="days">Days</string>
+    <string name="ball">Score</string>
+    <string name="max">Maximum</string>
+    <string name="avg_score">Average score</string>
+    <string name="date">Date</string>
+    <string name="type">Type</string>
+    <string name="category">Category</string>
+    <string name="amount">Quantity</string>
+    <string name="unit">Unit</string>
+    <string name="section">Section</string>
+    <string name="id_label">ID</string>
+    <string name="start">Start</string>
+    <string name="end">End</string>
+    <string name="read_more">Read more</string>
+    <string name="file">File</string>
+    <string name="upload_file">Upload file</string>
+    <string name="saved_ok">Saved successfully!</string>
+    <string name="again">Again</string>
+    <string name="dot_separator">·</string>
+    <string name="dash_separator">–</string>
+    <string name="bonus">Bonus</string>
+    <string name="position_label">POSITION</string>
+    <string name="personal_info">PERSONAL INFO</string>
+    <string name="security">SECURITY</string>
+    <string name="settings">Settings</string>
+    <string name="last_7_days">Last 7 days</string>
+
+    <!-- Auth / Exit -->
+    <string name="exit_app_title">Exit app?</string>
+    <string name="exit_app_msg">Do you want to close the app? PIN will be required next time.</string>
+    <string name="exit_yes">Yes, exit</string>
+    <string name="logout">Sign out</string>
+
+    <!-- Password -->
+    <string name="change_password">Change password</string>
+    <string name="save_password">Save password</string>
+    <string name="password_changed">Password changed successfully!</string>
+    <string name="password_hint_text">Update your password regularly.</string>
+    <string name="password_strong_hint">Use letters, numbers and special characters for a strong password.</string>
+
+    <!-- Attendance -->
+    <string name="attendance_rate">Attendance rate</string>
+    <string name="attendance_loading">Loading attendance…</string>
+    <string name="view_attendance">View attendance</string>
+    <string name="no_attendance_week">No attendance records this week</string>
+    <string name="weekly_attendance_stats">Weekly attendance stats</string>
+
+    <!-- Grades -->
+    <string name="no_grades">No grades entered yet</string>
+    <string name="view_grades">View grades</string>
+    <string name="grades_by_subject">Grades by subject</string>
+    <string name="class_ranking">Class ranking</string>
+
+    <!-- Homework -->
+    <string name="no_homework">No homework assigned yet</string>
+    <string name="recent_homework">Recent homework</string>
+    <string name="submit_answer">Submit answer</string>
+    <string name="answer_accepted">Your answer was accepted</string>
+
+    <!-- Exams -->
+    <string name="no_exams">No exam results yet</string>
+    <string name="recent_exams">Recent exams</string>
+
+    <!-- Payments -->
+    <string name="view_payments">View payments</string>
+    <string name="all_payments">All payments</string>
+    <string name="active_contract">Active contract</string>
+    <string name="next_payment_date">Next payment date</string>
+    <string name="no_payments">No contracts or payments yet</string>
+    <string name="paid">Paid</string>
+
+    <!-- Parent -->
+    <string name="linked_children">LINKED CHILDREN</string>
+    <string name="parent_role">Parent</string>
+    <string name="school_parent">School parent</string>
+    <string name="student_role">Student</string>
+
+    <!-- Profile -->
+    <string name="profile_title">Profile</string>
+
+    <!-- Complaints -->
+    <string name="my_complaints">My complaints</string>
+    <string name="new_complaint">New complaint</string>
+    <string name="complaint_type">Complaint type</string>
+    <string name="complaint_detail_hint">Describe the problem in detail…</string>
+    <string name="complaint_accepted">Your complaint has been received</string>
+    <string name="complaint_reply_time">Administration will review within 2 working days</string>
+
+    <!-- Surveys -->
+    <string name="surveys_title">Surveys</string>
+
+    <!-- News -->
+    <string name="news_coming_soon">News coming soon</string>
+
+    <!-- Teacher -->
+    <string name="no_class_today">No classes today</string>
+    <string name="no_class_assigned">No class assigned to teacher</string>
+    <string name="classes_loading">Loading classes…</string>
+    <string name="new_subject">New subject</string>
+
+    <!-- Chef -->
+    <string name="chef_role">Chef · Cafeteria</string>
+    <string name="low_stock_alerts">Low stock alerts</string>
+    <string name="warehouse_usage">Warehouse usage</string>
+    <string name="most_used_ingredients">Most used ingredients</string>
+    <string name="spend_trend">Spend trend</string>
+    <string name="recent_movements">Recent warehouse movements</string>
+    <string name="ingredient">Ingredient</string>
+    <string name="ingredient_catalog">Ingredient catalog</string>
+    <string name="ingredient_search_hint">Search ingredient or category</string>
+    <string name="no_ingredients">No ingredients found</string>
+    <string name="add_ingredient">Add ingredient</string>
+    <string name="new_ingredient">New ingredient</string>
+    <string name="edit_ingredient">Edit ingredient</string>
+    <string name="min_stock">Min.stock</string>
+    <string name="remaining">Remaining</string>
+    <string name="movements_search_hint">Search by movement, reason or ingredient</string>
+    <string name="movements_title">Movements</string>
+    <string name="no_movements">No movements found</string>
+    <string name="menu_calendar">Menu calendar</string>
+    <string name="no_menu_today">No menu set for today</string>
+    <string name="select_meal">Select meal</string>
+    <string name="recipes_title">Recipes</string>
+    <string name="recipe_search_hint">Search recipes</string>
+    <string name="no_recipes">No recipes found</string>
+    <string name="new_recipe">New recipe</string>
+    <string name="portion">Portion</string>
+
+    <!-- HR -->
+    <string name="employee">Employee</string>
+    <string name="employee_search_hint">Search employee…</string>
+    <string name="no_employee">Employee not found</string>
+    <string name="add_employee">Add employee</string>
+    <string name="employee_added">Employee added successfully!</string>
+    <string name="departments_by_employees">Employees by department</string>
+    <string name="salary_distribution">Salary distribution</string>
+    <string name="documents_title">Documents</string>
+    <string name="document_search_hint">Search documents…</string>
+
+    <!-- Behavior -->
+    <string name="no_behavior_records">No behavior records</string>
+</resources>
