@@ -22,6 +22,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.maktab.app.network.ApiResult
 import com.maktab.app.ui.components.*
 import com.maktab.app.ui.theme.*
+import com.maktab.app.ui.theme.str
 import com.maktab.app.viewmodel.EmployeeUi
 import com.maktab.app.viewmodel.HRViewModel
 import com.maktab.app.viewmodel.PositionUi
@@ -131,7 +132,7 @@ fun HRXodimlarScreen(vm: HRViewModel = viewModel()) {
         item {
             OutlinedTextField(
                 value = search, onValueChange = { search = it; vm.loadEmployees(search = it) },
-                placeholder = { Text("Xodim qidirish...", fontSize = 13.sp) },
+                placeholder = { Text(str.employeeSearchHint, fontSize = 13.sp) },
                 modifier = Modifier.fillMaxWidth(), singleLine = true,
                 shape = RoundedCornerShape(10.dp),
                 leadingIcon = { Icon(Icons.Default.Search, null, modifier = Modifier.size(20.dp)) },
@@ -161,14 +162,14 @@ fun HRXodimlarScreen(vm: HRViewModel = viewModel()) {
                 Column(Modifier.fillMaxWidth().padding(vertical = 24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                     Text((employeesState as ApiResult.Error).message, color = Red10, fontSize = 13.sp)
                     Spacer(Modifier.height(8.dp))
-                    TextButton(onClick = { vm.refresh() }) { Text("Qayta urinish", color = Purple10) }
+                    TextButton(onClick = { vm.refresh() }) { Text(str.retry, color = Purple10) }
                 }
             }
             else -> {
                 if (filtered.isEmpty()) {
                     item {
                         Box(Modifier.fillMaxWidth().padding(vertical = 32.dp), Alignment.Center) {
-                            Text("Xodim topilmadi", fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text(str.noEmployee, fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                     }
                 } else {
@@ -249,7 +250,7 @@ fun HRYangiXodimScreen() {
         item { SectionHeader("Yangi xodim qo'shish") {} }
         item {
             AppCard {
-                Text("SHAXSIY MA'LUMOTLAR", fontSize = 10.sp, fontWeight = FontWeight.Bold,
+                Text(str.personalInfo, fontSize = 10.sp, fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurfaceVariant, letterSpacing = 0.8.sp)
                 Spacer(Modifier.height(14.dp))
                 HRField("To'liq ism", name, { name = it }, Icons.Default.Person, "Masalan: Karimova Nargiza")
@@ -261,12 +262,12 @@ fun HRYangiXodimScreen() {
         }
         item {
             AppCard {
-                Text("LAVOZIM", fontSize = 10.sp, fontWeight = FontWeight.Bold,
+                Text(str.positionLabel, fontSize = 10.sp, fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurfaceVariant, letterSpacing = 0.8.sp)
                 Spacer(Modifier.height(14.dp))
                 HRField("Lavozim", position, { position = it }, Icons.Default.Work, "Masalan: Matematika o'qituvchisi")
                 Spacer(Modifier.height(12.dp))
-                Text("Bo'lim", fontSize = 13.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(str.section, fontSize = 13.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Spacer(Modifier.height(8.dp))
                 HRMock.departments.chunked(2).forEach { chunk ->
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(bottom = 8.dp)) {
@@ -294,7 +295,7 @@ fun HRYangiXodimScreen() {
                 Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(TealContainer).padding(14.dp),
                     verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     Icon(Icons.Default.CheckCircle, null, tint = Teal10, modifier = Modifier.size(20.dp))
-                    Text("Xodim muvaffaqiyatli qo'shildi!", fontSize = 14.sp, color = Teal10)
+                    Text(str.employeeAdded, fontSize = 14.sp, color = Teal10)
                 }
             } else {
                 Button(
@@ -306,7 +307,7 @@ fun HRYangiXodimScreen() {
                 ) {
                     Icon(Icons.Default.PersonAdd, null, modifier = Modifier.size(18.dp))
                     Spacer(Modifier.width(8.dp))
-                    Text("Xodimni qo'shish", fontSize = 15.sp)
+                    Text(str.addEmployee, fontSize = 15.sp)
                 }
             }
         }
@@ -444,7 +445,7 @@ fun HRDavomatScreen() {
                 Column(Modifier.padding(14.dp)) {
                     // Header
                     Row(Modifier.fillMaxWidth().padding(bottom = 10.dp)) {
-                        Text("Xodim", fontSize = 11.sp, fontWeight = FontWeight.Medium,
+                        Text(str.employee, fontSize = 11.sp, fontWeight = FontWeight.Medium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(2f))
                         days.forEach { d ->
                             Text(d, fontSize = 11.sp, fontWeight = FontWeight.Medium,
@@ -493,7 +494,7 @@ fun HRTatilScreen() {
                 StatCard("Kutilmoqda", "${HRMock.leaveRequests.count { it.status == "Kutilmoqda" }}", Amber10, Modifier.weight(1f))
             }
         }
-        item { Text("So'rovlar", fontSize = 15.sp, fontWeight = FontWeight.SemiBold) }
+        item { Text(str.surveysTitle, fontSize = 15.sp, fontWeight = FontWeight.SemiBold) }
         items(HRMock.leaveRequests) { req ->
             val isApproved = req.status == "Tasdiqlandi"
             Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = Color.White),
@@ -514,16 +515,16 @@ fun HRTatilScreen() {
                     Spacer(Modifier.height(10.dp))
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                         Column {
-                            Text("Boshlanish", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text(str.start, fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             Text(req.from, fontSize = 13.sp, fontWeight = FontWeight.Medium)
                         }
                         Icon(Icons.Default.ArrowForward, null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
                         Column(horizontalAlignment = Alignment.End) {
-                            Text("Tugash", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text(str.end, fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             Text(req.to, fontSize = 13.sp, fontWeight = FontWeight.Medium)
                         }
                         Column(horizontalAlignment = Alignment.End) {
-                            Text("Kunlar", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text(str.days, fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             Text("${req.days} kun", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = Purple10)
                         }
                     }
@@ -535,14 +536,14 @@ fun HRTatilScreen() {
                                 border = BorderStroke(0.5.dp, Red10)) {
                                 Icon(Icons.Default.Close, null, Modifier.size(14.dp), tint = Red10)
                                 Spacer(Modifier.width(4.dp))
-                                Text("Rad etish", fontSize = 12.sp, color = Red10)
+                                Text(str.reject, fontSize = 12.sp, color = Red10)
                             }
                             Button(onClick = {}, modifier = Modifier.weight(1f).height(40.dp),
                                 colors = ButtonDefaults.buttonColors(containerColor = Teal10),
                                 shape = RoundedCornerShape(8.dp), contentPadding = PaddingValues(0.dp)) {
                                 Icon(Icons.Default.Check, null, Modifier.size(14.dp))
                                 Spacer(Modifier.width(4.dp))
-                                Text("Tasdiqlash", fontSize = 12.sp)
+                                Text(str.confirm, fontSize = 12.sp)
                             }
                         }
                     }
@@ -572,11 +573,11 @@ fun HRMaoshScreen() {
                     Spacer(Modifier.height(8.dp))
                     Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                         Column {
-                            Text("To'landi", fontSize = 11.sp, color = Purple10.copy(0.7f))
+                            Text(str.paid, fontSize = 11.sp, color = Purple10.copy(0.7f))
                             Text("${HRMock.salaries.count { it.paid }} xodim", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = Teal10)
                         }
                         Column {
-                            Text("Kutilmoqda", fontSize = 11.sp, color = Purple10.copy(0.7f))
+                            Text(str.pending, fontSize = 11.sp, color = Purple10.copy(0.7f))
                             Text("${HRMock.salaries.count { !it.paid }} xodim", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = Amber10)
                         }
                     }
@@ -607,11 +608,11 @@ fun HRMaoshScreen() {
                             Text("${sal.base} UZS", fontSize = 13.sp, fontWeight = FontWeight.Medium)
                         }
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text("Bonus", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text(str.bonus, fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             Text("${sal.bonus} UZS", fontSize = 13.sp, fontWeight = FontWeight.Medium, color = Teal10)
                         }
                         Column(horizontalAlignment = Alignment.End) {
-                            Text("Jami", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text(str.total, fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             Text("${sal.total} UZS", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Purple10)
                         }
                     }
@@ -645,7 +646,7 @@ fun HRAnalitika() {
         // Bo'lim bo'yicha
         item {
             AppCard {
-                Text("Bo'limlar bo'yicha xodimlar", fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+                Text(str.departmentsByEmployees, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
                 Spacer(Modifier.height(14.dp))
                 deptCounts.forEachIndexed { idx, (dept, count) ->
                     val color = deptColors[idx % deptColors.size]
@@ -665,7 +666,7 @@ fun HRAnalitika() {
         // Davomat statistikasi
         item {
             AppCard {
-                Text("Haftalik davomat statistikasi", fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+                Text(str.weeklyAttendanceStats, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
                 Spacer(Modifier.height(14.dp))
                 val days = listOf("Dush", "Sesh", "Chor", "Pay", "Jum")
                 val dayPresent = (0..4).map { dayIdx ->
@@ -687,7 +688,7 @@ fun HRAnalitika() {
         // Maosh umumiy
         item {
             AppCard {
-                Text("Maosh taqsimoti", fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+                Text(str.salaryDistribution, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
                 Spacer(Modifier.height(14.dp))
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                     listOf(
@@ -719,20 +720,20 @@ fun HRHujjatlarScreen() {
     LazyColumn(contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
         item {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                Text("Hujjatlar", fontSize = 20.sp, fontWeight = FontWeight.SemiBold)
+                Text(str.documentsTitle, fontSize = 20.sp, fontWeight = FontWeight.SemiBold)
                 Button(onClick = {}, colors = ButtonDefaults.buttonColors(containerColor = Purple10),
                     contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp), modifier = Modifier.height(36.dp),
                     shape = RoundedCornerShape(8.dp)) {
                     Icon(Icons.Default.Add, null, modifier = Modifier.size(16.dp))
                     Spacer(Modifier.width(4.dp))
-                    Text("Yangi", fontSize = 12.sp)
+                    Text(str.addNew, fontSize = 12.sp)
                 }
             }
         }
         item {
             OutlinedTextField(
                 value = search, onValueChange = { search = it },
-                placeholder = { Text("Hujjat qidirish...", fontSize = 13.sp) },
+                placeholder = { Text(str.documentSearchHint, fontSize = 13.sp) },
                 modifier = Modifier.fillMaxWidth(), singleLine = true,
                 shape = RoundedCornerShape(10.dp),
                 leadingIcon = { Icon(Icons.Default.Search, null, modifier = Modifier.size(20.dp)) },

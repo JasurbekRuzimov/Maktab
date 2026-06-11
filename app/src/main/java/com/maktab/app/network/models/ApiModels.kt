@@ -246,7 +246,8 @@ data class RecipeIngredient(
 data class MenuEntryRequest(
     @Json(name = "recipe_id") val recipeId: String,
     @Json(name = "meal_type") val mealType: String,
-    @Json(name = "date") val dateKey: String
+    @Json(name = "date") val dateKey: String,
+    @Json(name = "planned_servings") val plannedServings: Int? = null
 )
 
 // ─────────────────────────────────────────────

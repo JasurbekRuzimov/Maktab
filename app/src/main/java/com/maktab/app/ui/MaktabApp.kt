@@ -35,8 +35,8 @@ import com.maktab.app.ui.screens.chef.*
 import com.maktab.app.ui.screens.hr.*
 import com.maktab.app.ui.screens.common.*
 import com.maktab.app.ui.theme.*
-import com.maktab.app.ui.theme.str
 import com.maktab.app.R
+import com.maktab.app.ui.theme.str
 import kotlinx.coroutines.launch
 
 // ─────────────────────────────────────────────
@@ -268,8 +268,11 @@ fun MaktabApp() {
                     role = s.role, language = language, isDark = isDark,
                     fullname = savedFullname, username = savedUsername,
                     onToggleDark = { isDark = !isDark },
-                    onLanguageChange = {
-                        LocaleHelper.applyLocale(context as Activity, it)
+                    onLanguageChange = { newLang ->
+                        language = newLang
+                        // Tilni saqlaymiz (keyingi ochilishda eslab qoladi), lekin restart YO'Q
+                        context.getSharedPreferences("app_prefs", android.content.Context.MODE_PRIVATE)
+                            .edit().putString("language", newLang).apply()
                     },
                     onLogout = { clearSession(); screen = Screen.Login }
                 )

@@ -25,6 +25,7 @@ import com.maktab.app.viewmodel.TeacherViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.maktab.app.ui.components.*
 import com.maktab.app.ui.theme.*
+import com.maktab.app.ui.theme.str
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -33,7 +34,7 @@ fun OquvRejaScreen() {
     val expandedIds = remember { mutableStateListOf<Int>() }
     val typeColor = mapOf("Dars" to Pair(Blue10,BlueContainer),"Test" to Pair(Red10,RedContainer),"Quiz" to Pair(Amber10,AmberContainer),"Imtixon" to Pair(Purple10,PurpleContainer))
     LazyColumn(modifier=Modifier.fillMaxSize(), contentPadding=PaddingValues(16.dp), verticalArrangement=Arrangement.spacedBy(10.dp)) {
-        item { SectionHeader("O'quv reja") { Button(onClick={}, colors=ButtonDefaults.buttonColors(containerColor=Teal10), contentPadding=PaddingValues(horizontal=14.dp,vertical=6.dp), modifier=Modifier.height(34.dp)) { Icon(Icons.Default.Add,null,modifier=Modifier.size(16.dp)); Spacer(Modifier.width(4.dp)); Text("Yangi fan",fontSize=12.sp) } }; Spacer(Modifier.height(4.dp)) }
+        item { SectionHeader("O'quv reja") { Button(onClick={}, colors=ButtonDefaults.buttonColors(containerColor=Teal10), contentPadding=PaddingValues(horizontal=14.dp,vertical=6.dp), modifier=Modifier.height(34.dp)) { Icon(Icons.Default.Add,null,modifier=Modifier.size(16.dp)); Spacer(Modifier.width(4.dp)); Text(str.newSubject,fontSize=12.sp) } }; Spacer(Modifier.height(4.dp)) }
         items(MockData.subjects) { sub ->
             val isExp = sub.id in expandedIds
             val sc = when(sub.id){1->Pair(Blue10,BlueContainer);2->Pair(Purple10,PurpleContainer);else->Pair(Amber10,AmberContainer)}
@@ -68,7 +69,7 @@ fun DavomatScreen(vm: TeacherViewModel = viewModel()) {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     CircularProgressIndicator(color = Teal10, strokeWidth = 2.dp)
-                    Text("Davomat yuklanmoqda...", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(str.attendanceLoading, fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
         }
@@ -86,11 +87,11 @@ fun DavomatScreen(vm: TeacherViewModel = viewModel()) {
                     ) {
                         Icon(Icons.Default.WifiOff, null, tint = Red10, modifier = Modifier.size(16.dp))
                         Column(Modifier.weight(1f)) {
-                            Text("Ma'lumot yuklanmadi", fontSize = 13.sp, fontWeight = FontWeight.Medium, color = Red10)
+                            Text(str.dataNotLoaded, fontSize = 13.sp, fontWeight = FontWeight.Medium, color = Red10)
                             Text(state.message, fontSize = 12.sp, color = Red10)
                         }
                         TextButton(onClick = { vm.loadAttendance() }) {
-                            Text("Qayta", fontSize = 12.sp, color = Red10)
+                            Text(str.again, fontSize = 12.sp, color = Red10)
                         }
                     }
                 }
@@ -141,7 +142,7 @@ fun DavomatScreen(vm: TeacherViewModel = viewModel()) {
                         ) {
                             Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
                                 Icon(Icons.Default.EventBusy, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(40.dp))
-                                Text("Bu hafta davomat yozuvi yo'q", fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                Text(str.noAttendanceWeek, fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             }
                         }
                     }

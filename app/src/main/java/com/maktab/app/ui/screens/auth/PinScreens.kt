@@ -34,13 +34,19 @@ fun PinSetupScreen(
     role: String,
     onPinSet: (String) -> Unit
 ) {
-    val isTeacher = role == "teacher"
-    val accent = if (isTeacher) Teal10 else Blue10
+    val accent = when (role) {
+        "teacher" -> Teal10
+        "chef"    -> Amber10
+        "hr", "hr_manager" -> Purple10
+        "student" -> Green10
+        else      -> Blue10
+    }
 
     var step by remember { mutableStateOf(0) }   // 0=kiriting, 1=tasdiqlang
     var firstPin by remember { mutableStateOf("") }
     var currentPin by remember { mutableStateOf("") }
     var errorMsg by remember { mutableStateOf("") }
+    val scope = rememberCoroutineScope()
 
     val title = if (step == 0) "PIN kod o'rnating" else "PIN kodni tasdiqlang"
     val subtitle = if (step == 0) "4 raqamli PIN kod kiriting" else "Tasdiqlash uchun PIN kodni qayta kiriting"
@@ -50,18 +56,22 @@ fun PinSetupScreen(
         currentPin += d
         errorMsg = ""
         if (currentPin.length == PIN_LENGTH) {
-            if (step == 0) {
-                firstPin = currentPin
-                currentPin = ""
-                step = 1
-            } else {
-                if (currentPin == firstPin) {
-                    onPinSet(currentPin)
-                } else {
-                    errorMsg = "PIN kodlar mos kelmadi. Qayta urinib ko'ring"
+            // 4-nuqta to'lib ko'rinishi uchun kichik kechikish
+            scope.launch {
+                kotlinx.coroutines.delay(180)
+                if (step == 0) {
+                    firstPin = currentPin
                     currentPin = ""
-                    firstPin = ""
-                    step = 0
+                    step = 1
+                } else {
+                    if (currentPin == firstPin) {
+                        onPinSet(currentPin)
+                    } else {
+                        errorMsg = "PIN kodlar mos kelmadi. Qayta urinib ko'ring"
+                        currentPin = ""
+                        firstPin = ""
+                        step = 0
+                    }
                 }
             }
         }
@@ -98,8 +108,13 @@ fun PinEntryScreen(
     onSuccess: () -> Unit,
     onForgotPin: () -> Unit
 ) {
-    val isTeacher = role == "teacher"
-    val accent = if (isTeacher) Teal10 else Blue10
+    val accent = when (role) {
+        "teacher" -> Teal10
+        "chef"    -> Amber10
+        "hr", "hr_manager" -> Purple10
+        "student" -> Green10
+        else      -> Blue10
+    }
 
     var currentPin by remember { mutableStateOf("") }
     var errorMsg by remember { mutableStateOf("") }
@@ -113,7 +128,7 @@ fun PinEntryScreen(
         errorMsg = ""
         if (currentPin.length == PIN_LENGTH) {
             if (currentPin == savedPin) {
-                onSuccess()
+                scope.launch { delay(180); onSuccess() }
             } else {
                 attempts++
                 isShaking = true
